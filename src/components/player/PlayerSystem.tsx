@@ -5,6 +5,7 @@ import { CapsuleCollider, CuboidCollider, RigidBody, useRapier, type RapierRigid
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import { Convertible } from "@/components/vehicle/Convertible";
 import { inputRef, consumeInteractPulse } from "@/hooks/useKeyboard";
 import { getGameState, setGameState, openChapter, menusBlockInput } from "@/lib/gameStore";
@@ -501,53 +502,75 @@ export function PlayerSystem() {
 }
 
 function ExplorerAvatar() {
-  const { scene } = useGLTF("/models/explorer.glb");
+  const gltf = useGLTF("/models/explorer.glb");
   const group = useRef<THREE.Group>(null);
-  const limbs = useRef<{ left?: THREE.Object3D; right?: THREE.Object3D }>({});
+  const mixer = useRef<THREE.AnimationMixer | null>(null);
+  const actions = useRef<Record<string, THREE.AnimationAction>>({});
+  const current = useRef<string | null>(null);
+
   const model = useMemo(() => {
-    const clone = scene.clone(true);
-    clone.traverse((o) => {
+    const clone = SkeletonUtils.clone(gltf.scene);
+    clone.traverse((o: THREE.Object3D) => {
       const m = o as THREE.Mesh;
       if (m.isMesh) {
         m.castShadow = true;
         m.receiveShadow = true;
+        // Hide weapon trail / dagger gizmos (Quaternius Rogue extras)
+        if (/nurbs|path|dagger|weapon|rogue001/i.test(o.name)) {
+          m.visible = false;
+        }
       }
-      if (o.name === "legL" || o.name === "armL") limbs.current.left = o;
-      if (o.name === "legR" || o.name === "armR") limbs.current.right = o;
     });
     return clone;
-  }, [scene]);
+  }, [gltf.scene]);
 
-  useFrame(({ clock }) => {
+  useEffect(() => {
+    const mix = new THREE.AnimationMixer(model);
+    mixer.current = mix;
+    const clips = gltf.animations ?? [];
+    const pick = (names: string[]) => clips.find((c) => names.includes(c.name));
+    const idle = pick(["Idle", "CharacterArmature|Idle", "Attacking_Idle"]);
+    const walk = pick(["Walk", "CharacterArmature|Walk"]);
+    const run = pick(["Run", "CharacterArmature|Run"]);
+    if (idle) actions.current.idle = mix.clipAction(idle);
+    if (walk) actions.current.walk = mix.clipAction(walk);
+    if (run) actions.current.run = mix.clipAction(run);
+    actions.current.idle?.play();
+    current.current = "idle";
+    return () => {
+      mix.stopAllAction();
+      mix.uncacheRoot(model);
+      mixer.current = null;
+    };
+  }, [model, gltf.animations]);
+
+  useFrame((_, dt) => {
     const { mode } = getGameState();
     if (!group.current) return;
     group.current.visible = mode === "walking";
+    mixer.current?.update(dt);
     if (mode !== "walking") return;
+
     const moving = Boolean(group.current.parent?.userData.moving);
     const running = Boolean(group.current.parent?.userData.running);
-    const freq = running ? 12 : 8;
-    const amp = running ? 0.55 : 0.35;
-    const t = clock.elapsedTime * freq;
-    const swing = moving ? Math.sin(t) * amp : 0;
-    cloneLimbSwing(model, swing);
-    const bob = moving ? Math.sin(t * 2) * (running ? 0.05 : 0.03) : 0;
-    group.current.position.y = bob;
+    const next = !moving ? "idle" : running ? "run" : "walk";
+    if (next !== current.current) {
+      const prev = current.current ? actions.current[current.current] : null;
+      const act = actions.current[next] ?? actions.current.idle;
+      if (act) {
+        act.reset().fadeIn(0.18).play();
+        prev?.fadeOut(0.18);
+        current.current = next;
+      }
+    }
   });
 
+  // Quaternius Rogue ≈ 2.8u tall → scale to ~1.7m
   return (
-    <group ref={group}>
+    <group ref={group} scale={0.62} position={[0, 0, 0]}>
       <primitive object={model} />
     </group>
   );
-}
-
-function cloneLimbSwing(root: THREE.Object3D, swing: number) {
-  root.traverse((o) => {
-    if (o.name === "legL") o.rotation.x = swing;
-    if (o.name === "legR") o.rotation.x = -swing;
-    if (o.name === "armL") o.rotation.x = -swing * 0.7;
-    if (o.name === "armR") o.rotation.x = swing * 0.7;
-  });
 }
 
 function easeOutCubic(t: number) {

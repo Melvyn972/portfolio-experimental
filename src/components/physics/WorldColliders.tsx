@@ -94,26 +94,32 @@ export function WorldColliders() {
         <CuboidCollider args={[4.8, 0.7, 0.35]} />
       </RigidBody>
 
-      {/* Buildings */}
+      {/* Buildings — Kenney City ×6.x footprints + Dormin phare ×0.34 */}
       {maison && (
         <>
-          <RigidBody type="fixed" colliders={false} position={[maison.x, 1.7, maison.z]}>
-            <CuboidCollider args={[4.6, 1.7, 3.4]} />
+          <RigidBody type="fixed" colliders={false} position={[maison.x, 3.55, maison.z]} rotation={[0, -0.35, 0]}>
+            <CuboidCollider args={[5.7, 3.55, 3.6]} />
           </RigidBody>
-          <RigidBody type="fixed" colliders={false} position={[maison.x + 5.2, 1.2, maison.z + 1.2]}>
-            <CuboidCollider args={[2.0, 1.2, 2.1]} />
+          <RigidBody type="fixed" colliders={false} position={[maison.x + 7.5, 3.25, maison.z + 2]} rotation={[0, 0.2, 0]}>
+            <CuboidCollider args={[4.6, 3.25, 2.7]} />
           </RigidBody>
         </>
       )}
       {studio && (
-        <RigidBody type="fixed" colliders={false} position={[studio.x, 1.4, studio.z]}>
-          <CuboidCollider args={[3.6, 1.4, 2.6]} />
+        <RigidBody type="fixed" colliders={false} position={[studio.x, 3.45, studio.z]} rotation={[0, 0.4, 0]}>
+          <CuboidCollider args={[4.0, 3.45, 3.15]} />
         </RigidBody>
       )}
       {phare && (
-        <RigidBody type="fixed" colliders={false} position={[phare.x, 4.2, phare.z]}>
-          <CuboidCollider args={[1.6, 4.2, 1.6]} />
-        </RigidBody>
+        <>
+          <RigidBody type="fixed" colliders={false} position={[phare.x, 4.95, phare.z]}>
+            <CuboidCollider args={[1.9, 4.95, 1.9]} />
+          </RigidBody>
+          {/* Rock skirt around lighthouse base */}
+          <RigidBody type="fixed" colliders={false} position={[phare.x, 0.55, phare.z]}>
+            <CuboidCollider args={[4.2, 0.55, 4.0]} friction={0.95} />
+          </RigidBody>
+        </>
       )}
 
       {/* Shore / cliff rock proxies */}

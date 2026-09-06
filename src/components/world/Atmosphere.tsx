@@ -34,7 +34,8 @@ export function Atmosphere({ dust = true, shadows = true, shadowMapSize = 2048 }
         shadow-camera-right={60}
         shadow-camera-top={60}
         shadow-camera-bottom={-60}
-        shadow-bias={-0.00025}
+        shadow-bias={-0.00035}
+        shadow-normalBias={0.04}
       />
       <directionalLight position={[-28, 16, -40]} intensity={0.38} color="#8eb8d4" />
       <Sky

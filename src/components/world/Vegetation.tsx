@@ -86,7 +86,13 @@ export function Vegetation({ count = 60 }: { count?: number }) {
       items.push({
         type,
         position: [pos.x, pos.y, pos.z],
-        scale: type === "cypress" ? 0.9 + (i % 3) * 0.15 : 0.85 + (i % 5) * 0.14,
+        // Quaternius pine ≈ 7.4u tall — keep coastal canopy ~3–4m
+        scale:
+          type === "pine"
+            ? 0.38 + (i % 5) * 0.06
+            : type === "cypress"
+              ? 0.9 + (i % 3) * 0.15
+              : 0.85 + (i % 5) * 0.14,
         rot: i * 0.7,
         sway: i * 0.4,
       });
@@ -97,7 +103,7 @@ export function Vegetation({ count = 60 }: { count?: number }) {
       items.push({
         type: i % 3 === 0 ? "bougainvillea" : i % 3 === 1 ? "cypress" : "pine",
         position: [terrace.x - 3 + i * 0.9, 0.95, terrace.z - 2 - (i % 4) * 1.1],
-        scale: 1 + (i % 3) * 0.12,
+        scale: i % 3 === 2 ? 0.32 + (i % 3) * 0.04 : 1 + (i % 3) * 0.12,
         rot: i * 0.9,
         sway: 200 + i,
       });

@@ -7,11 +7,9 @@ import * as THREE from "three";
 import { getBelvedereWorldAnchor } from "@/lib/road";
 import { useGameStore } from "@/hooks/useGameStore";
 
-export function Belvedere() {
-  const anchor = useMemo(() => getBelvedereWorldAnchor(), []);
-  const { terrace, yaw } = anchor;
-  const { scene } = useGLTF("/models/belvedere.glb");
-  const structure = useMemo(() => {
+function useShadowClone(path: string) {
+  const { scene } = useGLTF(path);
+  return useMemo(() => {
     const c = scene.clone(true);
     c.traverse((o) => {
       const m = o as THREE.Mesh;
@@ -22,64 +20,82 @@ export function Belvedere() {
     });
     return c;
   }, [scene]);
+}
+
+function Placed({
+  scene,
+  position,
+  rotation = [0, 0, 0],
+  scale = 1,
+}: {
+  scene: THREE.Object3D;
+  position: [number, number, number];
+  rotation?: [number, number, number];
+  scale?: number;
+}) {
+  const clone = useMemo(() => scene.clone(true), [scene]);
+  return (
+    <group position={position} rotation={rotation} scale={scale}>
+      <primitive object={clone} />
+    </group>
+  );
+}
+
+/**
+ * Belvedere overlook — Kenney Fantasy stone walls + hedge + lantern (no procedural shelter).
+ */
+export function Belvedere() {
+  const anchor = useMemo(() => getBelvedereWorldAnchor(), []);
+  const { terrace, yaw } = anchor;
+  const wall = useShadowClone("/models/kenney/fantasy/wall-block.glb");
+  const wallWin = useShadowClone("/models/kenney/fantasy/wall-window-stone.glb");
+  const balcony = useShadowClone("/models/kenney/fantasy/balcony-wall.glb");
+  const hedge = useShadowClone("/models/kenney/fantasy/hedge.glb");
+  const stairs = useShadowClone("/models/kenney/fantasy/stairs-stone.glb");
+  const lantern = useShadowClone("/models/lantern.glb");
+  const pine = useShadowClone("/models/pine.glb");
+  const bench = useShadowClone("/models/bench.glb");
 
   return (
     <group>
       <group position={[terrace.x, 0, terrace.z]} rotation={[0, yaw, 0]}>
-        <primitive object={structure} />
-        <BelvedereBench position={[2.2, 0.96, 2.0]} />
-        <BougainvilleaCluster />
-        <IdentityCarnetModel position={[0, 0.96, -0.55]} />
+        {/* Stone terrace deck */}
+        <mesh position={[0, 0.92, 0]} receiveShadow castShadow>
+          <boxGeometry args={[9.6, 0.28, 7.8]} />
+          <meshStandardMaterial color="#d4c4a8" roughness={0.92} />
+        </mesh>
+        <mesh position={[0, 0.78, 0]} receiveShadow>
+          <boxGeometry args={[10.2, 0.18, 8.4]} />
+          <meshStandardMaterial color="#b8a88c" roughness={0.95} />
+        </mesh>
+
+        {/* Sea-side parapet */}
+        <Placed scene={balcony} position={[-4.6, 1.05, 0]} rotation={[0, Math.PI / 2, 0]} scale={2.4} />
+        <Placed scene={wall} position={[-4.5, 1.05, -2.4]} rotation={[0, Math.PI / 2, 0]} scale={2.1} />
+        <Placed scene={wall} position={[-4.5, 1.05, 2.4]} rotation={[0, Math.PI / 2, 0]} scale={2.1} />
+
+        {/* Side shelter walls */}
+        <Placed scene={wallWin} position={[0.4, 1.05, -3.5]} scale={2.3} />
+        <Placed scene={wall} position={[2.6, 1.05, -3.5]} scale={2.3} />
+        <Placed scene={wall} position={[-1.8, 1.05, 3.5]} rotation={[0, Math.PI, 0]} scale={2.3} />
+
+        {/* Approach stairs */}
+        <Placed scene={stairs} position={[3.8, 0.05, 0]} rotation={[0, -Math.PI / 2, 0]} scale={1.9} />
+
+        {/* Greenery */}
+        <Placed scene={hedge} position={[-2.8, 1.05, 2.8]} scale={1.6} />
+        <Placed scene={hedge} position={[1.2, 1.05, 3.2]} rotation={[0, 0.4, 0]} scale={1.4} />
+        <Placed scene={pine} position={[-3.2, 1.05, -2.6]} scale={0.28} />
+        <Placed scene={pine} position={[3.4, 1.05, -2.2]} scale={0.24} />
+
+        <Placed scene={bench} position={[2.2, 1.05, 2.0]} />
+        <Placed scene={lantern} position={[-3.6, 1.05, -1.2]} scale={1.15} />
+        <Placed scene={lantern} position={[3.2, 1.05, 2.4]} scale={1.05} />
+
+        <IdentityCarnetModel position={[0, 1.05, -0.55]} />
+        <pointLight position={[-3.6, 2.4, -1.2]} intensity={0.55} color="#ffc878" distance={10} />
       </group>
       <StopMarker position={[anchor.stop.x, 0.03, anchor.stop.z]} />
-    </group>
-  );
-}
-
-function BelvedereBench({ position }: { position: [number, number, number] }) {
-  const { scene } = useGLTF("/models/bench.glb");
-  const model = useMemo(() => {
-    const c = scene.clone(true);
-    c.traverse((o) => {
-      const m = o as THREE.Mesh;
-      if (m.isMesh) {
-        m.castShadow = true;
-        m.receiveShadow = true;
-      }
-    });
-    return c;
-  }, [scene]);
-  return (
-    <group position={position}>
-      <primitive object={model} />
-    </group>
-  );
-}
-
-function BougainvilleaCluster() {
-  const { scene } = useGLTF("/models/bougainvillea.glb");
-  const models = useMemo(() => {
-    return [-2.5, -0.5, 1.5].map((z, i) => {
-      const c = scene.clone(true);
-      c.traverse((o) => {
-        const m = o as THREE.Mesh;
-        if (m.isMesh) {
-          m.castShadow = true;
-          m.receiveShadow = true;
-        }
-      });
-      c.scale.setScalar(0.85 + i * 0.08);
-      c.rotation.y = i * 0.7;
-      c.position.set(-4.5, 1.55, z);
-      return c;
-    });
-  }, [scene]);
-
-  return (
-    <group>
-      {models.map((m, i) => (
-        <primitive key={i} object={m} />
-      ))}
     </group>
   );
 }
@@ -151,12 +167,16 @@ export function getBelvedereInteractPosition() {
 }
 
 export function getBelvedereStopPosition() {
-  // Trigger on the road ribbon at belvedere (not terrace-local offset)
   const { stop } = getBelvedereWorldAnchor();
   return stop.clone().setY(0.05);
 }
 
-useGLTF.preload("/models/belvedere.glb");
+useGLTF.preload("/models/kenney/fantasy/wall-block.glb");
+useGLTF.preload("/models/kenney/fantasy/wall-window-stone.glb");
+useGLTF.preload("/models/kenney/fantasy/balcony-wall.glb");
+useGLTF.preload("/models/kenney/fantasy/hedge.glb");
+useGLTF.preload("/models/kenney/fantasy/stairs-stone.glb");
+useGLTF.preload("/models/lantern.glb");
+useGLTF.preload("/models/pine.glb");
 useGLTF.preload("/models/bench.glb");
-useGLTF.preload("/models/bougainvillea.glb");
 useGLTF.preload("/models/carnet.glb");
