@@ -13,7 +13,7 @@ import {
 } from "@/lib/ground";
 
 const SAND = new THREE.Color("#c4ae86");
-const WET = new THREE.Color("#a8946c");
+const WET = new THREE.Color("#b0a488");
 const APRON = new THREE.Color("#cbb492");
 const DIRT = new THREE.Color("#b39a74");
 const GRASS = new THREE.Color("#6d8754");
@@ -86,9 +86,9 @@ export function Terrain() {
         />
       </mesh>
       {/* Vertical lip so the paper-thin sand edge never reads as a floating slab. */}
-      <mesh position={[TERRAIN_MIN_X, -0.24, midZ]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
-        <planeGeometry args={[sizeZ, 0.14]} />
-        <meshStandardMaterial color="#a8946c" roughness={0.97} metalness={0} side={THREE.DoubleSide} />
+      <mesh position={[TERRAIN_MIN_X, -0.16, midZ]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
+        <planeGeometry args={[sizeZ, 0.28]} />
+        <meshStandardMaterial color="#b0a488" roughness={0.97} metalness={0} side={THREE.DoubleSide} />
       </mesh>
     </group>
   );
