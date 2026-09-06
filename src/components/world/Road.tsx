@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import * as THREE from "three";
 import { getRoadCurve, ROAD_SURFACE_LIFT, ROAD_WIDTH } from "@/lib/road";
 
-const ROAD_HALF = ROAD_WIDTH / 2 + 0.2;
+const ROAD_HALF = ROAD_WIDTH / 2 + 0.5;
 const SLAB_DEPTH = 1.45;
 
 function makeAsphaltTexture() {

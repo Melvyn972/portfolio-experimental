@@ -24,9 +24,9 @@ const _from = { x: 0, y: 0, z: 0 };
 const _rayDir = { x: 0, y: 0, z: 0 };
 
 const CAM_DIST_DRIVE = 7.8;
-const CAM_DIST_WALK = 5.2;
+const CAM_DIST_WALK = 5.6;
 const CAM_HEIGHT_DRIVE = 2.85;
-const CAM_HEIGHT_WALK = 2.85;
+const CAM_HEIGHT_WALK = 3.05;
 
 /**
  * Modern third-person camera:

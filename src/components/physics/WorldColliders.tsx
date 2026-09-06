@@ -124,11 +124,10 @@ export function WorldColliders() {
       {phare && (
         <>
           <RigidBody type="fixed" colliders={false} position={[phare.x, 5.5, phare.z]}>
-            <CuboidCollider args={[1.9, 4.95, 1.9]} />
+            <CuboidCollider args={[1.6, 4.95, 1.6]} />
           </RigidBody>
-          {/* Rock skirt around lighthouse base */}
-          <RigidBody type="fixed" colliders={false} position={[phare.x, 0.55, phare.z]}>
-            <CuboidCollider args={[4.2, 0.55, 4.0]} friction={0.95} />
+          <RigidBody type="fixed" colliders={false} position={[phare.x, 0.4, phare.z]}>
+            <CuboidCollider args={[2.6, 0.4, 2.5]} friction={0.95} />
           </RigidBody>
         </>
       )}

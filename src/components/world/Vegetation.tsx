@@ -81,7 +81,7 @@ export function Vegetation({ count = 60 }: { count?: number }) {
       const pos = p.clone().addScaledVector(side, dist);
       // Never plant in the sea ( Melvyn QA: floating pink shards over water )
       if (pos.x < -8.5) continue;
-      if (Math.abs(nearestRoadSample(pos).lateral) < ROAD_WIDTH * 0.5 + 4.5) continue;
+      if (Math.abs(nearestRoadSample(pos).lateral) < ROAD_WIDTH * 0.5 + 6.2) continue;
       pos.y = sampleGroundHeight(pos.x, pos.z);
       let type: TreeType = "pine";
       if (!cliffSide) type = i % 3 === 0 ? "bougainvillea" : "pine";
@@ -102,14 +102,19 @@ export function Vegetation({ count = 60 }: { count?: number }) {
       });
     }
 
-    // Belvedere cluster — kept off the deck
-    for (let i = 0; i < 6; i++) {
-      const px = terrace.x + 6.2 + (i % 3) * 1.1;
-      const pz = terrace.z - 3 + (i % 2) * 2.4;
+    // Belvedere cluster — seaward of the terrace, never on the ribbon
+    const bel = getBelvedereWorldAnchor();
+    for (let i = 0; i < 5; i++) {
+      const pos = terrace
+        .clone()
+        .addScaledVector(bel.side, -4.2 - (i % 2) * 1.1)
+        .addScaledVector(bel.tangent, (i - 2) * 1.8);
+      if (pos.x < -9.5) continue;
+      if (Math.abs(nearestRoadSample(pos).lateral) < ROAD_WIDTH * 0.5 + 6.2) continue;
       items.push({
         type: i % 2 === 0 ? "bougainvillea" : "pine",
-        position: [px, sampleGroundHeight(px, pz), pz],
-        scale: i % 2 === 0 ? 0.95 : 0.34,
+        position: [pos.x, sampleGroundHeight(pos.x, pos.z), pos.z],
+        scale: i % 2 === 0 ? 0.9 : 0.32,
         rot: i * 0.9,
         sway: 200 + i,
       });

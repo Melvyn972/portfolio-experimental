@@ -12,8 +12,8 @@ export const TERRAIN_MAX_Z = 75;
 const VISUAL_TRENCH = ROAD_WIDTH * 0.5 + 5.2;
 /** Drop visual sand this far under the curve (iPhone depth buffer still z-fights at 0.5 m). */
 const TRENCH_DROP = 2.4;
-/** Delete terrain triangles whose probe is closer than this to the centerline. */
-export const ROAD_CUT_MARGIN = ROAD_WIDTH * 0.5 + 2.35;
+/** Delete only faces under the asphalt prism — shoulders keep trenched terrain. */
+export const ROAD_CUT_MARGIN = ROAD_WIDTH * 0.5 + 0.42;
 
 function scenicHeight(x: number, z: number): { y: number; roadDist: number; roadY: number } {
   const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 160);
@@ -58,8 +58,8 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
   if (x > 2 && z < -175 && z > -195) y = Math.max(y, 3.8);
 
   {
-    const pdx = x - -8;
-    const pdz = z - -168;
+    const pdx = x - -16;
+    const pdz = z - -172;
     if (pdx * pdx + pdz * pdz < 90) {
       const falloff = 1 - Math.sqrt(pdx * pdx + pdz * pdz) / 9.5;
       y = Math.max(y, 0.35 + falloff * 1.4);

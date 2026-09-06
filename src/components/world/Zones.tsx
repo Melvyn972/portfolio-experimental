@@ -129,7 +129,7 @@ export function CoastalZones() {
         <group>
           {/* Kenney City building-type-e — studio */}
           <Placed scene={studio} position={[s.x, 0, s.z]} rotation={[0, 0.4, 0]} scale={6.0} />
-          <Placed scene={pine} position={[s.x - 5, 0, s.z + 3]} scale={0.48} />
+          <Placed scene={pine} position={[s.x - 7.5, 0, s.z + 5]} scale={0.48} />
           <Placed scene={hedge} position={[s.x + 4, 0, s.z + 4]} scale={2.0} />
           <Placed scene={pine} position={[s.x + 6, 0, s.z - 4]} scale={0.4} />
         </group>
@@ -141,23 +141,23 @@ export function CoastalZones() {
           <Placed scene={phare} position={[p.x, PHARE_Y, p.z]} scale={PHARE_SCALE} />
           {/* Rocky skirt so the tower reads anchored */}
           {[
-            [p.x + 2.4, 0.32, p.z - 1.4, 1.1],
-            [p.x - 2.6, 0.3, p.z + 1.6, 0.95],
-            [p.x + 0.8, 0.28, p.z + 3.0, 0.85],
-            [p.x - 1.4, 0.34, p.z - 2.6, 1.05],
+            [p.x + 1.6, 0.32, p.z - 1.8, 0.85],
+            [p.x - 1.8, 0.3, p.z + 1.2, 0.8],
+            [p.x + 0.4, 0.28, p.z + 2.2, 0.7],
+            [p.x - 1.0, 0.34, p.z - 2.2, 0.78],
           ].map(([x, y, z, s], i) => (
             <mesh key={`pr-${i}`} position={[x, y, z]} scale={[s, s * 0.55, s * 0.9]} castShadow receiveShadow>
               <sphereGeometry args={[0.85, 7, 5]} />
               <meshStandardMaterial color={i % 2 ? "#c2b49a" : "#b4a488"} roughness={0.95} />
             </mesh>
           ))}
-          <mesh position={[p.x, 0.2, p.z]} receiveShadow castShadow>
-            <cylinderGeometry args={[4.6, 5.4, 0.55, 10]} />
+          <mesh position={[p.x, 0.18, p.z]} receiveShadow castShadow>
+            <cylinderGeometry args={[2.8, 3.2, 0.45, 10]} />
             <meshStandardMaterial color="#b9a888" roughness={0.95} />
           </mesh>
-          <Placed scene={pine} position={[p.x + 6, 0, p.z + 4]} scale={0.55} />
-          <Placed scene={pine} position={[p.x - 5, 0, p.z - 3]} scale={0.45} />
-          <Placed scene={lantern} position={[p.x + 3.2, 0.55, p.z + 2.4]} scale={1.4} />
+          <Placed scene={pine} position={[p.x + 5.5, 0, p.z + 6]} scale={0.5} />
+          <Placed scene={pine} position={[p.x - 4.5, 0, p.z - 5]} scale={0.42} />
+          <Placed scene={lantern} position={[p.x + 2.4, 0.45, p.z + 3.2]} scale={1.3} />
           <pointLight
             position={[p.x, 0.55 + 28.95 * PHARE_SCALE * 0.92, p.z]}
             intensity={2.4}
@@ -170,11 +170,11 @@ export function CoastalZones() {
 
       {plage && (
         <group position={[plage.x, 0, plage.z]}>
-          <Placed scene={pier} position={[-3.2, 0.08, -1.2]} rotation={[0, 0.55, 0]} scale={0.38} />
-          <Placed scene={pine} position={[3.4, 0, 2.4]} scale={0.42} />
-          <Placed scene={pine} position={[2.2, 0, -2.6]} scale={0.36} />
-          <Placed scene={hedge} position={[1.4, 0, 4.2]} scale={1.8} />
-          <Placed scene={lantern} position={[1.6, 0, 1.2]} scale={1.2} />
+          <Placed scene={pier} position={[-4.2, 0.08, -1.6]} rotation={[0, 0.55, 0]} scale={0.38} />
+          <Placed scene={pine} position={[-1.2, 0, 3.6]} scale={0.4} />
+          <Placed scene={pine} position={[-2.4, 0, -3.2]} scale={0.34} />
+          <Placed scene={hedge} position={[-0.6, 0, 5.0]} scale={1.8} />
+          <Placed scene={lantern} position={[-1.8, 0, 2.0]} scale={1.2} />
         </group>
       )}
 
