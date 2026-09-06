@@ -93,19 +93,20 @@ export function Terrain() {
 
   const cliffFaces = useMemo(() => {
     const curve = getRoadCurve();
-    return Array.from({ length: 22 }, (_, i) => {
-      const t = 0.1 + i * 0.038;
+    return Array.from({ length: 18 }, (_, i) => {
+      const t = 0.12 + i * 0.042;
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-      const pos = p.clone().addScaledVector(side, 6.8);
-      const h = 1.4 + (i % 4) * 0.45 + Math.sin(i) * 0.3;
-      pos.y = h * 0.5;
+      const pos = p.clone().addScaledVector(side, 7.2);
+      const h = 1.6 + (i % 4) * 0.4 + Math.sin(i * 1.3) * 0.25;
+      // Sit on local ground — base at road height, grow upward
+      pos.y = p.y + h * 0.5 + 0.15;
       return {
         pos: [pos.x, pos.y, pos.z] as [number, number, number],
         yaw: Math.atan2(tangent.x, tangent.z),
         h,
-        w: 2.8 + (i % 3) * 0.6,
+        w: 2.6 + (i % 3) * 0.5,
       };
     });
   }, []);

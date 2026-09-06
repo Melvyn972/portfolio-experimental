@@ -142,7 +142,7 @@ export function VehicleController() {
       const pitch = Math.atan2(ahead.position.y - sample.position.y, 2.0) * 0.85;
 
       if (car.current) {
-        car.current.position.set(pos.current.x, sample.position.y + 0.02, pos.current.z);
+        car.current.position.set(pos.current.x, sample.position.y + 0.05, pos.current.z);
         car.current.rotation.order = "YXZ";
         car.current.rotation.y = yaw.current;
         car.current.rotation.x = THREE.MathUtils.lerp(car.current.rotation.x, pitch, 0.12);
