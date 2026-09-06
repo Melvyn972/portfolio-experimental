@@ -15,7 +15,7 @@ export const INLAND_SHELF_WIDTH = 14;
 export const PLAZA_HEIGHT = 1.64;
 
 function sandBedY(roadY: number) {
-  return roadY + ROAD_SURFACE_LIFT - 0.05;
+  return roadY + ROAD_SURFACE_LIFT - 0.018;
 }
 
 function scenicHeight(x: number, z: number): { y: number; roadDist: number; roadY: number; onAccess: boolean } {

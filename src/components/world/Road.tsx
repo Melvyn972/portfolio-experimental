@@ -5,7 +5,7 @@ import * as THREE from "three";
 import { getRoadCurve, ROAD_SURFACE_LIFT, ROAD_WIDTH } from "@/lib/road";
 
 /** Top-face overlay only — sits on the sand bed. No slab, no walls, no berms. */
-const ASPHALT_HALF = ROAD_WIDTH / 2 + 0.04;
+const ASPHALT_HALF = ROAD_WIDTH / 2 + 0.12;
 const SEGMENTS = 220;
 
 function makeAsphaltTexture() {
