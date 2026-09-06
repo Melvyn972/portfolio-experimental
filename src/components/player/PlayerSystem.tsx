@@ -510,7 +510,7 @@ export function PlayerSystem() {
       carPos: { x: pos.current.x, y: pos.current.y, z: pos.current.z },
     });
 
-    writeAxesDebug(state.mode === "driving" ? "driving" : "walking");
+    writeAxesDebug("walking");
 
     void rapier;
   });
