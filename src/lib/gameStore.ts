@@ -53,6 +53,13 @@ export function setGameState(partial: Partial<GameState>) {
   listeners.forEach((l) => l());
 }
 
+/** Dev helper for Playwright / QA */
+if (typeof window !== "undefined") {
+  (window as unknown as { __coteMelvyn?: { getState: typeof getGameState } }).__coteMelvyn = {
+    getState: getGameState,
+  };
+}
+
 export function subscribeGame(listener: Listener) {
   listeners.add(listener);
   return () => listeners.delete(listener);

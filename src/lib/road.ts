@@ -60,10 +60,26 @@ export function nearestRoadSample(world: THREE.Vector3, samples = 120) {
 /** Soft pull toward road center when drifting off the asphalt. */
 export function roadCorrectionForce(world: THREE.Vector3, maxLateral = ROAD_WIDTH * 0.48) {
   const { tangent, lateral } = nearestRoadSample(world);
-  if (Math.abs(lateral) <= maxLateral) return new THREE.Vector3();
-  const overshoot = lateral - Math.sign(lateral) * maxLateral;
   const side = new THREE.Vector3(-tangent.z, 0, tangent.x);
-  return side.multiplyScalar(-overshoot * 2.4);
+  if (Math.abs(lateral) <= maxLateral) {
+    // Gentle centering for road-following feel
+    return side.multiplyScalar(-lateral * 0.35);
+  }
+  const overshoot = lateral - Math.sign(lateral) * maxLateral;
+  return side.multiplyScalar(-overshoot * 4.5);
+}
+
+/** Hard clamp onto the driveable ribbon. */
+export function clampToRoad(world: THREE.Vector3, maxLateral = ROAD_WIDTH * 0.42) {
+  const { position, tangent, lateral } = nearestRoadSample(world);
+  if (Math.abs(lateral) <= maxLateral) {
+    world.y = position.y;
+    return world;
+  }
+  const side = new THREE.Vector3(-tangent.z, 0, tangent.x);
+  world.copy(position).addScaledVector(side, Math.sign(lateral) * maxLateral);
+  world.y = position.y;
+  return world;
 }
 
 export const START_POSE = sampleRoad(0.08);

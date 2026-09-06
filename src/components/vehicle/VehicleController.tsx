@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { Convertible } from "./Convertible";
 import { inputRef, consumeInteractPulse } from "@/hooks/useKeyboard";
 import { getGameState, setGameState } from "@/lib/gameStore";
-import { nearestRoadSample, roadCorrectionForce, START_POSE, ROAD_WIDTH } from "@/lib/road";
+import { nearestRoadSample, roadCorrectionForce, clampToRoad, sampleRoad, START_POSE, ROAD_WIDTH, BELVEDERE_T } from "@/lib/road";
 import { getBelvedereInteractPosition, getBelvedereStopPosition } from "@/components/world/Belvedere";
 
 const MAX_SPEED = 22;
@@ -65,6 +65,11 @@ export function VehicleController() {
     const stopPos = getBelvedereStopPosition();
     const interactPos = getBelvedereInteractPosition();
 
+    // Clear explorer hint on first drive input
+    if (state.showExplorerHint && (forward || back || left || right || Math.abs(touch.x) > 0.2 || Math.abs(touch.y) > 0.2)) {
+      setGameState({ showExplorerHint: false });
+    }
+
     if (state.mode === "driving") {
       if (forward) velocity.current = Math.min(MAX_SPEED, velocity.current + ACCEL * dt);
       if (back) velocity.current = Math.max(-MAX_SPEED * 0.45, velocity.current - ACCEL * 0.7 * dt);
@@ -82,9 +87,29 @@ export function VehicleController() {
 
       tmp.current.set(Math.sin(yaw.current), 0, Math.cos(yaw.current));
       pos.current.addScaledVector(tmp.current, velocity.current * dt);
-      pos.current.addScaledVector(roadCorrectionForce(pos.current, ROAD_WIDTH * 0.55), dt);
+      pos.current.addScaledVector(roadCorrectionForce(pos.current, ROAD_WIDTH * 0.42), dt);
+      clampToRoad(pos.current, ROAD_WIDTH * 0.48);
 
       const sample = nearestRoadSample(pos.current);
+      // Keep on the playable ribbon length
+      if (sample.t < 0.02 || sample.t > 0.96) {
+        const safe = sampleRoad(THREE.MathUtils.clamp(sample.t, 0.02, 0.96));
+        pos.current.x = THREE.MathUtils.lerp(pos.current.x, safe.position.x, 0.35);
+        pos.current.z = THREE.MathUtils.lerp(pos.current.z, safe.position.z, 0.35);
+        if ((sample.t < 0.02 && velocity.current < 0) || (sample.t > 0.96 && velocity.current > 0)) {
+          velocity.current *= 0.5;
+        }
+        if (sample.t > 0.98) velocity.current = Math.min(velocity.current, 0);
+        if (sample.t < 0.02) velocity.current = Math.max(velocity.current, 0);
+      }
+      // Light assist: ease yaw toward road tangent while moving
+      if (Math.abs(velocity.current) > 2) {
+        const desiredYaw = Math.atan2(sample.tangent.x, sample.tangent.z);
+        let dy = desiredYaw - yaw.current;
+        while (dy > Math.PI) dy -= Math.PI * 2;
+        while (dy < -Math.PI) dy += Math.PI * 2;
+        yaw.current += dy * 0.04;
+      }
       pos.current.y = sample.position.y;
 
       if (car.current) {
@@ -99,19 +124,28 @@ export function VehicleController() {
         car.current.userData.setSteer?.(((left ? 1 : 0) - (right ? 1 : 0)) * 0.45);
       }
 
-      const nearStop = pos.current.distanceTo(stopPos) < 6.5 && Math.abs(velocity.current) < 1.5;
+      const nearBelvedereZone = Math.abs(sample.t - BELVEDERE_T) < 0.08;
+      const nearStop = nearBelvedereZone && Math.abs(velocity.current) < 4;
+
+      // Soft speed dampener near the belvedere so the stop is catchable
+      if (nearBelvedereZone && Math.abs(velocity.current) > 6) {
+        velocity.current *= 1 - 1.8 * dt;
+      }
 
       if (nearStop && exitCooldown.current <= 0 && (consumeInteractPulse() || input.exit)) {
-        const side = new THREE.Vector3(Math.cos(yaw.current), 0, -Math.sin(yaw.current));
-        playerPos.current.copy(pos.current).addScaledVector(side, 2.3);
-        playerPos.current.y = sample.position.y;
+        const towardBelvedere = interactPos.clone().sub(pos.current);
+        towardBelvedere.y = 0;
+        if (towardBelvedere.lengthSq() > 0.01) towardBelvedere.normalize();
+        else towardBelvedere.set(Math.cos(yaw.current), 0, -Math.sin(yaw.current));
+        playerPos.current.copy(pos.current).addScaledVector(towardBelvedere, 5.5);
+        playerPos.current.y = Math.max(sample.position.y, 0.9);
         velocity.current = 0;
         exitCooldown.current = 0.6;
         setGameState({
           mode: "walking",
           speed: 0,
           nearStopSpot: true,
-          nearCar: true,
+          nearCar: false,
           prompt: "Rejoindre le belvédère · E pour lire le carnet",
           engineOn: true,
         });
@@ -123,9 +157,17 @@ export function VehicleController() {
         carYaw: yaw.current,
         nearStopSpot: nearStop,
         nearCar: false,
-        prompt: nearStop ? "E / Descendre — Belvédère" : null,
+        prompt: nearStop
+          ? "E / Descendre — Belvédère"
+          : nearBelvedereZone
+            ? "Ralentissez pour descendre"
+            : null,
         playerPos: { x: pos.current.x, y: pos.current.y, z: pos.current.z },
       });
+      // stash road t for QA
+      if (typeof window !== "undefined") {
+        (window as unknown as { __roadT?: number }).__roadT = sample.t;
+      }
       return;
     }
 
@@ -134,7 +176,6 @@ export function VehicleController() {
     const moveZ = (forward ? 1 : 0) - (back ? 1 : 0) + (Math.abs(touch.y) > 0.15 ? touch.y : 0);
 
     if (Math.abs(moveX) > 0.01 || Math.abs(moveZ) > 0.01) {
-      const sample = nearestRoadSample(playerPos.current);
       const forwardDir = new THREE.Vector3(Math.sin(yaw.current), 0, Math.cos(yaw.current));
       const rightDir = new THREE.Vector3(forwardDir.z, 0, -forwardDir.x);
       tmp.current
@@ -144,14 +185,23 @@ export function VehicleController() {
       if (tmp.current.lengthSq() > 0.001) {
         tmp.current.normalize();
         playerPos.current.addScaledVector(tmp.current, WALK_SPEED * dt);
-        playerPos.current.y = nearestRoadSample(playerPos.current).position.y;
-        // Soft clamp: don't wander endlessly inland/sea
-        const lat = nearestRoadSample(playerPos.current).lateral;
-        if (Math.abs(lat) > 16) {
-          playerPos.current.addScaledVector(rightDir, -Math.sign(lat) * 0.2);
-        }
-        void sample;
       }
+    }
+
+    // Height: terrace near carnet, else road/ground sample
+    const distCarnet = playerPos.current.distanceTo(interactPos);
+    if (distCarnet < 8) {
+      playerPos.current.y = THREE.MathUtils.lerp(playerPos.current.y, 1.05, 0.15);
+    } else {
+      playerPos.current.y = nearestRoadSample(playerPos.current).position.y;
+    }
+
+    // Soft bounds around coast slice
+    const lat = nearestRoadSample(playerPos.current).lateral;
+    if (Math.abs(lat) > 18) {
+      const sample = nearestRoadSample(playerPos.current);
+      const side = new THREE.Vector3(-sample.tangent.z, 0, sample.tangent.x);
+      playerPos.current.addScaledVector(side, -Math.sign(lat) * 0.25);
     }
 
     if (player.current) {
@@ -163,11 +213,12 @@ export function VehicleController() {
       car.current.rotation.y = yaw.current;
     }
 
-    const nearCar = playerPos.current.distanceTo(pos.current) < 3.2;
-    const nearBelvedere = playerPos.current.distanceTo(interactPos) < 2.6;
+    const nearCar = playerPos.current.distanceTo(pos.current) < 2.8;
+    const nearBelvedere = playerPos.current.distanceTo(interactPos) < 4.0;
     let prompt: string | null = null;
     if (nearBelvedere) prompt = "E — Consulter le carnet";
     else if (nearCar) prompt = "E — Monter";
+    else prompt = "Rejoindre le belvédère";
 
     if (exitCooldown.current <= 0 && consumeInteractPulse()) {
       if (nearBelvedere) {
