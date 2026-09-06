@@ -1,24 +1,25 @@
 import * as THREE from "three";
 
-/** Coastal road centerline (~200m), sea on −X, cliffs on +X. */
+/** Coastal road centerline (~220m), sea on −X, cliffs / maisons on +X. */
 const ROAD_POINTS: [number, number, number][] = [
-  [0, 0.05, 40],
-  [2, 0.05, 20],
-  [-1, 0.08, 0],
-  [-4, 0.1, -20],
-  [-2, 0.12, -40],
-  [1, 0.15, -55],
-  [-3, 0.18, -70],
-  [-6, 0.22, -85],
-  [-4, 0.25, -100],
-  [0, 0.28, -115],
-  [3, 0.3, -130],
-  [-1, 0.32, -145],
-  [-5, 0.35, -160],
+  [0, 0.05, 42],
+  [2, 0.05, 22],
+  [-1, 0.08, 2],
+  [-3, 0.1, -18],
+  [0, 0.12, -38],
+  [2, 0.14, -52],
+  [-2, 0.16, -68],
+  [-5, 0.2, -85],
+  [-3, 0.24, -102],
+  [1, 0.28, -118],
+  [2, 0.3, -135],
+  [-2, 0.32, -150],
+  [-6, 0.36, -165],
+  [-4, 0.4, -178],
 ];
 
 export const ROAD_WIDTH = 7.2;
-export const ROAD_LENGTH_HINT = 200;
+export const ROAD_LENGTH_HINT = 220;
 
 const curve = new THREE.CatmullRomCurve3(
   ROAD_POINTS.map((p) => new THREE.Vector3(...p)),
@@ -42,7 +43,7 @@ export function sampleRoad(t: number) {
   return { position, tangent, t: clamped };
 }
 
-export function nearestRoadSample(world: THREE.Vector3, samples = 120) {
+export function nearestRoadSample(world: THREE.Vector3, samples = 140) {
   let bestT = 0;
   let bestDist = Infinity;
   for (let i = 0; i <= samples; i++) {
@@ -85,10 +86,12 @@ export function clampToRoad(world: THREE.Vector3, maxLateral = ROAD_WIDTH * 0.42
   return world;
 }
 
-/** Belvédère aligned with coastal pocket (~z = −85) and zones.json. */
-export const BELVEDERE_T = 0.58;
-export const START_POSE = sampleRoad(0.08);
+/** Belvédère aligned with coastal pocket (~z = −85). */
+export const BELVEDERE_T = 0.52;
+export const START_POSE = sampleRoad(0.06);
 export const BELVEDERE = sampleRoad(BELVEDERE_T);
+/** Near-phare road stop for final destination */
+export const PHARE_ROAD_T = 0.9;
 
 export function getBelvedereWorldAnchor() {
   const { position, tangent } = BELVEDERE;
@@ -97,8 +100,8 @@ export function getBelvedereWorldAnchor() {
     position: position.clone(),
     tangent: tangent.clone(),
     side,
-    terrace: position.clone().addScaledVector(side, -8.5),
-    stop: position.clone().addScaledVector(side, -1.0),
+    terrace: position.clone().addScaledVector(side, -8.5).setY(1.0),
+    stop: position.clone().addScaledVector(side, -0.2),
     yaw: Math.atan2(-side.x, -side.z),
   };
 }

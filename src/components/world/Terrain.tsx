@@ -64,9 +64,10 @@ export function Terrain() {
       }
 
       // Future zone plateaus
-      if (x > 12 && z < -30 && z > -50) y = Math.max(y, 1.8);
-      if (x > 14 && z < -110 && z > -130) y = Math.max(y, 2.0);
-      if (x > 4 && z < -170 && z > -190) y = Math.max(y, 3.5);
+      if (x > 12 && z < -30 && z > -55) y = Math.max(y, 1.6);
+      if (x > 12 && z < -108 && z > -130) y = Math.max(y, 1.8);
+      if (x > 2 && z < -175 && z > -195) y = Math.max(y, 3.8);
+      if (x < -14 && z < -85 && z > -110) y = Math.min(y, 0.2);
 
       pos.setY(i, y);
 

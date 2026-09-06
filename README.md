@@ -1,64 +1,37 @@
 # Côte Melvyn
 
-Portfolio-jeu cinématique de **Melvyn Thierry-Bellefond** — Développeur Full-Stack & Expert IT.
+Portfolio-jeu interactif 3D de **Melvyn Thierry-Bellefond** — Développeur Full-Stack & Expert IT.
 
-Concept : une côte méditerranéenne stylisée à explorer. Vous conduisez un cabriolet le long d’une route côtière (~200 m), vous descendez, marchez jusqu’au belvédère, et consultez un carnet d’identité intégré au monde. Pas de landing « Bonjour je suis… » — le lieu parle.
+Concept : une côte méditerranéenne à explorer. Conduire un cabriolet, descendre, marcher de zone en zone — le monde *est* le portfolio. Pas de landing classique.
 
-## Lancer en local
+## Lancer
 
 ```bash
 npm install
-npm run assets   # régénère les GLB stylisés (optionnel si déjà dans public/models)
 npm run dev
 ```
 
-Build production :
+Build : `npm run build` · Assets GLB : `node scripts/generate-assets.mjs`
 
-```bash
-npm run build
-npm start
-```
+## Boucle de jeu
 
-Stack : Next.js (App Router) · React Three Fiber · Drei · postprocessing (subtil) · Tailwind CSS · audio procédural Web Audio · assets GLB maison.
+1. Intro cinématique (mer, falaises, soleil bas)
+2. Conduire (ZQSD / flèches, joystick) jusqu’au belvédère → **Descendre**
+3. Marcher : identité (carnet) → Maison (parcours) → Studio (projets) → Plage → Phare (CV / contact)
+4. Remonter dans la voiture, continuer vers le phare
 
-## Jouer
+**Desktop** : ZQSD + Shift (courir) + E · **Mobile** : stick gauche (déplacer), stick droit (regard), Interagir uniquement si disponible, Courir.
 
-1. Plan large cinématique (mer, falaises, route, soleil bas)
-2. Descente vers la voiture — caméra oblique de suivi
-3. Conduire (ZQSD / flèches, joystick tactile) jusqu’au belvédère
-4. S’arrêter sur le marquage → **Descendre** → marcher → **consulter le carnet**
-5. Remonter dans la voiture et continuer
-
-Contrôles : **E** interagir / descendre / monter · **Échap** fermer panneaux · **Menu** (recruteurs) · **Muet** · presets **Auto / Haute / Éco**.
+Menu = carte + checklist découverte ; fermer restaure l’état monde. Debug colliders : **F3** (off en prod).
 
 ## Contenu
 
-Source de vérité : `/content/*.json` — voir `docs/CONTENT_MAP.md`.
+Source de vérité `/content/*.json` — voir `docs/CONTENT_MAP.md`. Pas de SIRET ni téléphone publics.
 
-| Fichier | Contenu |
-|---------|---------|
-| `identity.json` | Nom, titre, présentation |
-| `experiences.json` | Parcours pro |
-| `formations.json` | Formations |
-| `competences.json` | Clusters de compétences |
-| `projets.json` | Projets |
-| `passions.json` | Passions |
-| `activite.json` | Auto-entreprise / services |
-| `contact.json` | Email, GitHub, LinkedIn, Codeur, CV |
-| `zones.json` | Carte des zones (playable + scaffold) |
+## Stack
 
-Pas de SIRET ni téléphone sur l’UI publique. CV lisible sur `/cv` + PDF téléchargeable.
+Next.js App Router · React Three Fiber · Drei · postprocessing · Tailwind · Web Audio procédural.
 
-## Docs
+## Crédits
 
-- `docs/AUDIT.md` — audit qualité / dette
-- `docs/CONTENT_MAP.md` — mapping contenu → zones
-- `public/licenses/ATTRIBUTIONS.md` — crédits assets
-
-## Zones
-
-Route & Belvédère sont jouables. Scaffolds art-dirigés pour Maison/Atelier, Studio, Plage, Phare, WOW overlook.
-
-## Déploiement
-
-Projet Vercel `portfolio-experimental` — déployer depuis `main`.
+`public/licenses/ATTRIBUTIONS.md` — modèles GLB maison (pipeline `generate-assets.mjs`).
