@@ -41,7 +41,7 @@ export function GameHUD() {
     <div className="pointer-events-none fixed inset-0 z-20 text-[var(--fg)]">
       <TopBar />
       {state.phase === "intro" && <IntroTitle />}
-      {state.showExplorerHint && state.phase === "playing" && !state.openChapter && (
+      {state.showExplorerHint && state.phase === "playing" && !state.openChapter && !state.prompt && (
         <ExplorerHint />
       )}
       {state.openChapter && <ChapterPanel chapter={state.openChapter} />}
@@ -71,8 +71,8 @@ function ExplorerHint() {
       ? "Stick gauche : marcher · stick droit : regard"
       : "Stick : conduire · Interagir au belvédère"
     : mode === "walking"
-      ? "ZQSD · souris · Shift — marcher"
-      : "ZQSD · Shift · E — explorez la côte";
+      ? "ZQSD ou WASD · souris — marcher"
+      : "ZQSD ou WASD · E — conduisez";
   return (
     <div
       className="absolute left-1/2 -translate-x-1/2 animate-fade-in"
@@ -155,9 +155,9 @@ function InteractPrompt() {
     <div
       className="pointer-events-auto absolute left-1/2 z-40 -translate-x-1/2"
       style={{
-        bottom: isMobile
-          ? "calc(10.5rem + env(safe-area-inset-bottom, 0px))"
-          : "calc(5.5rem + env(safe-area-inset-bottom, 0px))",
+        ...(isMobile
+          ? { top: "calc(3.4rem + env(safe-area-inset-top, 0px))" }
+          : { bottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))" }),
       }}
     >
       <button
@@ -690,7 +690,7 @@ function VirtualStick({
     <div
       ref={zone}
       data-inactive={inactive ? "1" : "0"}
-      className="pointer-events-auto absolute h-[5rem] w-[5rem] rounded-full border border-[#c4a574]/40 bg-[#f3ead8]/32 backdrop-blur-[2px] touch-none sm:h-20 sm:w-20"
+      className="pointer-events-auto absolute h-16 w-16 rounded-full border border-[#c4a574]/40 bg-[#f3ead8]/32 backdrop-blur-[2px] touch-none sm:h-[4.5rem] sm:w-[4.5rem]"
       style={{ ...style, visibility: inactive ? "hidden" : "visible", pointerEvents: inactive ? "none" : "auto" }}
     >
       <div

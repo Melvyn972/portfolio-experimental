@@ -14,7 +14,7 @@ function makeAsphaltTexture() {
   for (let y = 0; y < s; y++) {
     for (let x = 0; x < s; x++) {
       const i = (y * s + x) * 4;
-      const n = 36 + ((x * 13 + y * 7) % 17);
+      const n = 78 + ((x * 13 + y * 7) % 22);
       data[i] = n;
       data[i + 1] = n;
       data[i + 2] = n - 3;
@@ -67,7 +67,7 @@ export function Road() {
     <group>
       <mesh geometry={overlay} receiveShadow renderOrder={2}>
         <meshStandardMaterial
-          color="#1c1b18"
+          color="#5a5346"
           map={asphalt}
           roughness={0.9}
           metalness={0.02}

@@ -62,14 +62,93 @@ export function buildWorldColliders(): Collider[] {
 }
 
 let cached: Collider[] | null = null;
+let cachedCam: Collider[] | null = null;
 
 export function getColliders() {
   if (!cached) cached = buildWorldColliders();
   return cached;
 }
 
+/** Taller / wider volumes for the chase cam — walk AABBs stay porch-open. */
+export function buildCameraOccluders(): Collider[] {
+  const list: Collider[] = [];
+  for (const zone of content.zones.zones) {
+    const { x, z } = zone.marker;
+    if (zone.id === "maison-atelier") {
+      list.push(box("cam-maison", x, 5.4, z - 1.2, 6.8, 10.4, 5.2));
+      list.push(box("cam-atelier", x + 7.5, 4.8, z + 1.5, 5.2, 9.2, 4.4));
+    }
+    if (zone.id === "studio") {
+      list.push(box("cam-studio", x, 5.2, z - 0.8, 5.8, 10.0, 4.8));
+    }
+    if (zone.id === "phare") {
+      list.push(box("cam-phare", x, 6.4, z, 3.2, 12.4, 3.2));
+    }
+  }
+  return list;
+}
+
+export function getCameraOccluders() {
+  if (!cachedCam) cachedCam = buildCameraOccluders();
+  return cachedCam;
+}
+
 export function resetColliders() {
   cached = null;
+  cachedCam = null;
+}
+
+/**
+ * Push a camera point out of building volumes (roofs included).
+ * Mutates `pos`. Returns true if the camera was inside a house.
+ */
+export function isInsideCameraOccluder(pos: THREE.Vector3, pad = 0.05): boolean {
+  for (const c of getCameraOccluders()) {
+    if (
+      pos.x > c.min.x + pad &&
+      pos.x < c.max.x - pad &&
+      pos.y > c.min.y + pad &&
+      pos.y < c.max.y - pad &&
+      pos.z > c.min.z + pad &&
+      pos.z < c.max.z - pad
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function pushCameraOut(pos: THREE.Vector3, radius = 0.55): boolean {
+  const boxes = getCameraOccluders();
+  let hit = false;
+  for (const c of boxes) {
+    const inside =
+      pos.x > c.min.x - radius &&
+      pos.x < c.max.x + radius &&
+      pos.y > c.min.y - radius &&
+      pos.y < c.max.y + radius &&
+      pos.z > c.min.z - radius &&
+      pos.z < c.max.z + radius;
+    if (!inside) continue;
+
+    const penL = pos.x - (c.min.x - radius);
+    const penR = c.max.x + radius - pos.x;
+    const penD = pos.y - (c.min.y - radius);
+    const penU = c.max.y + radius - pos.y;
+    const penN = pos.z - (c.min.z - radius);
+    const penS = c.max.z + radius - pos.z;
+    const minPen = Math.min(penL, penR, penD, penU, penN, penS);
+    if (minPen < 0) continue;
+
+    if (minPen === penL) pos.x -= penL;
+    else if (minPen === penR) pos.x += penR;
+    else if (minPen === penD) pos.y -= penD;
+    else if (minPen === penU) pos.y += penU;
+    else if (minPen === penN) pos.z -= penN;
+    else pos.z += penS;
+    hit = true;
+  }
+  return hit;
 }
 
 /**

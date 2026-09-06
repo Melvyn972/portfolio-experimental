@@ -8,6 +8,7 @@ import { getGameState } from "@/lib/gameStore";
 import { START_POSE } from "@/lib/road";
 import { sampleGroundHeight } from "@/lib/ground";
 import { getBelvedereInteractPosition } from "@/components/world/Belvedere";
+import { pushCameraOut } from "@/lib/colliders";
 
 const _subject = new THREE.Vector3();
 const _desired = new THREE.Vector3();
@@ -96,7 +97,9 @@ export function GameCamera() {
       offsetPos(_desired, _subject, state.lookYaw, 0.18, distWalk * 1.05, hWalk + 1.0, 0.4);
       const gY = sampleGroundHeight(_desired.x, _desired.z);
       _desired.y = Math.max(_desired.y, gY + 2.0);
+      pushCameraOut(_desired, 0.7);
       current.current.lerp(_desired, 1 - Math.exp(-3 * dt));
+      pushCameraOut(current.current, 0.7);
       look.current.lerp(_subject.clone().add(_a.set(0, 1.2, 0)), 1 - Math.exp(-4 * dt));
       camera.position.copy(current.current);
       camera.lookAt(look.current);
@@ -153,9 +156,9 @@ export function GameCamera() {
         if (groundHit) {
           _desired.y = Math.max(_desired.y, sampleGroundHeight(_desired.x, _desired.z) + (walking ? 1.9 : 2.2));
         } else {
-          const pull = Math.max(walking ? 2.8 : 4.8, hit.timeOfImpact - 0.55);
+          const pull = Math.max(walking ? 1.65 : 3.2, hit.timeOfImpact - 0.85);
           _desired.copy(_subject).addScaledVector(_dir, pull);
-          _desired.y += walking ? 1.05 : 0.65;
+          _desired.y += walking ? 0.55 : 0.4;
         }
       }
     }
@@ -189,6 +192,8 @@ export function GameCamera() {
       );
     }
 
+    pushCameraOut(_desired, 0.62);
+
     const follow = walking ? 16 : 8.5;
     const fwdX = Math.sin(yaw);
     const fwdZ = Math.cos(yaw);
@@ -208,8 +213,10 @@ export function GameCamera() {
     }
     const cg = sampleGroundHeight(current.current.x, current.current.z);
     current.current.y = Math.max(current.current.y, cg + (walking ? 1.15 : 1.55), 1.5);
-    const maxAbove = _subject.y + (walking ? 4.2 : 5.4);
+    const maxAbove = _subject.y + (walking ? 3.4 : 4.6);
     current.current.y = Math.min(current.current.y, maxAbove);
+    pushCameraOut(_desired, 0.62);
+    pushCameraOut(current.current, 0.62);
     camera.position.copy(current.current);
     camera.lookAt(look.current);
     camera.updateMatrixWorld(true);

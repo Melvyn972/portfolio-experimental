@@ -23,7 +23,8 @@ import { findNearestInteractable } from "@/lib/interaction";
 import { getBelvedereInteractPosition, getBelvedereStopPosition } from "@/components/world/Belvedere";
 import { isUnsafePosition, safeRespawnPosition } from "@/lib/respawn";
 import { isFinitePos, sanitizeWalkSpawn } from "@/lib/spawn";
-import { resolveCollisions } from "@/lib/colliders";
+import { isInsideCameraOccluder, resolveCollisions } from "@/lib/colliders";
+import { SEA_INLAND_X } from "@/components/world/Sea";
 
 const MAX_SPEED = 20;
 const ACCEL = 12;
@@ -433,11 +434,15 @@ export function PlayerSystem() {
     playerPos.current.y = sampleGroundHeight(playerPos.current.x, playerPos.current.z);
     setPlayerKinematic(playerPos.current, walkYaw.current, true);
 
-    // Soft world bounds — leave the beach (x ≈ −22) walkable
-    if (playerPos.current.x < -28) playerPos.current.x = -28;
-    if (playerPos.current.x > 32) playerPos.current.x = 32;
-    if (playerPos.current.z > 50) playerPos.current.z = 50;
-    if (playerPos.current.z < -195) playerPos.current.z = -195;
+    // Soft world bounds — beach stays walkable, sea sheet is a wall (no swim-off).
+    const waterLimit = SEA_INLAND_X + 0.85;
+    if (playerPos.current.x < waterLimit) {
+      playerPos.current.x = waterLimit;
+      playerVel.current.x = Math.max(0, playerVel.current.x);
+    }
+    if (playerPos.current.x > 30) playerPos.current.x = 30;
+    if (playerPos.current.z > 46) playerPos.current.z = 46;
+    if (playerPos.current.z < -188) playerPos.current.z = -188;
 
     // Soft snap if the capsule dropped into a trench / void under the mesh.
     const standY = sampleGroundHeight(playerPos.current.x, playerPos.current.z);
@@ -545,6 +550,9 @@ export function PlayerSystem() {
       camFwd: { x: tmp.current.x, z: tmp.current.z },
       lookFwd: { x: lookFx, z: lookFz },
       camDotLook: tmp.current.x * lookFx + tmp.current.z * lookFz,
+      camPos: { x: camera.position.x, y: camera.position.y, z: camera.position.z },
+      camInside: isInsideCameraOccluder(camera.position, 0.08),
+      keys: { ...inputRef.current },
     };
   }
 

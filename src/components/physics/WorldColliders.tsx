@@ -25,7 +25,10 @@ export function WorldColliders() {
         <CuboidCollider args={[90, 0.4, 150]} friction={1.1} restitution={0} />
       </RigidBody>
 
-      {/* Sea / map bounds — well outside playable beach and plazas */}
+      {/* Sea wall at the water sheet — no swim-off. Beach (x ≳ −16.5) stays open. */}
+      <RigidBody type="fixed" colliders={false} position={[-18.15, 2.2, -70]}>
+        <CuboidCollider args={[0.55, 6, 140]} friction={0.35} />
+      </RigidBody>
       <RigidBody type="fixed" colliders={false} position={[-34, 2, -70]}>
         <CuboidCollider args={[1, 8, 140]} friction={0.4} />
       </RigidBody>
@@ -58,18 +61,18 @@ export function WorldColliders() {
           <RigidBody
             type="fixed"
             colliders={false}
-            position={[maison.x, maisonY + 2.4, maison.z - 1.4]}
+            position={[maison.x, maisonY + 5.2, maison.z - 1.4]}
             rotation={[0, -0.35, 0]}
           >
-            <CuboidCollider args={[2.2, 2.4, 1.3]} />
+            <CuboidCollider args={[2.4, 5.2, 1.45]} />
           </RigidBody>
           <RigidBody
             type="fixed"
             colliders={false}
-            position={[maison.x + 7.5, maisonY + 2.1, maison.z + 1.6]}
+            position={[maison.x + 7.5, maisonY + 4.6, maison.z + 1.6]}
             rotation={[0, 0.2, 0]}
           >
-            <CuboidCollider args={[2.0, 2.1, 1.35]} />
+            <CuboidCollider args={[2.15, 4.6, 1.5]} />
           </RigidBody>
         </>
       )}
@@ -77,10 +80,10 @@ export function WorldColliders() {
         <RigidBody
           type="fixed"
           colliders={false}
-          position={[studio.x, studioY + 2.3, studio.z - 1.0]}
+          position={[studio.x, studioY + 5.0, studio.z - 1.0]}
           rotation={[0, 0.4, 0]}
         >
-          <CuboidCollider args={[1.8, 2.3, 1.25]} />
+          <CuboidCollider args={[2.0, 5.0, 1.4]} />
         </RigidBody>
       )}
       {phare && (

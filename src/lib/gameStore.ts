@@ -250,6 +250,9 @@ if (typeof window !== "undefined") {
         camFwd: { x: number; z: number };
         lookFwd: { x: number; z: number };
         camDotLook: number;
+        camPos?: { x: number; y: number; z: number };
+        camInside?: boolean;
+        keys?: { forward: boolean; back: boolean; left: boolean; right: boolean };
       };
       sampleHeights: (x: number, z: number) => {
         visual: number;

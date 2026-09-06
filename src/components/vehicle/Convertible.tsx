@@ -78,11 +78,11 @@ export function Convertible({ color = "#c45c3e" }: Props) {
           } else if (matName.includes("body blue") || mat.color.getHexString() === "c45c3e") {
             next = toPhysical(mat, {
               color: new THREE.Color(color).lerp(new THREE.Color("#b84430"), 0.08),
-              metalness: 0.62,
-              roughness: 0.14,
+              metalness: 0.68,
+              roughness: 0.11,
               clearcoat: 1,
-              clearcoatRoughness: 0.045,
-              envMapIntensity: 2.15,
+              clearcoatRoughness: 0.035,
+              envMapIntensity: 2.45,
               sheen: 0.28,
               sheenRoughness: 0.35,
               sheenColor: new THREE.Color("#f2c8a8"),
