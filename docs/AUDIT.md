@@ -1,8 +1,12 @@
-# Audit — Côte Melvyn (vertical slice → présentable)
+# Audit — Côte Melvyn (finition production)
 
-Date : 2026-09-06 · Branche de finition
+Date : 2026-09-06 · Branche `melvyn972/cote-melvyn-production-finish-3583`
 
-## Architecture
+## Verdict
+
+Vertical slice jouable (route → belvédère → carnet → remonter). **Pas encore un portfolio-expérience 3D présentable** : HUD mobile trop grand, interactions permanentes, architecture encore en boîtes, zones scaffold, contrôleur pied rudimentaire, pas de checklist découverte.
+
+## Architecture actuelle
 
 ```
 content/*.json → src/lib/content.ts
@@ -15,55 +19,58 @@ CoteMelvynApp
   └─ boot splash
 ```
 
-Séparation correcte (world / vehicle / camera / UI / audio). Lacunes : pas de couche assets/loader, collisions soft, store notifié chaque frame, zones scaffold hardcodées.
-
-## Verdict
-
-Prototype jouable avec bonne direction artistique (ciel, mer shader, palette, loop drive→exit→walk→carnet). **Pas prêt portfolio** sans : coords belvédère unifiées, store throttlé, assets GLB (plus de boîtes), personnage, CV scrollable, qualité honorée.
-
-## Classification
+## Classification (état avant finition)
 
 ### CRITICAL
-| # | Problème | Action |
+| # | Problème | Impact |
 |---|----------|--------|
-| C1 | Belvédère désync (`BELVEDERE_T=0.52` vs plateau/zones `z≈-85`) | Une source de vérité `t` + sync terrain/végétation/zones |
-| C2 | `/cv` scroll cassé (`body { overflow: hidden }` global) | Overflow scoped à la route jeu |
-| C3 | Zéro GLB — tout en primitives | Pipeline assets + cabriolet / végétation / belvédère / avatar |
+| C1 | HUD mobile oversized + bouton Interagir permanent + joystick qui masque le monde | QA Melvyn — monde invisible |
+| C2 | Belvédère / architecture = `boxGeometry` visibles (pas GLB structure) | « Three.js scene », pas expérience |
+| C3 | Zones Maison/Studio/Plage/Phare = plinths scaffold, contenu hors monde | Portfolio incomplet |
+| C4 | Contrôleur pied : pas de look caméra, pas de course, hauteur hackée, pas de collisions murs | Float / clipping / QA |
 
 ### MAJOR
 | # | Problème | Action |
 |---|----------|--------|
-| M1 | `setGameState` chaque frame → thrash React/audio | Dirty-check / push UI throttlé |
-| M2 | Sortie voiture ≠ marqueur stop | Détection distance au stop |
-| M3 | Marche : hauteur terrasse + caméra figée sur `carYaw` | Facing walk + hauteur terrain |
-| M4 | Menus n’interrompent pas les inputs | Gate + Escape |
-| M5 | Qualité partielle (ombres 2048 hardcodées, ContactShadows en Éco) | Honorer presets |
-| M6 | Contenu JSON sous-exploité in-world | Menu + scaffolds liés à Content Map |
+| M1 | Caméra sans collision avoid, distance variable, trop basse au sol parfois | Spring + ray + minY |
+| M2 | Véhicule : pas de suspension / inertie soignée ; sortie téléportée | Smooth exit + feel |
+| M3 | Interaction : prompt permanent + bouton Interagir toujours visible | InteractionManager |
+| M4 | Safe-area Safari absentes | `env(safe-area-inset-*)` |
+| M5 | Menu = dump texte, pas carte + checklist découverte | Menu carte / chapitres |
+| M6 | Pas de progressive load / LOD runtime | Boot→Core→… |
 
 ### IMPORTANT
-Roues steer/spin sur même groupe · pas de pitch châssis · intro timer-only · joystick sans `pointercancel` · Escape manquant · `gsap` inutilisé · marqueurs zones incomplets · GC Vector3 chaque frame · lien `/cv` absent du HUD.
+Viewport 3D clip possible (`100dvh` sans safe) · Shift run absent · dual stick mobile absent · debug colliders absent · attributions GLB maison à clarifier · Road Accent cylinders WOW encore primitifs.
 
 ### POLISH
-Hooks QA window · dust CPU · sway végétation naïf · attributions legacy · OG image manquante.
+Dust CPU · sway naïf · OG image · FPS auto-downgrade.
 
-## Placeholders à remplacer
-Cabriolet, avatar, belvédère (pierre/bois/verre), carnet, arbres, rochers, lampadaires, plinths zones. Mer/terrain/route restent procéduraux mais soignés (pas « plane bleue seule »).
+## Placeholders à remplacer (priorité héros)
+1. Structure belvédère (pierre/bois/verre) → GLB
+2. Maison / Atelier, Studio projets, Phare → GLB
+3. Avatar / roadster déjà GLB (améliorer si besoin)
+4. Rochers / végétation déjà GLB
+5. Terrain / mer / route restent procéduraux soignés (OK)
 
-## Contenu
-Identity + contact + 3 expériences dans le jeu ; formations/compétences/projets sur `/cv` seulement ; passions/activité importés mais non rendus ; `zones.json` non lu au runtime.
+## Contenu (source de vérité)
+`content/*.json` uniquement — inventer rien. Mapping :
+- Belvédère → Identité
+- Maison/Atelier → Parcours · Expériences · Compétences
+- Studio → Projets
+- Plage → Passions
+- Phare → Activité · CV · Contact
 
-## Corrections appliquées (finition 2026-09-06)
+## Plan d’exécution (10 passes)
+1. Audit + critiques HUD/safe-area/store
+2. Rebuild Input→Movement→Physics→Character→Anim→Camera + véhicule
+3. Pipeline assets architecture GLB
+4. Level : Route→Belvédère→Maison→Studio→Plage→Phare
+5. Chapitres portfolio + checklist menu
+6. Mobile layout (monde visible)
+7. Perf LOD / progressive
+8. Lighting / audio / InteractionManager
+9. QA path complet + debug colliders
+10. Build + push
 
-- C1 belvédère unifié (`t=0.58`) · C2 scroll `/cv` · C3 GLB maison
-- M1 store dirty-check · M2 stop distance · M3 walkYaw · M4 menus/Escape
-- M5 qualité ombres · M6 content map menu
-- Strict Mode : boot→intro + keyboard listeners (garde `started`/`ready` retirées)
-- Marche arrière : plus de flip yaw chaque frame
-- Boucle playtestée : drive → stop → exit → carnet → identity → re-enter
-
-## Limites restantes
-- Terrasse/falaises/route encore partiellement procédurales (boîtes de soutènement)
-- Maison/Studio/Phare/Plage/WOW = scaffolds, pas AAA
-- Pas de LOD mesh / Draco runtime (GLB déjà légers)
-- Auto quality = snapshot mobile/desktop, pas downgrade FPS dynamique
-- Cabriolet stylisé low-poly (cohérent) — pas photoréaliste
+## Corrections appliquées (cette branche)
+Voir commits successifs — ce document est mis à jour en fin de passe 10.

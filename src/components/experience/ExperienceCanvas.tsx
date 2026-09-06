@@ -7,21 +7,23 @@ import { World } from "@/components/world/World";
 import { VehicleController } from "@/components/vehicle/VehicleController";
 import { GameCamera } from "@/components/camera/GameCamera";
 import { PostFX } from "@/components/experience/PostFX";
+import { ProgressiveLoader } from "@/components/experience/ProgressiveLoader";
 import { useGameStore } from "@/hooks/useGameStore";
 import { resolveQuality } from "@/lib/quality";
 import { getGameState, setGameState } from "@/lib/gameStore";
 import { useKeyboard } from "@/hooks/useKeyboard";
 
 function Scene({ isMobile }: { isMobile: boolean }) {
-  const { quality: preset, phase } = useGameStore();
+  const { quality: preset, phase, loadStage } = useGameStore();
   const quality = useMemo(() => resolveQuality(preset, isMobile), [preset, isMobile]);
 
   return (
     <>
+      <ProgressiveLoader />
       <GameCamera />
-      <World quality={quality} />
-      {(phase === "playing" || phase === "intro") && <VehicleController />}
-      <PostFX enabled={quality.postfx} />
+      {loadStage >= 1 && <World quality={quality} />}
+      {loadStage >= 2 && (phase === "playing" || phase === "intro") && <VehicleController />}
+      {loadStage >= 3 && <PostFX enabled={quality.postfx} />}
     </>
   );
 }
@@ -34,14 +36,16 @@ export function ExperienceCanvas() {
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 768px), (pointer: coarse)");
-    const apply = () => setIsMobile(mq.matches);
+    const apply = () => {
+      const mobile = mq.matches;
+      setIsMobile(mobile);
+      setGameState({ isMobile: mobile });
+    };
     apply();
     mq.addEventListener("change", apply);
     return () => mq.removeEventListener("change", apply);
   }, []);
 
-  // Boot → intro. No "started" ref guard: React Strict Mode cleanup would cancel the
-  // first timeout and the second effect would no-op, freezing the boot splash forever.
   useEffect(() => {
     const t = window.setTimeout(() => {
       if (getGameState().phase === "boot") setGameState({ phase: "intro" });
@@ -50,22 +54,27 @@ export function ExperienceCanvas() {
   }, []);
 
   return (
-    <Canvas
-      shadows={quality.shadows}
-      dpr={quality.dpr}
-      gl={{
-        antialias: quality.aa,
-        powerPreference: "high-performance",
-        toneMappingExposure: 1.05,
-      }}
-      camera={{ fov: 40, near: 0.1, far: 280, position: [32, 24, 58] }}
-      onCreated={({ gl }) => {
-        gl.setClearColor("#c8dde8");
-      }}
-    >
-      <Suspense fallback={null}>
-        <Scene isMobile={isMobile} />
-      </Suspense>
-    </Canvas>
+    <div className="absolute inset-0" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+      <Canvas
+        className="!absolute inset-0 h-full w-full touch-none"
+        style={{ width: "100%", height: "100%", touchAction: "none" }}
+        shadows={quality.shadows}
+        dpr={quality.dpr}
+        gl={{
+          antialias: quality.aa,
+          powerPreference: "high-performance",
+          toneMappingExposure: 1.08,
+        }}
+        camera={{ fov: 42, near: 0.15, far: 320, position: [32, 24, 58] }}
+        onCreated={({ gl }) => {
+          gl.setClearColor("#c8dde8");
+          gl.domElement.style.touchAction = "none";
+        }}
+      >
+        <Suspense fallback={null}>
+          <Scene isMobile={isMobile} />
+        </Suspense>
+      </Canvas>
+    </div>
   );
 }

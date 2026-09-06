@@ -449,6 +449,189 @@ function buildZonePlinth() {
   return g;
 }
 
+const MAT_EXTRA = {
+  plaster: () => new THREE.MeshStandardMaterial({ color: "#f0e8d8", roughness: 0.88 }),
+  plasterWarm: () => new THREE.MeshStandardMaterial({ color: "#e8dcc8", roughness: 0.9 }),
+  tile: () => new THREE.MeshStandardMaterial({ color: "#c45c3e", roughness: 0.72 }),
+  tileDark: () => new THREE.MeshStandardMaterial({ color: "#9a3f2a", roughness: 0.75 }),
+  shutter: () => new THREE.MeshStandardMaterial({ color: "#3d5c4a", roughness: 0.7 }),
+  lighthouse: () => new THREE.MeshStandardMaterial({ color: "#f5f0e6", roughness: 0.82 }),
+  lighthouseBand: () => new THREE.MeshStandardMaterial({ color: "#c45c3e", roughness: 0.7 }),
+  lantern: () =>
+    new THREE.MeshStandardMaterial({
+      color: "#fff4d0",
+      emissive: "#ffd090",
+      emissiveIntensity: 0.65,
+      roughness: 0.3,
+    }),
+};
+
+function buildBelvedereStructure() {
+  const g = new THREE.Group();
+  g.name = "BelvedereStructure";
+  // Plinth + deck
+  g.add(mesh(new THREE.BoxGeometry(11.2, 0.84, 8.7), MAT.stone(), [0, 0.42, 0]));
+  g.add(mesh(new THREE.BoxGeometry(10.6, 0.1, 8.1), MAT_EXTRA.plaster(), [0, 0.9, 0]));
+  // Tile grooves (subtle)
+  for (const z of [-3, -1, 1, 3]) {
+    g.add(mesh(new THREE.BoxGeometry(10.2, 0.012, 0.035), MAT.stoneDark(), [0, 0.96, z]));
+  }
+  for (const x of [-3.5, -1.2, 1.2, 3.5]) {
+    g.add(mesh(new THREE.BoxGeometry(0.035, 0.012, 7.7), MAT.stoneDark(), [x, 0.96, 0]));
+  }
+  // Cascading steps
+  [
+    [4.6, 0.32, 1.5, 2.4, 0.5, 2.5],
+    [6.3, 0.16, 1.5, 1.7, 0.28, 2.1],
+    [7.4, 0.05, 1.5, 1.0, 0.12, 1.85],
+  ].forEach(([x, y, z, w, h, d], i) => {
+    g.add(
+      mesh(
+        new THREE.BoxGeometry(w, h, d),
+        i === 0 ? MAT.stone() : i === 1 ? MAT.stoneDark() : MAT.rockLit(),
+        [x, y, z],
+      ),
+    );
+  });
+  // Sea parapet
+  g.add(mesh(new THREE.BoxGeometry(0.38, 0.75, 7.8), MAT.stoneDark(), [-4.95, 1.3, 0]));
+  for (const z of [-3.4, -1.15, 1.15, 3.4]) {
+    g.add(mesh(new THREE.CylinderGeometry(0.09, 0.1, 0.55, 8), MAT.stone(), [-4.95, 1.75, z]));
+    g.add(mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.06, 8), MAT.brass(), [-4.95, 2.07, z]));
+  }
+  g.add(
+    mesh(
+      new THREE.BoxGeometry(0.05, 0.42, 6.4),
+      new THREE.MeshStandardMaterial({
+        color: "#c5e0e8",
+        metalness: 0.35,
+        roughness: 0.08,
+        transparent: true,
+        opacity: 0.4,
+      }),
+      [-4.78, 1.5, 0],
+    ),
+  );
+  g.add(mesh(new THREE.BoxGeometry(9.6, 0.55, 0.28), MAT.stoneDark(), [0, 1.2, -3.75]));
+  g.add(mesh(new THREE.BoxGeometry(9.6, 0.4, 0.26), MAT.stoneDark(), [0, 1.15, 3.75]));
+  g.add(mesh(new THREE.BoxGeometry(0.08, 0.06, 7.4), MAT.brass(), [-4.95, 1.85, 0]));
+  // Canopy
+  for (const x of [3.15, 0.45]) {
+    g.add(mesh(new THREE.CylinderGeometry(0.07, 0.08, 2.5, 8), MAT.stone(), [x, 2.15, -1.75]));
+  }
+  g.add(mesh(new THREE.BoxGeometry(5.0, 0.12, 2.5), MAT.wood(), [1.8, 3.42, -1.75]));
+  g.add(mesh(new THREE.BoxGeometry(4.6, 0.05, 2.15), MAT.woodDark(), [1.8, 3.3, -1.75]));
+  return g;
+}
+
+function buildMaison() {
+  const g = new THREE.Group();
+  g.name = "MaisonAtelier";
+  // Main volume
+  g.add(mesh(new THREE.BoxGeometry(9.5, 3.4, 7.2), MAT_EXTRA.plaster(), [0, 1.7, 0]));
+  // Terrace wing
+  g.add(mesh(new THREE.BoxGeometry(4.2, 2.4, 4.5), MAT_EXTRA.plasterWarm(), [5.2, 1.2, 1.2]));
+  // Roof tiles (hipped simple)
+  g.add(mesh(new THREE.BoxGeometry(10.2, 0.25, 7.8), MAT_EXTRA.tile(), [0, 3.55, 0], [0.08, 0, 0]));
+  g.add(mesh(new THREE.BoxGeometry(4.6, 0.2, 4.9), MAT_EXTRA.tileDark(), [5.2, 2.55, 1.2], [0.1, 0, 0]));
+  // Chimney
+  g.add(mesh(new THREE.BoxGeometry(0.7, 1.2, 0.7), MAT.stone(), [-2.5, 4.3, -1.5]));
+  // Door
+  g.add(mesh(new THREE.BoxGeometry(1.1, 2.1, 0.12), MAT.woodDark(), [0.5, 1.05, 3.62]));
+  g.add(mesh(new THREE.SphereGeometry(0.05, 8, 8), MAT.brass(), [0.9, 1.05, 3.7]));
+  // Windows + shutters
+  for (const [x, y, z] of [
+    [-2.5, 1.8, 3.62],
+    [2.2, 1.8, 3.62],
+    [-4.8, 1.6, 0],
+    [4.8, 1.6, -1],
+  ]) {
+    g.add(mesh(new THREE.BoxGeometry(1.2, 1.1, 0.08), MAT.glass(), [x, y, z]));
+    g.add(mesh(new THREE.BoxGeometry(0.35, 1.15, 0.1), MAT_EXTRA.shutter(), [x - 0.7, y, z]));
+    g.add(mesh(new THREE.BoxGeometry(0.35, 1.15, 0.1), MAT_EXTRA.shutter(), [x + 0.7, y, z]));
+  }
+  // Stone base
+  g.add(mesh(new THREE.BoxGeometry(9.8, 0.45, 7.5), MAT.stone(), [0, 0.2, 0]));
+  g.add(mesh(new THREE.BoxGeometry(4.5, 0.35, 4.8), MAT.stoneDark(), [5.2, 0.15, 1.2]));
+  // Pergola posts
+  for (const x of [3.8, 6.4]) {
+    g.add(mesh(new THREE.CylinderGeometry(0.08, 0.09, 2.2, 6), MAT.wood(), [x, 2.3, 3.6]));
+  }
+  g.add(mesh(new THREE.BoxGeometry(3.2, 0.1, 0.15), MAT.woodDark(), [5.1, 3.35, 3.6]));
+  return g;
+}
+
+function buildStudio() {
+  const g = new THREE.Group();
+  g.name = "StudioProjets";
+  g.add(mesh(new THREE.BoxGeometry(7.5, 2.8, 5.5), MAT_EXTRA.plasterWarm(), [0, 1.4, 0]));
+  g.add(mesh(new THREE.BoxGeometry(8.0, 0.22, 5.9), MAT_EXTRA.tileDark(), [0, 2.95, 0], [0.06, 0, 0]));
+  // Large glass facade
+  g.add(
+    mesh(
+      new THREE.BoxGeometry(5.5, 1.8, 0.08),
+      new THREE.MeshStandardMaterial({
+        color: "#b9d6e0",
+        metalness: 0.3,
+        roughness: 0.1,
+        transparent: true,
+        opacity: 0.55,
+      }),
+      [0, 1.5, 2.78],
+    ),
+  );
+  g.add(mesh(new THREE.BoxGeometry(0.12, 1.9, 0.12), MAT.brass(), [-2.8, 1.5, 2.78]));
+  g.add(mesh(new THREE.BoxGeometry(0.12, 1.9, 0.12), MAT.brass(), [2.8, 1.5, 2.78]));
+  g.add(mesh(new THREE.BoxGeometry(5.7, 0.1, 0.12), MAT.brass(), [0, 2.45, 2.78]));
+  // Side door
+  g.add(mesh(new THREE.BoxGeometry(0.9, 1.9, 0.1), MAT.wood(), [3.8, 0.95, 1.2]));
+  // Display plinths outside
+  for (const x of [-1.8, 0, 1.8]) {
+    g.add(mesh(new THREE.BoxGeometry(1.0, 0.55, 0.7), MAT.stone(), [x, 0.28, 3.6]));
+    g.add(mesh(new THREE.BoxGeometry(0.7, 0.08, 0.5), MAT.brass(), [x, 0.6, 3.6]));
+  }
+  return g;
+}
+
+function buildPhare() {
+  const g = new THREE.Group();
+  g.name = "Phare";
+  // Base
+  g.add(mesh(new THREE.CylinderGeometry(2.4, 2.8, 0.6, 12), MAT.stone(), [0, 0.3, 0]));
+  // Tower taper
+  g.add(mesh(new THREE.CylinderGeometry(1.1, 1.55, 7.5, 14), MAT_EXTRA.lighthouse(), [0, 4.2, 0]));
+  // Bands
+  for (const y of [2.2, 4.0, 5.8]) {
+    g.add(mesh(new THREE.CylinderGeometry(1.35, 1.45, 0.35, 14), MAT_EXTRA.lighthouseBand(), [0, y, 0]));
+  }
+  // Lantern room
+  g.add(mesh(new THREE.CylinderGeometry(1.25, 1.25, 0.2, 12), MAT.stoneDark(), [0, 8.05, 0]));
+  g.add(mesh(new THREE.CylinderGeometry(0.95, 1.05, 1.6, 10), MAT.glass(), [0, 8.9, 0]));
+  g.add(mesh(new THREE.SphereGeometry(0.35, 12, 12), MAT_EXTRA.lantern(), [0, 8.9, 0]));
+  g.add(mesh(new THREE.ConeGeometry(1.2, 0.9, 10), MAT_EXTRA.tile(), [0, 10.0, 0]));
+  // Door
+  g.add(mesh(new THREE.BoxGeometry(0.7, 1.6, 0.15), MAT.woodDark(), [0, 1.1, 1.55]));
+  // Gallery rail
+  g.add(mesh(new THREE.TorusGeometry(1.2, 0.04, 6, 20), MAT.brass(), [0, 8.15, 0], [Math.PI / 2, 0, 0]));
+  return g;
+}
+
+function buildStoneWall() {
+  const g = new THREE.Group();
+  g.name = "StoneWall";
+  g.add(mesh(new THREE.BoxGeometry(4.5, 1.1, 0.45), MAT.stone(), [0, 0.55, 0]));
+  for (let i = 0; i < 5; i++) {
+    g.add(
+      mesh(
+        new THREE.BoxGeometry(0.7 + (i % 2) * 0.2, 0.35, 0.5),
+        i % 2 === 0 ? MAT.stoneDark() : MAT.rockLit(),
+        [-1.6 + i * 0.85, 0.9 + (i % 2) * 0.1, 0],
+      ),
+    );
+  }
+  return g;
+}
+
 async function exportGLB(object, filename) {
   const exporter = new GLTFExporter();
   const ab = await exporter.parseAsync(object, { binary: true });
@@ -471,6 +654,11 @@ async function main() {
   await exportGLB(buildAvatar(), "explorer.glb");
   await exportGLB(buildLamp(), "lamp.glb");
   await exportGLB(buildZonePlinth(), "plinth.glb");
+  await exportGLB(buildBelvedereStructure(), "belvedere.glb");
+  await exportGLB(buildMaison(), "maison.glb");
+  await exportGLB(buildStudio(), "studio.glb");
+  await exportGLB(buildPhare(), "phare.glb");
+  await exportGLB(buildStoneWall(), "stone-wall.glb");
   console.log("done");
 }
 

@@ -1,9 +1,9 @@
 {
   "slice": {
-    "id": "cote-belvedere",
-    "name": "Côte Melvyn — Belvédère",
-    "lengthMeters": 200,
-    "description": "Vertical slice jouable : route côtière, mer, belvédère d’identité."
+    "id": "cote-melvyn",
+    "name": "Côte Melvyn",
+    "lengthMeters": 220,
+    "description": "Côte méditerranéenne jouable : route, belvédère, maison/atelier, studio, plage, phare."
   },
   "zones": [
     {
@@ -11,54 +11,49 @@
       "name": "La Route",
       "status": "playable",
       "role": "Conduite cinématique le long de la côte",
-      "marker": { "x": 0, "y": 0, "z": 0 }
+      "marker": { "x": 0, "y": 0.05, "z": 20 }
     },
     {
       "id": "belvedere",
       "name": "Le Belvédère",
       "status": "playable",
-      "role": "Interaction d’identité — carnet de cuivre et verre",
-      "marker": { "x": -6, "y": 1.2, "z": -85 },
-      "roadT": 0.58
+      "role": "Identité — carnet de cuivre et verre",
+      "marker": { "x": -2, "y": 1.2, "z": -85 }
     },
     {
       "id": "maison-atelier",
       "name": "Maison / Atelier",
-      "status": "scaffold",
-      "role": "Futur hub parcours & expérience terrain",
-      "contentKeys": ["experiences", "formations", "competences"],
-      "marker": { "x": 18, "y": 2, "z": -40 }
+      "status": "playable",
+      "role": "Parcours, expériences & compétences",
+      "marker": { "x": 16, "y": 1.6, "z": -42 }
     },
     {
       "id": "studio",
       "name": "Le Studio",
-      "status": "scaffold",
-      "role": "Mini-expériences projets",
-      "contentKeys": ["projets"],
-      "marker": { "x": 22, "y": 2, "z": -120 }
+      "status": "playable",
+      "role": "Projets",
+      "marker": { "x": 18, "y": 1.8, "z": -118 }
     },
     {
       "id": "plage",
       "name": "La Plage",
-      "status": "scaffold",
-      "role": "Zone contemplative / passions",
-      "contentKeys": ["passions"],
-      "marker": { "x": -28, "y": 0.2, "z": -60 }
+      "status": "playable",
+      "role": "Passions",
+      "marker": { "x": -22, "y": 0.15, "z": -95 }
     },
     {
       "id": "phare",
       "name": "Le Phare",
-      "status": "scaffold",
-      "role": "CV & contact",
-      "contentKeys": ["contact", "activite"],
-      "marker": { "x": -12, "y": 4, "z": -160 }
+      "status": "playable",
+      "role": "Activité, CV & contact — destination finale",
+      "marker": { "x": -8, "y": 0.4, "z": -168 }
     },
     {
       "id": "wow",
       "name": "WOW Overlook",
-      "status": "scaffold",
-      "role": "Séquence panoramique finale",
-      "marker": { "x": 8, "y": 8, "z": -180 }
+      "status": "playable",
+      "role": "Panorama final au-delà du phare",
+      "marker": { "x": 6, "y": 4.5, "z": -185 }
     }
   ]
 }

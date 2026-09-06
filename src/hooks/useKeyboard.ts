@@ -8,6 +8,7 @@ export interface InputState {
   left: boolean;
   right: boolean;
   brake: boolean;
+  run: boolean;
   interact: boolean;
   exit: boolean;
 }
@@ -18,14 +19,24 @@ const empty: InputState = {
   left: false,
   right: false,
   brake: false,
+  run: false,
   interact: false,
   exit: false,
 };
 
-/** Mutable input shared with the R3F frame loop. */
-export const inputRef: { current: InputState; touch: { x: number; y: number }; interactPulse: number } = {
+/**
+ * Mutable input shared with the R3F frame loop.
+ * touch = left stick (move), look = right stick / mouse look
+ */
+export const inputRef: {
+  current: InputState;
+  touch: { x: number; y: number };
+  look: { x: number; y: number };
+  interactPulse: number;
+} = {
   current: { ...empty },
   touch: { x: 0, y: 0 },
+  look: { x: 0, y: 0 },
   interactPulse: 0,
 };
 
@@ -41,6 +52,7 @@ export function useKeyboard() {
       if (k === "arrowleft" || k === "a" || k === "q") inputRef.current.left = true;
       if (k === "arrowright" || k === "d") inputRef.current.right = true;
       if (k === " ") inputRef.current.brake = true;
+      if (k === "shift") inputRef.current.run = true;
       if (k === "e" || k === "f") {
         inputRef.current.interact = true;
         inputRef.interactPulse = 1;
@@ -55,6 +67,7 @@ export function useKeyboard() {
       if (k === "arrowleft" || k === "a" || k === "q") inputRef.current.left = false;
       if (k === "arrowright" || k === "d") inputRef.current.right = false;
       if (k === " ") inputRef.current.brake = false;
+      if (k === "shift") inputRef.current.run = false;
       if (k === "e" || k === "f") {
         inputRef.current.interact = false;
         inputRef.current.exit = false;

@@ -5,13 +5,15 @@ Source de vérité : `/content/*.json` + CV PDF. Pas de réseaux inventés. Pas 
 | Contenu | Zone | Statut |
 |---------|------|--------|
 | Identity / Présentation | Belvédère (carnet) | **Jouable** |
-| Parcours / Formations / Expériences / Compétences | Maison / Atelier | Scaffold + menu Profil |
-| Projets | Studio | Scaffold + menu / `/cv` |
-| Passions | Plage | Scaffold |
-| Activité / CV / Contact / Réseaux | Phare | Scaffold + menu + `/cv` + PDF |
-| WOW overlook | Overlook final | Scaffold architecture |
+| Parcours (formations) | Maison / Atelier | **Jouable** |
+| Expériences | Maison / Atelier | **Jouable** |
+| Compétences | Maison / Atelier | **Jouable** |
+| Projets | Studio | **Jouable** |
+| Passions | Plage | **Jouable** |
+| Activité / CV / Contact | Phare | **Jouable** |
+| WOW overlook | Overlook final | Architecture + panorama |
 
-## Accès hors jeu
+## Accès hors exploration
+- Menu (carte) — raccourcis chapitres + checklist découverte ; fermer restaure l’état monde
 - `/cv` — CV lisible complet
-- PDF téléchargeable : `/cv-melvyn-thierry-bellefond.pdf`
-- Menu recruteur (Profil → Contact) discret pendant l’expérience
+- PDF : `/cv-melvyn-thierry-bellefond.pdf`

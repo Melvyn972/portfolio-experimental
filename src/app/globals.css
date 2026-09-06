@@ -42,6 +42,8 @@ body {
 body.game-locked {
   overflow: hidden;
   height: 100dvh;
+  overscroll-behavior: none;
+  touch-action: none;
 }
 
 body.cv-page {
