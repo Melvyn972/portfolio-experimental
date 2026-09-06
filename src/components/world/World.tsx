@@ -16,7 +16,6 @@ import { getRoadCurve } from "@/lib/road";
 
 function ShoreRocks({ detailed }: { detailed: boolean }) {
   const { scene: coast } = useGLTF("/models/rock-coast-a.glb");
-  const { scene: boulder } = useGLTF("/models/rock-boulder.glb");
   const { scene: cliff } = useGLTF("/models/cliff-coast.glb");
   const { scene: rockA } = useGLTF("/models/rock-a.glb");
   const { scene: rockB } = useGLTF("/models/rock-b.glb");
@@ -24,7 +23,7 @@ function ShoreRocks({ detailed }: { detailed: boolean }) {
 
   const rocks = useMemo(() => {
     const curve = getRoadCurve();
-    const sources = detailed ? [coast, boulder, cliff, rockA, rockB, rockC] : [rockA, rockB, rockC];
+    const sources = detailed ? [coast, cliff, rockA, rockB, rockC] : [rockA, rockB, rockC];
     return Array.from({ length: detailed ? 20 : 14 }, (_, i) => {
       const t = 0.08 + (i / 20) * 0.85;
       const p = curve.getPointAt(t);
@@ -47,7 +46,7 @@ function ShoreRocks({ detailed }: { detailed: boolean }) {
           }
         }
       });
-      const isPh = src === coast || src === boulder || src === cliff;
+      const isPh = src === coast || src === cliff;
       return {
         object: clone,
         position: [pos.x, pos.y, pos.z] as [number, number, number],
@@ -55,7 +54,7 @@ function ShoreRocks({ detailed }: { detailed: boolean }) {
         rot: i * 0.7,
       };
     });
-  }, [coast, boulder, cliff, rockA, rockB, rockC, detailed]);
+  }, [coast, cliff, rockA, rockB, rockC, detailed]);
 
   const cliffs = useMemo(() => {
     if (!detailed) return [] as {
@@ -104,7 +103,6 @@ function ShoreRocks({ detailed }: { detailed: boolean }) {
 }
 
 useGLTF.preload("/models/rock-coast-a.glb");
-useGLTF.preload("/models/rock-boulder.glb");
 useGLTF.preload("/models/cliff-coast.glb");
 
 export function World({ quality }: { quality: QualitySettings }) {

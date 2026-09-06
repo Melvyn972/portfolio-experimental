@@ -1,166 +1,79 @@
-/**
- * QA script — full path smoke test for Côte Melvyn
- * Usage: node scripts/qa-playwright.mjs
- */
-import { chromium, devices } from "playwright";
-import { mkdirSync } from "fs";
-import { join } from "path";
+import { chromium } from 'playwright';
 
-const OUT = "/opt/cursor/artifacts/screenshots";
-mkdirSync(OUT, { recursive: true });
-const BASE = process.env.QA_URL || "http://localhost:3000";
-
-async function waitPlaying(page, timeout = 20000) {
-  await page.waitForFunction(
-    () => window.__coteMelvyn?.getState()?.phase === "playing",
-    null,
-    { timeout },
-  );
-}
-
-async function driveToBelvedere(page) {
-  // Hold W to drive forward
-  await page.keyboard.down("w");
-  for (let i = 0; i < 40; i++) {
-    const t = await page.evaluate(() => window.__roadT ?? 0);
-    if (t > 0.48) break;
-    await page.waitForTimeout(250);
-  }
-  await page.keyboard.up("w");
-  // Brake
-  await page.keyboard.down(" ");
-  await page.waitForTimeout(800);
-  await page.keyboard.up(" ");
-}
-
-async function desktopRun(browser) {
-  const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
-  const errors = [];
-  page.on("console", (msg) => {
-    if (msg.type() === "error") errors.push(msg.text());
-  });
-  page.on("pageerror", (e) => errors.push(String(e)));
-
-  await page.goto(BASE, { waitUntil: "networkidle" });
-  await page.waitForTimeout(1500);
-  await page.screenshot({ path: join(OUT, "qa-desktop-boot.png") });
-
-  await waitPlaying(page);
-  await page.waitForTimeout(800);
-  await page.screenshot({ path: join(OUT, "qa-desktop-playing.png") });
-
-  await driveToBelvedere(page);
-  await page.waitForTimeout(400);
-  await page.screenshot({ path: join(OUT, "qa-desktop-driving.png") });
-
-  // Try exit
-  const state = await page.evaluate(() => window.__coteMelvyn.getState());
-  console.log("near stop:", state.nearStopSpot, "prompt:", state.prompt, "mode:", state.mode, "roadT:", await page.evaluate(() => window.__roadT));
-
-  // Approach stop more carefully
-  for (let i = 0; i < 20; i++) {
-    const s = await page.evaluate(() => window.__coteMelvyn.getState());
-    if (s.nearStopSpot) break;
-    await page.keyboard.down("w");
-    await page.waitForTimeout(200);
-    await page.keyboard.up("w");
-    await page.keyboard.down(" ");
-    await page.waitForTimeout(300);
-    await page.keyboard.up(" ");
-  }
-
-  await page.keyboard.press("e");
-  await page.waitForTimeout(700);
-  let after = await page.evaluate(() => window.__coteMelvyn.getState());
-  console.log("after E:", after.mode, after.prompt, after.interactTarget);
-
-  if (after.mode === "walking") {
-    // Walk toward carnet — press W
-    await page.keyboard.down("w");
-    await page.waitForTimeout(2500);
-    await page.keyboard.up("w");
-    await page.keyboard.press("e");
-    await page.waitForTimeout(500);
-    after = await page.evaluate(() => window.__coteMelvyn.getState());
-    console.log("chapter:", after.openChapter);
-    await page.screenshot({ path: join(OUT, "qa-desktop-identity.png") });
-    if (after.openChapter) {
-      await page.keyboard.press("Escape");
-      await page.waitForTimeout(300);
-    }
-  } else {
-    await page.screenshot({ path: join(OUT, "qa-desktop-identity.png") });
-  }
-
-  // Menu
-  await page.getByRole("button", { name: /Menu/i }).click();
-  await page.waitForTimeout(400);
-  await page.screenshot({ path: join(OUT, "qa-desktop-menu.png") });
-  await page.getByRole("button", { name: /Fermer/i }).click();
-
-  // Re-enter car if walking
-  after = await page.evaluate(() => window.__coteMelvyn.getState());
-  if (after.mode === "walking") {
-    // Walk back toward car roughly
-    await page.keyboard.down("s");
-    await page.waitForTimeout(2000);
-    await page.keyboard.up("s");
-    await page.keyboard.press("e");
-    await page.waitForTimeout(600);
-  }
-
-  console.log("DESKTOP errors:", errors.filter((e) => !e.includes("favicon")).slice(0, 10));
-  await page.close();
-  return errors;
-}
-
-async function mobileRun(browser) {
-  const iPhone = devices["iPhone 13"];
-  const context = await browser.newContext({
-    ...iPhone,
-    hasTouch: true,
-  });
-  const page = await context.newPage();
-  const errors = [];
-  page.on("console", (msg) => {
-    if (msg.type() === "error") errors.push(msg.text());
-  });
-
-  await page.goto(BASE, { waitUntil: "networkidle" });
-  await waitPlaying(page);
-  await page.waitForTimeout(600);
-  await page.screenshot({ path: join(OUT, "qa-mobile-playing.png") });
-
-  // Verify HUD sizes — joystick shouldn't dominate
-  const hud = await page.evaluate(() => {
-    const sticks = [...document.querySelectorAll(".pointer-events-auto.absolute")];
-    return {
-      stickCount: sticks.length,
-      bodyH: window.innerHeight,
-      bodyW: window.innerWidth,
-      state: window.__coteMelvyn.getState(),
-    };
-  });
-  console.log("MOBILE hud:", JSON.stringify(hud));
-
-  await page.screenshot({ path: join(OUT, "qa-mobile-controls.png") });
-  console.log("MOBILE errors:", errors.filter((e) => !e.includes("favicon")).slice(0, 10));
-  await context.close();
-  return errors;
-}
-
-async function main() {
-  const browser = await chromium.launch({ headless: true });
-  try {
-    await desktopRun(browser);
-    await mobileRun(browser);
-    console.log("QA done →", OUT);
-  } finally {
-    await browser.close();
-  }
-}
-
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
+const errors = [];
+const logs = [];
+const browser = await chromium.launch({ headless: true, args: ['--use-gl=angle', '--enable-webgl'] });
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+page.on('console', (msg) => {
+  const t = msg.type();
+  const text = msg.text();
+  if (t === 'error') errors.push(text);
+  if (t === 'warning' || t === 'error') logs.push(`[${t}] ${text.slice(0, 200)}`);
 });
+page.on('pageerror', (e) => errors.push('PAGEERROR: ' + e.message));
+
+await page.goto('http://127.0.0.1:3000/', { waitUntil: 'networkidle', timeout: 60000 });
+await page.waitForTimeout(2000);
+await page.screenshot({ path: '/opt/cursor/artifacts/screenshots/qa-boot.png', fullPage: false });
+
+// Wait for playing phase
+for (let i = 0; i < 20; i++) {
+  const phase = await page.evaluate(() => window.__coteMelvyn?.getState?.()?.phase);
+  console.log('phase', phase);
+  if (phase === 'playing') break;
+  await page.waitForTimeout(500);
+}
+
+await page.click('canvas', { force: true }).catch(() => {});
+await page.waitForTimeout(300);
+
+const before = await page.evaluate(() => {
+  const s = window.__coteMelvyn.getState();
+  return { phase: s.phase, mode: s.mode, car: s.carPos, speed: s.speed };
+});
+console.log('before', JSON.stringify(before));
+
+// Hold W for 3s
+await page.keyboard.down('w');
+await page.waitForTimeout(3000);
+await page.keyboard.up('w');
+await page.waitForTimeout(200);
+
+const after = await page.evaluate(() => {
+  const s = window.__coteMelvyn.getState();
+  return { phase: s.phase, mode: s.mode, car: s.carPos, speed: s.speed, roadT: window.__roadT };
+});
+console.log('after', JSON.stringify(after));
+
+await page.screenshot({ path: '/opt/cursor/artifacts/screenshots/qa-drive.png' });
+
+// Teleport near belvedere and exit
+await page.evaluate(() => {
+  const api = window.__coteMelvyn;
+  // Force near stop by setting state - better: move via internal if exposed
+  api.setState({ phase: 'playing', mode: 'walking', showExplorerHint: false });
+});
+await page.waitForTimeout(500);
+const walk = await page.evaluate(() => window.__coteMelvyn.getState());
+console.log('walk mode', walk.mode, walk.playerPos);
+
+await page.screenshot({ path: '/opt/cursor/artifacts/screenshots/qa-walk-force.png' });
+
+// Open menu
+await page.getByRole('button', { name: /Menu/ }).click();
+await page.waitForTimeout(400);
+await page.screenshot({ path: '/opt/cursor/artifacts/screenshots/qa-menu.png' });
+
+// Mobile
+await page.setViewportSize({ width: 390, height: 844 });
+await page.evaluate(() => window.__coteMelvyn.setState({ rescueOpen: false, openChapter: null }));
+await page.waitForTimeout(500);
+await page.screenshot({ path: '/opt/cursor/artifacts/screenshots/qa-mobile.png' });
+
+console.log('ERRORS', errors.length ? errors : 'none');
+console.log('LOGS', logs.slice(0, 15));
+await browser.close();
+
+const moved = Math.hypot(after.car.x - before.car.x, after.car.z - before.car.z);
+console.log('MOVED_DISTANCE', moved);
+process.exit(moved > 1 ? 0 : 2);

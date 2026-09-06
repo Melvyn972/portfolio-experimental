@@ -29,8 +29,8 @@ const TURN_RATE = 1.65;
 const WALK_SPEED = 3.8;
 const RUN_SPEED = 6.4;
 const EXIT_DIST = 4.8;
-const STOP_RADIUS = 5.5;
-const STOP_SPEED = 4.5;
+const STOP_RADIUS = 7.5;
+const STOP_SPEED = 5.5;
 const REENTER_RADIUS = 3.5;
 const EXIT_LERP_TIME = 0.55;
 const ENTER_LERP_TIME = 0.4;
@@ -210,9 +210,9 @@ export function PlayerSystem() {
       }
 
       const distStop = Math.hypot(pos.current.x - stopPos.x, pos.current.z - stopPos.z);
-      const nearBelvedereZone = distStop < 16;
-      if (distStop < 8) velocity.current *= 1 - 2.4 * dt;
-      else if (nearBelvedereZone && Math.abs(velocity.current) > 6) velocity.current *= 1 - 1.6 * dt;
+      const nearBelvedereZone = distStop < 18;
+      if (distStop < 10) velocity.current *= 1 - 3.2 * dt;
+      else if (nearBelvedereZone && Math.abs(velocity.current) > 5) velocity.current *= 1 - 2.0 * dt;
       const nearStop = distStop < STOP_RADIUS && Math.abs(velocity.current) < STOP_SPEED;
 
       if (nearStop && exitCooldown.current <= 0 && !blocked && (consumeInteractPulse() || input.exit)) {

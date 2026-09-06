@@ -149,8 +149,10 @@ export function getBelvedereInteractPosition() {
 }
 
 export function getBelvedereStopPosition() {
-  const { stop } = getBelvedereWorldAnchor();
-  return stop.clone().setY(0.05);
+  const { terrace, yaw } = getBelvedereWorldAnchor();
+  // Must match <StopMarker position={[7.8, 0.02, 1.6]} /> in Belvedere group space
+  const local = new THREE.Vector3(7.8, 0.02, 1.6).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+  return terrace.clone().add(local).setY(0.05);
 }
 
 useGLTF.preload("/models/belvedere.glb");
