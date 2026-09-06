@@ -138,6 +138,8 @@ export function PlayerSystem() {
       setGameState({
         phase: "playing",
         mode: "walking",
+        openChapter: null,
+        rescueOpen: false,
         playerPos: { x: pose.x, y: pose.y, z: pose.z },
         walkYaw: walkYaw.current,
         lookYaw: lookYaw.current,
@@ -395,6 +397,18 @@ export function PlayerSystem() {
 
     desired.current.x += playerVel.current.x * dt;
     desired.current.z += playerVel.current.z * dt;
+    if (typeof window !== "undefined") {
+      (window as unknown as { __walkDebug?: unknown }).__walkDebug = {
+        skip: skipController.current,
+        mode: state.mode,
+        touch: { ...inputRef.touch },
+        forward,
+        analogActive,
+        moveZ,
+        desired: { x: desired.current.x, z: desired.current.z },
+        pos: { x: playerPos.current.x, z: playerPos.current.z },
+      };
+    }
 
     const body = playerBody.current;
     const ctrl = controller.current;
