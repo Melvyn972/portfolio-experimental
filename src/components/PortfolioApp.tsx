@@ -15,7 +15,7 @@ const ExperienceCanvas = dynamic(
 );
 
 function Shell() {
-  const { reducedMotion, entered } = useExperience();
+  const { reducedMotion, entered, isMobile } = useExperience();
 
   return (
     <ScrollController>
@@ -27,12 +27,18 @@ function Shell() {
       </a>
       <TopBar />
       {!reducedMotion && <ExperienceCanvas />}
-      {reducedMotion && entered && <ReducedMotionFallback />}
-      <main id="contenu">
-        <SectionOverlays />
-      </main>
-      <SectionRail />
-      <MobileRail />
+      {/* Reduced-motion: scrollable 2D only — hide spatial overlays to avoid double content */}
+      {reducedMotion && entered ? (
+        <main id="contenu">
+          <ReducedMotionFallback />
+        </main>
+      ) : (
+        <main id="contenu">
+          <SectionOverlays />
+        </main>
+      )}
+      {!reducedMotion && !isMobile && <SectionRail />}
+      {!reducedMotion && isMobile && <MobileRail />}
       <LoaderGate />
     </ScrollController>
   );

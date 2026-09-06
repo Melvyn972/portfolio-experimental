@@ -26,7 +26,7 @@ function Panel({
 
   const alignClass =
     align === "right"
-      ? "items-end text-right ml-auto"
+      ? "md:items-end md:text-right md:ml-auto items-stretch text-left"
       : align === "center"
         ? "items-center text-center mx-auto"
         : "items-start text-left";
@@ -34,14 +34,19 @@ function Panel({
   return (
     <section
       aria-hidden={!active}
-      className={`pointer-events-none absolute inset-0 z-20 flex px-4 pb-28 pt-24 md:px-10 md:pb-16 md:pt-28 ${
-        active ? "opacity-100" : "opacity-0"
+      className={`absolute inset-0 z-20 flex px-3 pt-20 md:px-10 md:pt-28 ${
+        active ? "pointer-events-none opacity-100" : "pointer-events-none opacity-0"
       } transition-opacity duration-500`}
+      style={{
+        // Keep content clear of top bar + mobile bottom rail (+ safe area)
+        paddingBottom: "max(6.5rem, calc(5.25rem + env(safe-area-inset-bottom)))",
+      }}
     >
       <div
-        className={`pointer-events-auto flex max-w-xl flex-col gap-4 ${alignClass} ${
+        data-scroll-panel={active ? "true" : undefined}
+        className={`${active ? "pointer-events-auto" : "pointer-events-none"} flex max-h-full w-full max-w-xl flex-col gap-3 overflow-y-auto overscroll-contain sm:gap-4 ${alignClass} ${
           active ? "translate-y-0" : "translate-y-3"
-        } transition-transform duration-500`}
+        } transition-transform duration-500 [-ms-overflow-style:none] [scrollbar-width:thin]`}
       >
         {children}
       </div>
@@ -56,52 +61,56 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 }
 
 export function SectionOverlays() {
-  const { goToSection, reducedMotion } = useExperience();
+  const { goToSection } = useExperience();
 
   return (
     <div className="pointer-events-none fixed inset-0 z-20 overflow-hidden">
       <Panel id="entree" align="center">
-        <Eyebrow>01 — Entrée</Eyebrow>
-        <h2 className="font-display text-3xl font-bold leading-tight sm:text-5xl">
-          Atelier Mécanique
-          <br />
-          <span className="text-[var(--brass)]">Digitale</span>
-        </h2>
-        <p className="max-w-md text-sm leading-relaxed text-[var(--muted)] sm:text-base">
-          {PROFILE.tagline}
-        </p>
-        <button
-          type="button"
-          onClick={() => goToSection("profil")}
-          className="pointer-events-auto mt-2 min-h-11 rounded-full border border-[var(--brass)]/40 px-6 py-2.5 font-mono text-xs tracking-wider text-[var(--brass)] uppercase transition hover:bg-[var(--brass)] hover:text-[#07080c]"
-        >
-          Découvrir Melvyn
-        </button>
+        <div className="panel-glass rounded-3xl px-5 py-6 sm:px-8 sm:py-8">
+          <Eyebrow>01 — Entrée</Eyebrow>
+          <h2 className="font-display mt-2 text-3xl font-bold leading-tight sm:text-5xl">
+            Atelier Mécanique
+            <br />
+            <span className="text-[var(--brass)]">Digitale</span>
+          </h2>
+          <p className="mt-3 max-w-md text-sm leading-relaxed text-[var(--muted)] sm:text-base">
+            {PROFILE.tagline}
+          </p>
+          <button
+            type="button"
+            onClick={() => goToSection("profil")}
+            className="mt-5 min-h-12 rounded-full border border-[var(--brass)]/40 px-6 py-2.5 font-mono text-xs tracking-wider text-[var(--brass)] uppercase transition hover:bg-[var(--brass)] hover:text-[#07080c]"
+          >
+            Découvrir Melvyn
+          </button>
+        </div>
       </Panel>
 
       <Panel id="profil">
-        <Eyebrow>02 — Profil</Eyebrow>
-        <h2 className="font-display text-3xl font-bold sm:text-4xl">{PROFILE.name}</h2>
-        <p className="font-mono text-sm text-[var(--cyan)]">{PROFILE.title}</p>
-        <p className="text-sm leading-relaxed text-[var(--muted)]">{PROFILE.credo}</p>
-        <p className="text-sm text-[var(--fog)]">{PROFILE.ambition}</p>
-        <p className="font-mono text-xs text-[var(--muted)]">{PROFILE.location}</p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {[
-            { href: PROFILE.links.github, label: "GitHub" },
-            { href: PROFILE.links.linkedin, label: "LinkedIn" },
-            { href: PROFILE.links.codeur, label: "Codeur" },
-          ].map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="pointer-events-auto rounded-full border border-[var(--panel-border)] px-3 py-1.5 font-mono text-[10px] tracking-wider uppercase transition hover:border-[var(--cyan)] hover:text-[var(--cyan)]"
-            >
-              {l.label}
-            </a>
-          ))}
+        <div className="panel-glass w-full rounded-3xl p-5 sm:p-6">
+          <Eyebrow>02 — Profil</Eyebrow>
+          <h2 className="font-display mt-2 text-3xl font-bold sm:text-4xl">{PROFILE.name}</h2>
+          <p className="font-mono text-sm text-[var(--cyan)]">{PROFILE.title}</p>
+          <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">{PROFILE.credo}</p>
+          <p className="mt-2 text-sm text-[var(--fog)]">{PROFILE.ambition}</p>
+          <p className="mt-3 font-mono text-xs text-[var(--muted)]">{PROFILE.location}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {[
+              { href: PROFILE.links.github, label: "GitHub" },
+              { href: PROFILE.links.linkedin, label: "LinkedIn" },
+              { href: PROFILE.links.codeur, label: "Codeur" },
+            ].map((l) => (
+              <a
+                key={l.href}
+                href={l.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-11 items-center rounded-full border border-[var(--panel-border)] px-4 py-2 font-mono text-[10px] tracking-wider uppercase transition hover:border-[var(--cyan)] hover:text-[var(--cyan)]"
+              >
+                {l.label}
+              </a>
+            ))}
+          </div>
         </div>
       </Panel>
 
@@ -111,12 +120,9 @@ export function SectionOverlays() {
         <p className="max-w-md text-sm text-[var(--muted)]">
           Passion Beauté, Prisma Media, Search Artisan — et missions freelance.
         </p>
-        <ul className="mt-2 flex w-full max-w-md flex-col gap-3">
+        <ul className="mt-1 flex w-full max-w-md flex-col gap-3">
           {EXPERIENCES.map((exp) => (
-            <li
-              key={exp.company}
-              className="panel-glass rounded-2xl p-4 text-left"
-            >
+            <li key={exp.company} className="panel-glass rounded-2xl p-4 text-left">
               <p className="font-mono text-[10px] tracking-wider text-[var(--brass)] uppercase">
                 {exp.period}
               </p>
@@ -141,7 +147,7 @@ export function SectionOverlays() {
         <p className="text-sm text-[var(--muted)]">
           Pas de barres de pourcentage — des modules assemblés comme un build custom.
         </p>
-        <div className="mt-2 grid w-full max-w-lg grid-cols-2 gap-2 sm:grid-cols-3">
+        <div className="mt-1 grid w-full max-w-lg grid-cols-2 gap-2 sm:grid-cols-3">
           {SKILL_CLUSTERS.map((c) => (
             <div key={c.id} className="panel-glass rounded-2xl p-3 text-left">
               <p className="font-mono text-[10px] tracking-wider text-[var(--brass)] uppercase">
@@ -161,12 +167,9 @@ export function SectionOverlays() {
         <p className="max-w-lg text-sm text-[var(--muted)]">
           Des pièces à inspecter — apps métier, infra, e-commerce, missions freelance.
         </p>
-        <div className="mt-2 grid max-h-[50vh] w-full max-w-3xl grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2">
+        <div className="mt-1 grid w-full max-w-3xl grid-cols-1 gap-2 sm:grid-cols-2">
           {PROJECTS.map((p) => (
-            <article
-              key={p.id}
-              className="panel-glass rounded-2xl p-4 text-left"
-            >
+            <article key={p.id} className="panel-glass rounded-2xl p-4 text-left">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="font-display text-lg font-semibold">{p.name}</h3>
                 <span className="font-mono text-[9px] tracking-wider text-[var(--cyan)] uppercase">
@@ -180,7 +183,7 @@ export function SectionOverlays() {
                   href={p.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="pointer-events-auto mt-2 inline-block font-mono text-[10px] text-[var(--cyan)] underline-offset-2 hover:underline"
+                  className="mt-2 inline-flex min-h-10 items-center font-mono text-[10px] text-[var(--cyan)] underline-offset-2 hover:underline"
                 >
                   Voir le site →
                 </a>
@@ -193,7 +196,7 @@ export function SectionOverlays() {
       <Panel id="passions">
         <Eyebrow>06 — Stations passion</Eyebrow>
         <h2 className="font-display text-3xl font-bold sm:text-4xl">Ce qui nourrit le craft</h2>
-        <div className="mt-2 flex max-w-lg flex-col gap-2">
+        <div className="mt-1 flex max-w-lg flex-col gap-2">
           {PASSIONS.map((p) => (
             <div key={p.id} className="panel-glass rounded-2xl p-4 text-left">
               <p className="font-display text-base font-semibold text-[var(--brass)]">{p.title}</p>
@@ -210,7 +213,7 @@ export function SectionOverlays() {
         <p className="max-w-md text-sm text-[var(--muted)]">
           {PROFILE.age} · {PROFILE.permits} · {PROFILE.location}
         </p>
-        <ul className="mt-2 max-w-md space-y-2 text-left text-sm text-[var(--fog)]">
+        <ul className="mt-1 max-w-md space-y-2 text-left text-sm text-[var(--fog)]">
           {FORMATION.map((f) => (
             <li key={f.title} className="panel-glass rounded-xl px-4 py-3">
               <span className="font-mono text-[10px] text-[var(--brass)]">{f.period}</span>
@@ -227,13 +230,13 @@ export function SectionOverlays() {
           <a
             href="/cv-melvyn-thierry-bellefond.pdf"
             download
-            className="pointer-events-auto min-h-11 rounded-full bg-[var(--brass)] px-5 py-2.5 font-mono text-xs tracking-wider text-[#07080c] uppercase transition hover:bg-[var(--amber)]"
+            className="inline-flex min-h-12 items-center rounded-full bg-[var(--brass)] px-5 py-2.5 font-mono text-xs tracking-wider text-[#07080c] uppercase transition hover:bg-[var(--amber)]"
           >
             Télécharger le PDF
           </a>
           <a
             href="/cv"
-            className="pointer-events-auto min-h-11 rounded-full border border-[var(--panel-border)] px-5 py-2.5 font-mono text-xs tracking-wider uppercase transition hover:border-[var(--cyan)] hover:text-[var(--cyan)]"
+            className="inline-flex min-h-12 items-center rounded-full border border-[var(--panel-border)] px-5 py-2.5 font-mono text-xs tracking-wider uppercase transition hover:border-[var(--cyan)] hover:text-[var(--cyan)]"
           >
             Voir / imprimer
           </a>
@@ -241,56 +244,50 @@ export function SectionOverlays() {
       </Panel>
 
       <Panel id="contact" align="center">
-        <Eyebrow>08 — Zone magnétique</Eyebrow>
-        <h2 className="font-display text-3xl font-bold sm:text-5xl">
-          Projet en tête&nbsp;?
-        </h2>
-        <p className="max-w-lg text-sm leading-relaxed text-[var(--muted)] sm:text-base">
-          Auto-entreprise ouverte aux missions : {SERVICES.slice(0, 4).join(", ").toLowerCase()},
-          et plus encore.
-        </p>
-        <div className="mt-2 flex flex-wrap justify-center gap-2">
-          {SERVICES.map((s) => (
-            <span
-              key={s}
-              className="rounded-full border border-[var(--panel-border)] px-3 py-1 font-mono text-[10px] text-[var(--fog)]"
-            >
-              {s}
-            </span>
-          ))}
-        </div>
-        <ContactForm />
-        <div className="mt-4 flex flex-wrap justify-center gap-3">
-          <a
-            href={PROFILE.links.linkedin}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="pointer-events-auto font-mono text-xs text-[var(--cyan)] hover:underline"
-          >
-            LinkedIn
-          </a>
-          <a
-            href={PROFILE.links.github}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="pointer-events-auto font-mono text-xs text-[var(--cyan)] hover:underline"
-          >
-            GitHub
-          </a>
-          <a
-            href={PROFILE.links.codeur}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="pointer-events-auto font-mono text-xs text-[var(--cyan)] hover:underline"
-          >
-            Codeur.com
-          </a>
-        </div>
-        {reducedMotion && (
-          <p className="mt-4 text-xs text-[var(--muted)]">
-            Mode mouvement réduit actif — version 2D premium.
+        <div className="panel-glass w-full max-w-md rounded-3xl px-4 py-5 sm:px-6 sm:py-6">
+          <Eyebrow>08 — Zone magnétique</Eyebrow>
+          <h2 className="font-display mt-2 text-3xl font-bold sm:text-4xl">Projet en tête&nbsp;?</h2>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+            Auto-entreprise ouverte aux missions : sites, apps métier, TMA, SEO, infra.
           </p>
-        )}
+          <div className="mt-3 hidden flex-wrap justify-center gap-2 sm:flex">
+            {SERVICES.map((s) => (
+              <span
+                key={s}
+                className="rounded-full border border-[var(--panel-border)] px-3 py-1 font-mono text-[10px] text-[var(--fog)]"
+              >
+                {s}
+              </span>
+            ))}
+          </div>
+          <ContactForm />
+          <div className="mt-4 flex flex-wrap justify-center gap-4 pb-1">
+            <a
+              href={PROFILE.links.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center font-mono text-xs text-[var(--cyan)] hover:underline"
+            >
+              LinkedIn
+            </a>
+            <a
+              href={PROFILE.links.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center font-mono text-xs text-[var(--cyan)] hover:underline"
+            >
+              GitHub
+            </a>
+            <a
+              href={PROFILE.links.codeur}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center font-mono text-xs text-[var(--cyan)] hover:underline"
+            >
+              Codeur.com
+            </a>
+          </div>
+        </div>
       </Panel>
     </div>
   );
@@ -311,7 +308,7 @@ function ContactForm() {
 
   return (
     <form
-      className="pointer-events-auto mt-4 w-full max-w-md space-y-3 text-left"
+      className="mt-4 w-full space-y-3 text-left"
       onSubmit={(e) => {
         e.preventDefault();
         mailto(e.currentTarget);
@@ -325,7 +322,7 @@ function ContactForm() {
           name="name"
           required
           autoComplete="name"
-          className="mt-1 min-h-11 w-full rounded-xl border border-[var(--panel-border)] bg-[rgba(7,8,12,0.75)] px-3 py-2 text-sm outline-none focus:border-[var(--brass)]"
+          className="mt-1 min-h-12 w-full rounded-xl border border-[var(--panel-border)] bg-[rgba(7,8,12,0.85)] px-3 py-2 text-sm outline-none focus:border-[var(--brass)]"
           placeholder="Votre nom"
         />
       </label>
@@ -338,7 +335,7 @@ function ContactForm() {
           type="email"
           required
           autoComplete="email"
-          className="mt-1 min-h-11 w-full rounded-xl border border-[var(--panel-border)] bg-[rgba(7,8,12,0.75)] px-3 py-2 text-sm outline-none focus:border-[var(--brass)]"
+          className="mt-1 min-h-12 w-full rounded-xl border border-[var(--panel-border)] bg-[rgba(7,8,12,0.85)] px-3 py-2 text-sm outline-none focus:border-[var(--brass)]"
           placeholder="vous@entreprise.fr"
         />
       </label>
@@ -349,8 +346,8 @@ function ContactForm() {
         <textarea
           name="message"
           required
-          rows={4}
-          className="mt-1 w-full rounded-xl border border-[var(--panel-border)] bg-[rgba(7,8,12,0.75)] px-3 py-2 text-sm outline-none focus:border-[var(--brass)]"
+          rows={3}
+          className="mt-1 w-full rounded-xl border border-[var(--panel-border)] bg-[rgba(7,8,12,0.85)] px-3 py-2 text-sm outline-none focus:border-[var(--brass)]"
           placeholder="Sites, apps métier, TMA, SEO, infra…"
         />
       </label>

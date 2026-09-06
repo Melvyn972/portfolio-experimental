@@ -4,11 +4,20 @@ import { useEffect, useRef } from "react";
 import { SECTIONS } from "@/data/content";
 import { useExperience } from "@/hooks/useExperience";
 
+function isInteractiveTarget(target: EventTarget | null) {
+  if (!(target instanceof Element)) return false;
+  return Boolean(
+    target.closest(
+      "input, textarea, select, button, a, label, [data-scroll-panel], nav[aria-label='Sections']",
+    ),
+  );
+}
+
 /**
  * Scroll / touch / keyboard driven progress through the atelier path.
  */
 export function ScrollController({ children }: { children: React.ReactNode }) {
-  const { setProgress, entered, goToSection, activeSection, reducedMotion } = useExperience();
+  const { entered, goToSection, activeSection, reducedMotion } = useExperience();
   const lock = useRef(false);
   const touchY = useRef<number | null>(null);
 
@@ -16,6 +25,10 @@ export function ScrollController({ children }: { children: React.ReactNode }) {
     if (!entered || reducedMotion) return;
 
     const onWheel = (e: WheelEvent) => {
+      if (isInteractiveTarget(e.target)) return;
+      // Allow native scroll inside scroll panels
+      const panel = e.target instanceof Element ? e.target.closest("[data-scroll-panel]") : null;
+      if (panel) return;
       e.preventDefault();
       if (lock.current) return;
       const delta = Math.sign(e.deltaY);
@@ -30,7 +43,16 @@ export function ScrollController({ children }: { children: React.ReactNode }) {
     };
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      if (e.key === "ArrowDown" || e.key === "PageDown") {
+        e.preventDefault();
+        const idx = SECTIONS.findIndex((s) => s.id === activeSection);
+        if (idx < SECTIONS.length - 1) goToSection(SECTIONS[idx + 1].id);
+      }
+      if (e.key === " ") {
+        // Space advances only when not typing
         e.preventDefault();
         const idx = SECTIONS.findIndex((s) => s.id === activeSection);
         if (idx < SECTIONS.length - 1) goToSection(SECTIONS[idx + 1].id);
@@ -45,15 +67,23 @@ export function ScrollController({ children }: { children: React.ReactNode }) {
     };
 
     const onTouchStart = (e: TouchEvent) => {
+      if (isInteractiveTarget(e.target)) {
+        touchY.current = null;
+        return;
+      }
       touchY.current = e.touches[0]?.clientY ?? null;
     };
 
     const onTouchEnd = (e: TouchEvent) => {
       if (touchY.current == null || lock.current) return;
+      if (isInteractiveTarget(e.target)) {
+        touchY.current = null;
+        return;
+      }
       const y = e.changedTouches[0]?.clientY ?? touchY.current;
       const dy = touchY.current - y;
       touchY.current = null;
-      if (Math.abs(dy) < 48) return;
+      if (Math.abs(dy) < 56) return;
       lock.current = true;
       const idx = SECTIONS.findIndex((s) => s.id === activeSection);
       const next = Math.min(Math.max(idx + (dy > 0 ? 1 : -1), 0), SECTIONS.length - 1);
@@ -74,7 +104,7 @@ export function ScrollController({ children }: { children: React.ReactNode }) {
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchend", onTouchEnd);
     };
-  }, [entered, activeSection, goToSection, reducedMotion, setProgress]);
+  }, [entered, activeSection, goToSection, reducedMotion]);
 
   return <>{children}</>;
 }
