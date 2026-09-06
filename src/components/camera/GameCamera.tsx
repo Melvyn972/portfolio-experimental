@@ -47,10 +47,10 @@ export function GameCamera() {
     const dt = Math.min(rawDt, 0.05);
     const state = getGameState();
     const mobile = state.isMobile;
-    const distDrive = mobile ? CAM_DIST_DRIVE * 0.88 : CAM_DIST_DRIVE;
-    const distWalk = mobile ? CAM_DIST_WALK * 0.85 : CAM_DIST_WALK;
-    const hDrive = mobile ? CAM_HEIGHT_DRIVE * 0.92 : CAM_HEIGHT_DRIVE;
-    const hWalk = mobile ? CAM_HEIGHT_WALK * 0.9 : CAM_HEIGHT_WALK;
+    const distDrive = mobile ? CAM_DIST_DRIVE * 1.05 : CAM_DIST_DRIVE;
+    const distWalk = mobile ? CAM_DIST_WALK * 0.95 : CAM_DIST_WALK;
+    const hDrive = mobile ? CAM_HEIGHT_DRIVE * 1.05 : CAM_HEIGHT_DRIVE;
+    const hWalk = mobile ? CAM_HEIGHT_WALK * 0.95 : CAM_HEIGHT_WALK;
 
     if (state.phase === "boot") {
       camera.position.set(32, 24, 58);
