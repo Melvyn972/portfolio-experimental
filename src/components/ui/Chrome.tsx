@@ -53,6 +53,7 @@ export function MobileRail() {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
+  const [hiddenRight, setHiddenRight] = useState(0);
 
   const updateOverflow = useCallback(() => {
     const el = scrollerRef.current;
@@ -61,6 +62,12 @@ export function MobileRail() {
     const left = el.scrollLeft;
     setCanLeft(left > 8);
     setCanRight(max - left > 8);
+    const viewRight = left + el.clientWidth;
+    let hidden = 0;
+    el.querySelectorAll<HTMLElement>('button[aria-label^="Aller"]').forEach((btn) => {
+      if (btn.offsetLeft + btn.offsetWidth * 0.45 > viewRight) hidden += 1;
+    });
+    setHiddenRight(hidden);
   }, []);
 
   useEffect(() => {
@@ -119,18 +126,16 @@ export function MobileRail() {
           }`}
         />
 
-        {/* Right peek pill — always hint more content when overflow remains */}
-        {canRight && (
+        {canRight && hiddenRight > 0 && (
           <div
             aria-hidden
             className="pointer-events-none absolute inset-y-1 right-11 z-[9] flex items-center"
           >
             <span className="rounded-md bg-[rgba(201,162,39,0.15)] px-1.5 py-2 font-mono text-[9px] text-[var(--brass)]">
-              +3
+              +{hiddenRight}
             </span>
           </div>
         )}
-
         {canLeft && (
           <button
             type="button"
