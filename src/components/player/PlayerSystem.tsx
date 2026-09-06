@@ -63,7 +63,6 @@ export function PlayerSystem() {
   const playerVel = useRef(new THREE.Vector3());
   const tmp = useRef(new THREE.Vector3());
   const sideTmp = useRef(new THREE.Vector3());
-  const desired = useRef(new THREE.Vector3());
   const initialized = useRef(false);
   const skipUntil = useRef(0);
   const exitCooldown = useRef(0);
