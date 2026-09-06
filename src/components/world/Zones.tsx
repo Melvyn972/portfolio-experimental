@@ -73,7 +73,6 @@ export function CoastalZones() {
     });
     return c;
   }, [phareSrc]);
-  const phareRocks = useShadowClone("/models/rocks-dormin.glb", true);
   const fence = useShadowClone("/models/kenney/city/fence.glb");
   const pine = useShadowClone("/models/pine.glb");
   const hedge = useShadowClone("/models/kenney/fantasy/hedge.glb");
@@ -141,10 +140,17 @@ export function CoastalZones() {
           {/* Daniel Dormin lighthouse — sit base on ground */}
           <Placed scene={phare} position={[p.x, PHARE_Y, p.z]} scale={PHARE_SCALE} />
           {/* Rocky skirt so the tower reads anchored */}
-          <Placed scene={phareRocks} position={[p.x + 2.2, 0.35, p.z - 1.2]} scale={2.6} />
-          <Placed scene={phareRocks} position={[p.x - 2.8, 0.3, p.z + 1.8]} rotation={[0, 1.1, 0]} scale={2.2} />
-          <Placed scene={phareRocks} position={[p.x + 0.5, 0.25, p.z + 3.2]} rotation={[0, -0.6, 0]} scale={2.0} />
-          <Placed scene={phareRocks} position={[p.x - 1.2, 0.4, p.z - 2.8]} rotation={[0, 2.1, 0]} scale={2.4} />
+          {[
+            [p.x + 2.4, 0.32, p.z - 1.4, 1.1],
+            [p.x - 2.6, 0.3, p.z + 1.6, 0.95],
+            [p.x + 0.8, 0.28, p.z + 3.0, 0.85],
+            [p.x - 1.4, 0.34, p.z - 2.6, 1.05],
+          ].map(([x, y, z, s], i) => (
+            <mesh key={`pr-${i}`} position={[x, y, z]} scale={[s, s * 0.55, s * 0.9]} castShadow receiveShadow>
+              <sphereGeometry args={[0.85, 7, 5]} />
+              <meshStandardMaterial color={i % 2 ? "#c2b49a" : "#b4a488"} roughness={0.95} />
+            </mesh>
+          ))}
           <mesh position={[p.x, 0.2, p.z]} receiveShadow castShadow>
             <cylinderGeometry args={[4.6, 5.4, 0.55, 10]} />
             <meshStandardMaterial color="#b9a888" roughness={0.95} />
@@ -191,7 +197,6 @@ useGLTF.preload("/models/maison.glb");
 useGLTF.preload("/models/studio.glb");
 useGLTF.preload("/models/kenney/city/atelier.glb");
 useGLTF.preload("/models/phare.glb");
-useGLTF.preload("/models/rocks-dormin.glb");
 useGLTF.preload("/models/pine.glb");
 useGLTF.preload("/models/pier.glb");
 useGLTF.preload("/models/lantern.glb");
