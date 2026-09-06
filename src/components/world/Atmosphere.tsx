@@ -7,6 +7,7 @@ import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import * as THREE from "three";
 import { getRoadCurve } from "@/lib/road";
+import { sampleGroundHeight } from "@/lib/ground";
 
 type AtmosphereProps = {
   dust?: boolean;
@@ -20,12 +21,12 @@ export function Atmosphere({ dust = true, shadows = true, shadowMapSize = 2048 }
     <>
       <color attach="background" args={["#9ec4d6"]} />
       <fog attach="fog" args={["#c5d6e4", 42, 175]} />
-      <ambientLight intensity={0.22} color="#ffd8b8" />
-      <hemisphereLight args={["#7eb4d4", "#c4a078", 0.62]} />
+      <ambientLight intensity={0.28} color="#ffd8b8" />
+      <hemisphereLight args={["#7eb4d4", "#c4a078", 0.7]} />
       <directionalLight
         castShadow={shadows}
         position={[46, 28, 18]}
-        intensity={3.05}
+        intensity={2.15}
         color="#ffc888"
         shadow-mapSize={[shadowMapSize, shadowMapSize]}
         shadow-camera-near={1}
@@ -49,7 +50,7 @@ export function Atmosphere({ dust = true, shadows = true, shadowMapSize = 2048 }
         rayleigh={0.62}
         turbidity={8.5}
       />
-      <Environment files="/hdri/venice_sunset_1k.hdr" background={false} environmentIntensity={1.08} />
+      <Environment files="/hdri/venice_sunset_1k.hdr" background={false} environmentIntensity={0.82} />
       {shadows && (
         <ContactShadows position={[0, 0.015, -70]} opacity={0.38} scale={140} blur={2.1} far={18} color="#2a2218" />
       )}
@@ -102,7 +103,8 @@ export function RoadAccentProps() {
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-      const pos = p.clone().addScaledVector(side, 4.6);
+      const pos = p.clone().addScaledVector(side, 5.4);
+      pos.y = sampleGroundHeight(pos.x, pos.z);
       const clone = scene.clone(true);
       clone.traverse((o) => {
         const m = o as THREE.Mesh;

@@ -151,8 +151,8 @@ export function Convertible({ color = "#c45c3e" }: Props) {
         });
       }
 
-      const n = obj.name.toLowerCase();
-      if (n.includes("wheel") && obj.children.length > 0 && !n.includes("steer") && !n.includes("spin")) {
+      const n = obj.name;
+      if (/^Roadster_wheel_(front|rear)_(left|right)$/.test(n)) {
         hubs.push(obj);
       }
     });
@@ -167,11 +167,10 @@ export function Convertible({ color = "#c45c3e" }: Props) {
       const spinG = new THREE.Group();
       spinG.name = obj.name + "_spin";
       obj.position.set(0, 0, 0);
-      obj.rotation.set(0, 0, 0);
       steerG.add(spinG);
       spinG.add(obj);
       spins.push(spinG);
-      if (obj.name.toLowerCase().includes("front")) steers.push(steerG);
+      if (obj.name.includes("front")) steers.push(steerG);
     }
 
     spinNodes.current = spins;
@@ -205,7 +204,8 @@ export function Convertible({ color = "#c45c3e" }: Props) {
       node.parent.userData.setSteer = node.userData.setSteer;
     }
     spinNodes.current.forEach((w) => {
-      w.rotation.x = wheelSpin.current;
+      // Model faces +Z; +X spin rolls backward — invert so wheels roll with travel.
+      w.rotation.x = -wheelSpin.current;
     });
     steerNodes.current.forEach((w) => {
       w.rotation.y = steer.current;

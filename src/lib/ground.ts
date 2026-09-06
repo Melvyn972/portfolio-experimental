@@ -143,7 +143,8 @@ export function inlandShelfY(lat: number, roadY: number): number | null {
  */
 export function sampleGroundHeight(x: number, z: number): number {
   const { y, roadDist, roadY, onAccess } = scenicHeight(x, z);
-  if (roadDist < ROAD_WIDTH * 0.55) return roadY;
+  // Stand on the asphalt overlay, not 20 cm under the road cuboid / ribbon.
+  if (roadDist < ROAD_WIDTH * 0.55) return roadY + ROAD_SURFACE_LIFT;
   if (onAccess) return y;
   return y;
 }

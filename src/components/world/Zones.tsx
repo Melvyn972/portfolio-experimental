@@ -114,21 +114,45 @@ export function CoastalZones() {
     <group>
       {m && (
         <group>
-          {/* Kenney City building-type-b — maison */}
-          <Placed scene={maison} position={[m.x, 0, m.z]} rotation={[0, -0.35, 0]} scale={6.2} />
-          {/* Wing / atelier */}
-          <Placed scene={atelier} position={[m.x + 7.5, 0, m.z + 2]} rotation={[0, 0.2, 0]} scale={5.2} />
+          {/* Kenney City building-type-b — sit on the plaza, not buried at y=0 */}
+          <Placed
+            scene={maison}
+            position={[m.x, sampleGroundHeight(m.x, m.z), m.z]}
+            rotation={[0, -0.35, 0]}
+            scale={6.2}
+          />
+          <Placed
+            scene={atelier}
+            position={[m.x + 7.5, sampleGroundHeight(m.x + 7.5, m.z + 2), m.z + 2]}
+            rotation={[0, 0.2, 0]}
+            scale={5.2}
+          />
           <Placed scene={pine} position={[m.x - 6, sampleGroundHeight(m.x - 6, m.z + 4), m.z + 4]} scale={0.5} />
           <Placed scene={pine} position={[m.x + 10, sampleGroundHeight(m.x + 10, m.z - 3), m.z - 3]} scale={0.42} />
-          <Placed scene={hedge} position={[m.x + 3, 0, m.z + 6]} rotation={[0, 0.4, 0]} scale={2.2} />
-          <Placed scene={stairs} position={[m.x - 1, 0, m.z + 5.5]} rotation={[0, Math.PI, 0]} scale={1.8} />
+          <Placed
+            scene={hedge}
+            position={[m.x + 4.2, sampleGroundHeight(m.x + 4.2, m.z + 3.4), m.z + 3.4]}
+            rotation={[0, 0.4, 0]}
+            scale={2.2}
+          />
+          <Placed
+            scene={stairs}
+            position={[m.x - 3.6, sampleGroundHeight(m.x - 3.6, m.z + 3.8), m.z + 3.8]}
+            rotation={[0, Math.PI, 0]}
+            scale={1.8}
+          />
         </group>
       )}
 
       {s && (
         <group>
           {/* Kenney City building-type-e — studio */}
-          <Placed scene={studio} position={[s.x, 0, s.z]} rotation={[0, 0.4, 0]} scale={6.0} />
+          <Placed
+            scene={studio}
+            position={[s.x, sampleGroundHeight(s.x, s.z), s.z]}
+            rotation={[0, 0.4, 0]}
+            scale={6.0}
+          />
           <Placed scene={pine} position={[s.x - 7.5, sampleGroundHeight(s.x - 7.5, s.z + 5), s.z + 5]} scale={0.48} />
           <Placed scene={hedge} position={[s.x + 4, sampleGroundHeight(s.x + 4, s.z + 4), s.z + 4]} scale={2.0} />
           <Placed scene={pine} position={[s.x + 6, sampleGroundHeight(s.x + 6, s.z - 4), s.z - 4]} scale={0.4} />

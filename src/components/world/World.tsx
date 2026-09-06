@@ -91,13 +91,13 @@ function AccessPaths() {
       {plazas.map((p, i) => (
         <mesh key={`plaza-${i}`} position={p.pos} receiveShadow>
           <boxGeometry args={p.size} />
-          <meshStandardMaterial color="#c8b89a" roughness={0.93} />
+          <meshStandardMaterial color="#b7a27c" roughness={0.9} metalness={0.04} />
         </mesh>
       ))}
       {slabs.map((s, i) => (
         <mesh key={i} position={s.pos} rotation={[0, s.yaw, 0]} receiveShadow>
           <boxGeometry args={s.size} />
-          <meshStandardMaterial color={i % 2 ? "#c4b49a" : "#b7a888"} roughness={0.92} />
+          <meshStandardMaterial color={i % 2 ? "#c2ae88" : "#a89270"} roughness={0.88} />
         </mesh>
       ))}
     </group>

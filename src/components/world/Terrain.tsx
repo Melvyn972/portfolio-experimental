@@ -37,12 +37,12 @@ export function Terrain() {
       const { y, roadDist } = roadClearance(x, z);
       pos.setY(i, computeTerrainHeight(x, z));
 
-      if (x < -6 || roadDist < ROAD_SAND_APRON + 1.2) c.set("#e6d3b4");
-      else if (y > 4.5) c.set("#c8b8a0");
-      else if (y > 2.2) c.set("#d2c2a8");
-      else if (y > 0.9) c.set("#c0ae90");
-      else if (x < 2) c.set("#dcc8a4");
-      else c.set("#8fa36c");
+      if (x < -6 || roadDist < ROAD_SAND_APRON + 1.2) c.set("#d7c09a");
+      else if (y > 4.5) c.set("#c2b094");
+      else if (y > 2.2) c.set("#cbb89a");
+      else if (y > 0.9) c.set("#b8a47e");
+      else if (x < 2) c.set("#d0b890");
+      else c.set("#7f9660");
 
       if (y < 1.2 && x > 2) {
         c.offsetHSL(0, -0.05, Math.sin(x * 2.1 + z * 1.7) * 0.04);

@@ -36,8 +36,8 @@ export function zoneWalkSpawns(): Record<"belvedere" | "maison" | "studio" | "pl
   };
   return {
     belvedere: snap(bel.terrace.x, bel.terrace.z, bel.yaw),
-    maison: snap(16, -37, Math.PI),
-    studio: snap(18, -113, Math.PI),
+    maison: snap(16.15, -36.2, Math.PI),
+    studio: snap(18.1, -112.4, Math.PI),
     plage: snap(-8, -95, -Math.PI / 2),
     phare: snap(-14, -170, -2.4),
   };

@@ -80,8 +80,8 @@ export function PlayerSystem() {
     c.setApplyImpulsesToDynamicBodies(false);
     c.setMaxSlopeClimbAngle((48 * Math.PI) / 180);
     c.setMinSlopeSlideAngle((55 * Math.PI) / 180);
-    c.enableAutostep(0.62, 0.32, true);
-    c.enableSnapToGround(0.55);
+    c.enableAutostep(0.78, 0.38, true);
+    c.enableSnapToGround(0.7);
     c.setCharacterMass(70);
     controller.current = c;
     return () => {
@@ -281,8 +281,8 @@ export function PlayerSystem() {
 
       syncCar(pos.current, yaw.current, suspension.current, pitch, roll);
       if (carVisual.current) {
-        carVisual.current.userData.setWheelSpin?.(velocity.current * dt * 2.8);
-        carVisual.current.userData.setSteer?.(((left ? 1 : 0) - (right ? 1 : 0)) * 0.55);
+        carVisual.current.userData.setWheelSpin?.(velocity.current * dt * 3.15);
+        carVisual.current.userData.setSteer?.(((right ? 1 : 0) - (left ? 1 : 0)) * 0.42);
       }
 
       const distStop = Math.hypot(pos.current.x - stopPos.x, pos.current.z - stopPos.z);
@@ -365,7 +365,7 @@ export function PlayerSystem() {
       lookPitch.current = THREE.MathUtils.clamp(lookPitch.current + mouseY, -0.22, 0.38);
     }
 
-    const analogActive = !blocked && (Math.abs(touch.x) > 0.1 || Math.abs(touch.y) > 0.1);
+    const analogActive = !blocked && (Math.abs(touch.x) > 0.12 || Math.abs(touch.y) > 0.12);
     const moveX = analogActive ? touch.x : (right ? 1 : 0) - (left ? 1 : 0);
     const moveZ = analogActive ? touch.y : (forward ? 1 : 0) - (back ? 1 : 0);
     let moving = false;
@@ -418,11 +418,21 @@ export function PlayerSystem() {
         } else {
           const want = Math.hypot(desired.current.x, desired.current.z);
           const got = Math.hypot(mv.x, mv.z);
-          if (want > 0.008 && got < 0.00015) {
-            playerPos.current.x += desired.current.x;
-            playerPos.current.z += desired.current.z;
-            playerPos.current.y = sampleGroundHeight(playerPos.current.x, playerPos.current.z);
-            setPlayerKinematic(playerPos.current, walkYaw.current, true);
+          if (want > 0.008 && got < 0.0002) {
+            // Slide along the block instead of tunneling through invisible walls.
+            ctrl.computeColliderMovement(collider, { x: desired.current.x, y: desired.current.y, z: 0 });
+            const mx = ctrl.computedMovement();
+            ctrl.computeColliderMovement(collider, { x: 0, y: desired.current.y, z: desired.current.z });
+            const mz = ctrl.computedMovement();
+            const pick = Math.hypot(mx.x, mx.z) >= Math.hypot(mz.x, mz.z) ? mx : mz;
+            const nextSlide = { x: t.x + pick.x, y: t.y + pick.y, z: t.z + pick.z };
+            if (isFinitePos(nextSlide) && Math.hypot(pick.x, pick.z) > 0.00015) {
+              body.setNextKinematicTranslation(nextSlide);
+              playerPos.current.set(nextSlide.x, nextSlide.y - CAPSULE_Y, nextSlide.z);
+            } else {
+              playerPos.current.y = sampleGroundHeight(playerPos.current.x, playerPos.current.z);
+              setPlayerKinematic(playerPos.current, walkYaw.current, true);
+            }
           } else {
             body.setNextKinematicTranslation(next);
             playerPos.current.set(next.x, next.y - CAPSULE_Y, next.z);
@@ -466,12 +476,6 @@ export function PlayerSystem() {
 
     // Keep car synced while walking
     syncCar(pos.current, yaw.current, 0, 0);
-
-    // Face quaternion for capsule body
-    if (body) {
-      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, walkYaw.current, 0));
-      body.setNextKinematicRotation({ x: q.x, y: q.y, z: q.z, w: q.w });
-    }
 
     const nearCar = playerPos.current.distanceTo(pos.current) < REENTER_RADIUS;
     const interactable = findNearestInteractable(playerPos.current, "walking");
