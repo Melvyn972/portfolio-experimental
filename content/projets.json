@@ -1,0 +1,67 @@
+[
+  {
+    "id": "vdapb",
+    "name": "VDAPB",
+    "stack": "Symfony 7 · React 18",
+    "blurb": "App métier nationale — BDC, DN, factures. Go-live prévu sept. 2026.",
+    "tag": "Métier",
+    "zone": "studio"
+  },
+  {
+    "id": "eresapb",
+    "name": "E-ResaPB",
+    "stack": "Symfony · React · MySQL",
+    "blurb": "Click & Collect interne — 93 magasins, ~11 000 références.",
+    "tag": "Retail",
+    "zone": "studio"
+  },
+  {
+    "id": "freepro",
+    "name": "Migration Free Pro",
+    "stack": "Infra · B2B fibre",
+    "blurb": "12 points de vente migrés — −66 % de coûts, ~19 000 €/an économisés.",
+    "tag": "Infra",
+    "zone": "atelier"
+  },
+  {
+    "id": "hubanimal",
+    "name": "HubAnimal",
+    "stack": "TypeScript",
+    "blurb": "Plateforme métier pensée pour la fluidité et la maintenabilité.",
+    "tag": "Web",
+    "zone": "studio"
+  },
+  {
+    "id": "artwise",
+    "name": "ArtWise",
+    "stack": "Twig · PHP",
+    "blurb": "Expérience web artisanale, templates Twig soignés.",
+    "tag": "Web",
+    "zone": "studio"
+  },
+  {
+    "id": "cynastore",
+    "name": "CynaStoreWeb",
+    "stack": "Next.js 14 · Prisma · Stripe",
+    "blurb": "E-commerce moderne avec paiement Stripe et data Prisma.",
+    "tag": "Commerce",
+    "zone": "studio"
+  },
+  {
+    "id": "intranet",
+    "name": "Planning & Intranet",
+    "stack": "RH · Apps internes",
+    "blurb": "Pilotage RH et intranet pour équipes multisites.",
+    "tag": "Ops",
+    "zone": "atelier"
+  },
+  {
+    "id": "coldcall",
+    "name": "Cold Call Agency",
+    "stack": "Freelance client",
+    "blurb": "Mission freelance — présence web d’une agence de cold calling.",
+    "tag": "Client",
+    "href": "https://www.coldcallagency.com/",
+    "zone": "studio"
+  }
+]

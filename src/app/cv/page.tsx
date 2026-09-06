@@ -1,89 +1,68 @@
 import type { Metadata } from "next";
-import {
-  EXPERIENCES,
-  FORMATION,
-  PROFILE,
-  PROJECTS,
-  SKILL_CLUSTERS,
-} from "@/data/content";
+import { content } from "@/lib/content";
 import { CvToolbar } from "@/components/ui/CvToolbar";
 
 export const metadata: Metadata = {
   title: "CV",
-  description: `CV de ${PROFILE.name} — ${PROFILE.title}`,
+  description: `CV de ${content.identity.name} — ${content.identity.title}`,
 };
 
 export default function CvPage() {
+  const { identity, contact, experiences, formations, competences, projets } = content;
+
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#f7f5f0] text-[#12141a]">
+    <div className="min-h-screen overflow-x-auto overflow-y-auto bg-[#f7f1e6] text-[#2c241c]">
       <CvToolbar />
 
-      <article className="mx-auto w-full max-w-3xl px-4 py-8 break-words sm:px-6 sm:py-10 print:max-w-none print:px-0 print:py-0">
-        <header className="border-b-2 border-[#c9a227] pb-6">
-          <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-            {PROFILE.name}
-          </h1>
-          <p className="mt-2 text-base text-[#3a4558] sm:text-lg">{PROFILE.title}</p>
-          <p className="mt-3 text-sm leading-relaxed text-[#5a6478]">{PROFILE.tagline}</p>
-          <dl className="mt-4 grid gap-2 text-sm text-[#3a4558]">
-            <div className="min-w-0">
+      <article className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10 print:max-w-none print:px-0 print:py-0">
+        <header className="border-b-2 border-[#b08d57] pb-6">
+          <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">{identity.name}</h1>
+          <p className="mt-2 text-base text-[#5c4a36] sm:text-lg">{identity.title}</p>
+          <p className="mt-3 text-sm leading-relaxed text-[#7a6854]">{identity.tagline}</p>
+          <dl className="mt-4 grid gap-2 text-sm text-[#4a3e32]">
+            <div>
               <dt className="font-semibold">Localisation</dt>
-              <dd>{PROFILE.location}</dd>
+              <dd>{identity.location}</dd>
             </div>
-            <div className="min-w-0">
+            <div>
               <dt className="font-semibold">E-mail</dt>
-              <dd className="break-all">
-                <a href={`mailto:${PROFILE.email}`} className="underline">
-                  {PROFILE.email}
+              <dd>
+                <a href={`mailto:${contact.email}`} className="underline">
+                  {contact.email}
                 </a>
               </dd>
             </div>
-            <div className="min-w-0">
-              <dt className="font-semibold">GitHub</dt>
-              <dd>
-                <a href={PROFILE.links.github} className="underline">
-                  Melvyn972
+            <div>
+              <dt className="font-semibold">Réseaux</dt>
+              <dd className="flex flex-wrap gap-3">
+                <a href={contact.networks.github.url} className="underline">
+                  GitHub
                 </a>
-              </dd>
-            </div>
-            <div className="min-w-0">
-              <dt className="font-semibold">LinkedIn</dt>
-              <dd>
-                <a href={PROFILE.links.linkedin} className="underline">
-                  Profil
+                <a href={contact.networks.linkedin.url} className="underline">
+                  LinkedIn
                 </a>
-              </dd>
-            </div>
-            <div className="min-w-0">
-              <dt className="font-semibold">Infos</dt>
-              <dd>
-                {PROFILE.age} · {PROFILE.permits}
+                <a href={contact.networks.codeur.url} className="underline">
+                  Codeur
+                </a>
               </dd>
             </div>
           </dl>
         </header>
 
         <section className="mt-8">
-          <h2 className="font-display text-xl font-bold text-[#6b5a2a]">Profil</h2>
-          <p className="mt-2 text-sm leading-relaxed text-[#3a4558]">{PROFILE.credo}</p>
-          <p className="mt-1 text-sm text-[#3a4558]">{PROFILE.ambition}</p>
-        </section>
-
-        <section className="mt-8">
-          <h2 className="font-display text-xl font-bold text-[#6b5a2a]">Expériences</h2>
+          <h2 className="font-display text-xl text-[#2c241c]">Expériences</h2>
           <ul className="mt-4 space-y-5">
-            {EXPERIENCES.map((exp) => (
-              <li key={exp.company} className="min-w-0">
-                <p className="font-mono text-xs uppercase tracking-wider text-[#8a7350]">
-                  {exp.period}
+            {experiences.map((e) => (
+              <li key={`${e.company}-${e.period}`}>
+                <p className="font-semibold">
+                  {e.role} — {e.company}
                 </p>
-                <p className="font-semibold leading-snug">
-                  {exp.role}
-                  <span className="font-normal text-[#5a6478]"> — {exp.company}</span>
+                <p className="text-sm text-[#7a6854]">
+                  {e.period}
+                  {e.detail ? ` · ${e.detail}` : ""}
                 </p>
-                <p className="text-sm text-[#5a6478]">{exp.detail}</p>
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[#3a4558]">
-                  {exp.highlights.map((h) => (
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[#4a3e32]">
+                  {e.highlights.map((h) => (
                     <li key={h}>{h}</li>
                   ))}
                 </ul>
@@ -93,51 +72,48 @@ export default function CvPage() {
         </section>
 
         <section className="mt-8">
-          <h2 className="font-display text-xl font-bold text-[#6b5a2a]">Projets clés</h2>
+          <h2 className="font-display text-xl">Formations</h2>
           <ul className="mt-4 space-y-3">
-            {PROJECTS.map((p) => (
-              <li key={p.id} className="min-w-0 text-sm">
-                <span className="font-semibold">{p.name}</span>
-                <span className="block text-[#8a7350] sm:inline sm:before:content-['_—_']">
-                  {p.stack}
-                </span>
-                <p className="text-[#3a4558]">{p.blurb}</p>
+            {formations.map((f) => (
+              <li key={f.title}>
+                <p className="font-semibold">{f.title}</p>
+                <p className="text-sm text-[#7a6854]">
+                  {f.period}
+                  {f.school ? ` · ${f.school}` : ""}
+                  {f.detail ? ` · ${f.detail}` : ""}
+                </p>
               </li>
             ))}
           </ul>
         </section>
 
         <section className="mt-8">
-          <h2 className="font-display text-xl font-bold text-[#6b5a2a]">Compétences</h2>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {SKILL_CLUSTERS.map((c) => (
-              <div key={c.id} className="min-w-0">
-                <p className="text-sm font-semibold">{c.title}</p>
-                <p className="text-sm leading-relaxed text-[#3a4558]">{c.items.join(", ")}</p>
+          <h2 className="font-display text-xl">Compétences</h2>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            {competences.clusters.map((c) => (
+              <div key={c.id}>
+                <p className="font-semibold">{c.title}</p>
+                <p className="text-sm text-[#4a3e32]">{c.items.join(" · ")}</p>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="mt-8">
-          <h2 className="font-display text-xl font-bold text-[#6b5a2a]">Formation</h2>
-          <ul className="mt-3 space-y-3">
-            {FORMATION.map((f) => (
-              <li key={f.title} className="min-w-0 text-sm">
-                <span className="font-mono text-xs text-[#8a7350]">{f.period}</span>
-                <p className="font-semibold">{f.title}</p>
-                {(f.school || f.detail) && (
-                  <p className="text-[#5a6478]">{[f.school, f.detail].filter(Boolean).join(" · ")}</p>
-                )}
+        <section className="mt-8 mb-12">
+          <h2 className="font-display text-xl">Projets</h2>
+          <ul className="mt-4 space-y-3">
+            {projets.map((p) => (
+              <li key={p.id}>
+                <p className="font-semibold">
+                  {p.name} <span className="text-sm font-normal text-[#7a6854]">· {p.tag}</span>
+                </p>
+                <p className="text-sm text-[#4a3e32]">
+                  {p.blurb} <span className="text-[#7a6854]">({p.stack})</span>
+                </p>
               </li>
             ))}
           </ul>
         </section>
-
-        <footer className="mt-10 border-t border-black/10 pt-4 text-xs leading-relaxed text-[#5a6478]">
-          Document généré pour le portfolio Atelier Mécanique Digitale — auto-entreprise · missions
-          freelance. Contact : {PROFILE.email}
-        </footer>
       </article>
     </div>
   );

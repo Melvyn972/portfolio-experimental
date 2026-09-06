@@ -1,0 +1,34 @@
+{
+  "clusters": [
+    {
+      "id": "front",
+      "title": "Front",
+      "items": ["HTML/CSS", "JS/TS", "React", "Vue", "Vite", "Tailwind", "TanStack", "Twig"]
+    },
+    {
+      "id": "back",
+      "title": "Back",
+      "items": ["PHP", "Symfony", "Express", "Nest", "API Platform", "Doctrine", "JWT", "REST"]
+    },
+    {
+      "id": "data",
+      "title": "Data",
+      "items": ["MySQL", "SQLite", "Redis", "Supabase", "Neon"]
+    },
+    {
+      "id": "outils",
+      "title": "Outils",
+      "items": ["Figma", "DataGrip", "Power BI", "GitHub", "Docker"]
+    },
+    {
+      "id": "infra",
+      "title": "Infra",
+      "items": ["O2switch/cPanel", "CORS", "VLAN", "Fibre/4G/5G", "TPE/caisses"]
+    },
+    {
+      "id": "pilotage",
+      "title": "Pilotage",
+      "items": ["Support IT", "Budget IT", "Multisite", "SEO/CMS", "Ads", "Search Console"]
+    }
+  ]
+}

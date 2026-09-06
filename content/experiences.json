@@ -1,0 +1,33 @@
+[
+  {
+    "period": "2024 → 2027",
+    "role": "Développeur Web & Chargé de Missions Informatique",
+    "company": "Passion Beauté",
+    "detail": "Alternance · ~100 magasins · Fontenay-sous-Bois",
+    "highlights": [
+      "E-ResaPB & VDAPB — Symfony, API Platform, React, MySQL, Redis",
+      "Pilotage budget IT & support TeamViewer multisite",
+      "Migration Free Pro B2B sur 12 PDV (−66 %, ~19 000 €/an)"
+    ]
+  },
+  {
+    "period": "2023 → 2024",
+    "role": "Développeur PHP",
+    "company": "Prisma Media",
+    "detail": "Alternance",
+    "highlights": [
+      "Développement PHP sur l’écosystème média",
+      "Intégration et maintenance d’applications métier"
+    ]
+  },
+  {
+    "period": "2022 → 2023",
+    "role": "Webmaster",
+    "company": "Search Artisan",
+    "detail": "Alternance · WP / Webflow / Wix / Duda",
+    "highlights": [
+      "Création et optimisation de sites vitrines",
+      "SEO Ads & Google Search Console"
+    ]
+  }
+]

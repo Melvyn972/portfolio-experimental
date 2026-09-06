@@ -1,0 +1,21 @@
+{
+  "email": "melvyn.thierrybellefond@gmail.com",
+  "networks": {
+    "github": {
+      "label": "GitHub",
+      "url": "https://github.com/Melvyn972",
+      "handle": "Melvyn972"
+    },
+    "linkedin": {
+      "label": "LinkedIn",
+      "url": "https://www.linkedin.com/in/melvyn-thierry-bellefond-9b135520b/"
+    },
+    "codeur": {
+      "label": "Codeur.com",
+      "url": "https://www.codeur.com/-melvyntiyf5"
+    }
+  },
+  "site": "https://melvynthierrybellefond.xyz/",
+  "cvPdf": "/cv-melvyn-thierry-bellefond.pdf",
+  "notes": "Pas de SIRET ni de téléphone sur l’interface publique."
+}

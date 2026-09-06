@@ -1,0 +1,59 @@
+{
+  "slice": {
+    "id": "cote-belvedere",
+    "name": "Côte Melvyn — Belvédère",
+    "lengthMeters": 200,
+    "description": "Vertical slice jouable : route côtière, mer, belvédère d’identité."
+  },
+  "zones": [
+    {
+      "id": "route",
+      "name": "La Route",
+      "status": "playable",
+      "role": "Conduite cinématique le long de la côte",
+      "marker": { "x": 0, "y": 0, "z": 0 }
+    },
+    {
+      "id": "belvedere",
+      "name": "Le Belvédère",
+      "status": "playable",
+      "role": "Interaction d’identité — carnet de cuivre et verre",
+      "marker": { "x": -2, "y": 1.2, "z": -85 }
+    },
+    {
+      "id": "maison-atelier",
+      "name": "Maison / Atelier",
+      "status": "scaffold",
+      "role": "Futur hub parcours & expérience terrain",
+      "marker": { "x": 18, "y": 2, "z": -40 }
+    },
+    {
+      "id": "studio",
+      "name": "Le Studio",
+      "status": "scaffold",
+      "role": "Mini-expériences projets",
+      "marker": { "x": 22, "y": 2, "z": -120 }
+    },
+    {
+      "id": "plage",
+      "name": "La Plage",
+      "status": "scaffold",
+      "role": "Zone contemplative / passions",
+      "marker": { "x": -28, "y": 0.2, "z": -60 }
+    },
+    {
+      "id": "phare",
+      "name": "Le Phare",
+      "status": "scaffold",
+      "role": "CV & contact",
+      "marker": { "x": -12, "y": 4, "z": -160 }
+    },
+    {
+      "id": "wow",
+      "name": "WOW Overlook",
+      "status": "scaffold",
+      "role": "Séquence panoramique finale",
+      "marker": { "x": 8, "y": 8, "z": -180 }
+    }
+  ]
+}

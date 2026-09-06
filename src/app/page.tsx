@@ -1,5 +1,5 @@
-import { PortfolioApp } from "@/components/PortfolioApp";
+import { CoteMelvynApp } from "@/components/CoteMelvynApp";
 
 export default function HomePage() {
-  return <PortfolioApp />;
+  return <CoteMelvynApp />;
 }

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "auto",
+    "title": "Automobile",
+    "beat": "Comprendre un châssis, c’est comprendre un système.",
+    "craft": "Diagnostic, écoute des signaux faibles, optimisation sous contrainte."
+  },
+  {
+    "id": "moto",
+    "title": "Moto",
+    "beat": "Équilibre, réaction, précision du geste.",
+    "craft": "Décisions rapides, feedback immédiat — comme en prod."
+  },
+  {
+    "id": "horlogerie",
+    "title": "Horlogerie",
+    "beat": "Chaque pièce a une tolérance. L’ensemble doit tenir le temps.",
+    "craft": "Architecture propre, assemblage soigné, zéro jeu inutile."
+  },
+  {
+    "id": "jeux",
+    "title": "Jeux vidéo",
+    "beat": "Systèmes, boucles, UX — un jeu est une app sous pression.",
+    "craft": "Perf, feedback, parcours utilisateur pensés pour l’engagement."
+  },
+  {
+    "id": "pc",
+    "title": "Ordinateurs",
+    "beat": "Monter, flasher, tuner — le hardware comme terrain de jeu.",
+    "craft": "Infra locale, builds custom, culture du « faire soi-même »."
+  }
+]

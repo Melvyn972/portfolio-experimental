@@ -1,18 +1,10 @@
-# Licences des assets 3D
+# Licences & crédits — Côte Melvyn
 
-## Kenney.nl (CC0 1.0 Universal)
-Packs utilisés (extraits) :
-- Factory Kit 3.0
-- Car Kit
-- Furniture Kit
-- City Kit Industrial 2.0
-- Racing Kit
+## Prototype actuel
+L’environnement méditerranéen, la route, le cabriolet, le belvédère et l’interaction d’identité sont des géométries procédurales art-dirigées créées pour ce dépôt (pas de modèles tiers requis au runtime pour la vertical slice).
 
-Licence : https://creativecommons.org/publicdomain/zero/1.0/
-Site : https://kenney.nl
+## Audio
+Ambiance générée procéduralement via Web Audio API (vagues, vent, oiseaux, moteur, pneus) — aucun sample tiers embarqué.
 
-## Poly Haven — workshop HDRI 1K (CC0)
-https://polyhaven.com/a/workshop
-Licence : https://polyhaven.com/license
-
-Les fichiers sont embarqués dans ce dépôt sous `/public/models` et `/public/hdri`.
+## Historique (assets abandonnés de l’ancien Atelier)
+Les packs Kenney / Poly Haven de l’ancien concept « Atelier Mécanique Digitale » ne sont plus utilisés dans l’expérience Côte Melvyn. S’ils restent physiquement dans `/public`, ils sont legacy et peuvent être retirés.

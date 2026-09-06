@@ -1,6 +1,6 @@
 {
-  "name": "atelier-mecanique-digitale",
-  "version": "1.0.0",
+  "name": "cote-melvyn",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -13,7 +13,6 @@
     "@react-three/fiber": "^9.4.2",
     "@react-three/postprocessing": "^3.0.4",
     "gsap": "^3.13.0",
-    "meshoptimizer": "^1.2.0",
     "next": "^15.5.4",
     "postprocessing": "^6.39.4",
     "react": "^19.1.1",
