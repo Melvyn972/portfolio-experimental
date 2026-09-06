@@ -8,8 +8,12 @@ export const TERRAIN_MAX_X = 70;
 export const TERRAIN_MIN_Z = -185;
 export const TERRAIN_MAX_Z = 75;
 
-/** How far from the centerline every terrain vertex must stay below the ribbon. */
-const VISUAL_TRENCH = ROAD_WIDTH * 0.5 + 3.6;
+/** Visual trench — wider than the ribbon so interpolated faces cannot climb back onto asphalt. */
+const VISUAL_TRENCH = ROAD_WIDTH * 0.5 + 5.2;
+/** Drop visual sand this far under the curve (iPhone depth buffer still z-fights at 0.5 m). */
+const TRENCH_DROP = 2.4;
+/** Delete terrain triangles whose probe is closer than this to the centerline. */
+export const ROAD_CUT_MARGIN = ROAD_WIDTH * 0.5 + 2.35;
 
 function scenicHeight(x: number, z: number): { y: number; roadDist: number; roadY: number } {
   const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 160);
@@ -76,16 +80,28 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
   return { y, roadDist, roadY };
 }
 
+export function roadClearance(x: number, z: number) {
+  const { y, roadDist, roadY } = scenicHeight(x, z);
+  return { y, roadDist, roadY };
+}
+
 /**
- * Visual terrain — always carved under the asphalt so interpolated faces
- * cannot slice through the ribbon (iPhone z-fight).
+ * Visual terrain — always carved well under the asphalt. Remaining faces
+ * inside ROAD_CUT_MARGIN are deleted in Terrain.tsx so iPhone cannot z-fight.
  */
 export function computeTerrainHeight(x: number, z: number): number {
   const { y, roadDist, roadY } = scenicHeight(x, z);
   if (roadDist < VISUAL_TRENCH) {
-    return Math.min(y, roadY - 0.5);
+    return Math.min(y, roadY - TRENCH_DROP);
   }
   return y;
+}
+
+/** True when a probe sits on / across the driving ribbon (used to cut triangles). */
+export function isRoadCutProbe(x: number, z: number): boolean {
+  const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 160);
+  const roadDist = Math.min(Math.abs(sample.lateral), sample.dist);
+  return roadDist < ROAD_CUT_MARGIN;
 }
 
 /**

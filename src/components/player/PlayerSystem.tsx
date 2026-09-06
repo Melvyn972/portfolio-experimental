@@ -346,10 +346,13 @@ export function PlayerSystem() {
     inputRef.lookDelta.x = 0;
     inputRef.lookDelta.y = 0;
     const analogLook = !blocked && (Math.abs(look.x) > 0.06 || Math.abs(look.y) > 0.06);
-    // Fixed signs — never remapped mid-session. Right = look right, up = look up.
+    // Frozen signs for the whole session. Never remap, never mix analog + mouse.
+    // look.x > 0 → yaw right. look.y > 0 → pitch up. Movement uses lookYaw only.
+    const LOOK_YAW_RATE = 2.05;
+    const LOOK_PITCH_RATE = 1.1;
     if (analogLook) {
-      lookYaw.current += look.x * 2.05 * dt;
-      lookPitch.current = THREE.MathUtils.clamp(lookPitch.current + look.y * 1.1 * dt, -0.22, 0.38);
+      lookYaw.current += look.x * LOOK_YAW_RATE * dt;
+      lookPitch.current = THREE.MathUtils.clamp(lookPitch.current + look.y * LOOK_PITCH_RATE * dt, -0.22, 0.38);
     } else if (!blocked && (mouseX || mouseY)) {
       lookYaw.current += mouseX;
       lookPitch.current = THREE.MathUtils.clamp(lookPitch.current + mouseY, -0.22, 0.38);

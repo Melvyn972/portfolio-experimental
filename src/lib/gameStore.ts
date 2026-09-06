@@ -1,3 +1,7 @@
+import * as THREE from "three";
+import { computeTerrainHeight, sampleGroundHeight } from "@/lib/ground";
+import { nearestRoadSample, ROAD_SURFACE_LIFT } from "@/lib/road";
+
 export type GamePhase = "boot" | "intro" | "playing";
 export type ControlMode = "driving" | "walking";
 export type QualityPreset = "auto" | "high" | "eco";
@@ -164,6 +168,13 @@ if (typeof window !== "undefined") {
       setState: typeof setGameState;
       teleportBelvedere: () => void;
       teleportWalk: (x: number, y: number, z: number, yaw?: number) => void;
+      sampleHeights: (x: number, z: number) => {
+        visual: number;
+        walk: number;
+        roadY: number;
+        liftRoad: number;
+        roadDist: number;
+      };
     };
   }).__coteMelvyn = {
     getState: getGameState,
@@ -173,6 +184,16 @@ if (typeof window !== "undefined") {
     },
     teleportWalk: (x, y, z, yaw) => {
       window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: { x, y, z, yaw } }));
+    },
+    sampleHeights: (x: number, z: number) => {
+      const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 160);
+      return {
+        visual: computeTerrainHeight(x, z),
+        walk: sampleGroundHeight(x, z),
+        roadY: sample.position.y,
+        liftRoad: sample.position.y + ROAD_SURFACE_LIFT,
+        roadDist: Math.min(Math.abs(sample.lateral), sample.dist),
+      };
     },
   };
 }

@@ -45,10 +45,16 @@ export function ExperienceCanvas() {
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 768px), (pointer: coarse)");
+    let locked = false;
     const apply = () => {
-      const mobile = mq.matches;
-      setIsMobile(mobile);
-      setGameState({ isMobile: mobile });
+      // iOS Safari chrome hide/show must not flip desktop/mobile mid-session
+      // (that remounts sticks and feels like an invert).
+      if (locked) return;
+      if (mq.matches) {
+        locked = true;
+        setIsMobile(true);
+        setGameState({ isMobile: true });
+      }
     };
     apply();
     mq.addEventListener("change", apply);

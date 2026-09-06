@@ -12,7 +12,7 @@ import type { QualitySettings } from "@/lib/quality";
 import { useMemo } from "react";
 import * as THREE from "three";
 import { getRoadCurve } from "@/lib/road";
-import { computeTerrainHeight } from "@/lib/ground";
+import { sampleGroundHeight } from "@/lib/ground";
 
 /** Rounded coastal boulders — not dodecahedron shards, not uncentered GLBs. */
 function ShoreRocks({ count }: { count: number }) {
@@ -27,7 +27,7 @@ function ShoreRocks({ count }: { count: number }) {
       const pos = p.clone().addScaledVector(side, -11.4 - (i % 2) * 0.45);
       pos.x = Math.max(pos.x, -9.2);
       return {
-        position: [pos.x, computeTerrainHeight(pos.x, pos.z) + 0.32, pos.z] as [number, number, number],
+        position: [pos.x, sampleGroundHeight(pos.x, pos.z) + 0.32, pos.z] as [number, number, number],
         scale: [1.1 + (i % 3) * 0.15, 0.55 + (i % 2) * 0.08, 0.95 + (i % 3) * 0.12] as [number, number, number],
         rot: i * 0.7,
         color: i % 2 === 0 ? "#c2b49a" : "#b4a488",

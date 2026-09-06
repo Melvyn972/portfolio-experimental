@@ -4,10 +4,32 @@ import { useMemo } from "react";
 import * as THREE from "three";
 import { getRoadCurve, ROAD_SURFACE_LIFT, ROAD_WIDTH } from "@/lib/road";
 
-function buildRoadGeometry() {
+const ROAD_HALF = ROAD_WIDTH / 2 + 0.2;
+const SLAB_DEPTH = 1.45;
+
+function makeAsphaltTexture() {
+  const s = 64;
+  const data = new Uint8Array(s * s * 4);
+  for (let y = 0; y < s; y++) {
+    for (let x = 0; x < s; x++) {
+      const i = (y * s + x) * 4;
+      const n = 36 + ((x * 13 + y * 7) % 17);
+      data[i] = n;
+      data[i + 1] = n;
+      data[i + 2] = n - 3;
+      data[i + 3] = 255;
+    }
+  }
+  const tex = new THREE.DataTexture(data, s, s);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.needsUpdate = true;
+  return tex;
+}
+
+function buildRoadPrism() {
   const curve = getRoadCurve();
   const frames = curve.computeFrenetFrames(96, false);
-  const half = ROAD_WIDTH / 2;
   const positions: number[] = [];
   const uvs: number[] = [];
   const indices: number[] = [];
@@ -16,17 +38,36 @@ function buildRoadGeometry() {
     const t = i / 96;
     const p = curve.getPointAt(t);
     const side = new THREE.Vector3(-frames.tangents[i].z, 0, frames.tangents[i].x).normalize();
-    const left = p.clone().addScaledVector(side, -half);
-    const right = p.clone().addScaledVector(side, half);
-    left.y = p.y + ROAD_SURFACE_LIFT;
-    right.y = p.y + ROAD_SURFACE_LIFT;
-    positions.push(left.x, left.y, left.z, right.x, right.y, right.z);
-    uvs.push(0, t * 32, 1, t * 32);
+    const left = p.clone().addScaledVector(side, -ROAD_HALF);
+    const right = p.clone().addScaledVector(side, ROAD_HALF);
+    const yTop = p.y + ROAD_SURFACE_LIFT;
+    const yBot = yTop - SLAB_DEPTH;
+    // 0 LT, 1 RT, 2 LB, 3 RB
+    positions.push(
+      left.x, yTop, left.z,
+      right.x, yTop, right.z,
+      left.x, yBot, left.z,
+      right.x, yBot, right.z,
+    );
+    uvs.push(0, t * 28, 1, t * 28, 0, t * 28, 1, t * 28);
     if (i < 96) {
-      const a = i * 2;
-      indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+      const a = i * 4;
+      const b = a + 4;
+      // top
+      indices.push(a, a + 1, b, a + 1, b + 1, b);
+      // bottom
+      indices.push(a + 2, b + 2, a + 3, a + 3, b + 2, b + 3);
+      // left wall
+      indices.push(a, b, a + 2, b, b + 2, a + 2);
+      // right wall
+      indices.push(a + 1, a + 3, b + 1, b + 1, a + 3, b + 3);
     }
   }
+
+  // end caps
+  const last = 96 * 4;
+  indices.push(0, 2, 1, 1, 2, 3);
+  indices.push(last, last + 1, last + 2, last + 1, last + 3, last + 2);
 
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
@@ -41,16 +82,16 @@ function Shoulder({ side }: { side: 1 | -1 }) {
     const curve = getRoadCurve();
     const positions: number[] = [];
     const indices: number[] = [];
-    const half = ROAD_WIDTH / 2;
+    const innerW = ROAD_HALF + 0.08;
     for (let i = 0; i <= 80; i++) {
       const t = i / 80;
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const lateral = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-      const inner = p.clone().addScaledVector(lateral, side * (half + 0.12));
-      const outer = p.clone().addScaledVector(lateral, side * (half + 3.2));
-      inner.y = p.y + ROAD_SURFACE_LIFT - 0.06;
-      outer.y = p.y - 0.22;
+      const inner = p.clone().addScaledVector(lateral, side * innerW);
+      const outer = p.clone().addScaledVector(lateral, side * (innerW + 2.8));
+      inner.y = p.y + ROAD_SURFACE_LIFT - 0.08;
+      outer.y = p.y - 0.35;
       positions.push(inner.x, inner.y, inner.z, outer.x, outer.y, outer.z);
       if (i < 80) {
         const a = i * 2;
@@ -67,59 +108,26 @@ function Shoulder({ side }: { side: 1 | -1 }) {
 
   return (
     <mesh geometry={geo} receiveShadow>
-      <meshStandardMaterial color="#6e685c" roughness={0.96} />
+      <meshStandardMaterial color="#6a6458" roughness={0.96} />
     </mesh>
   );
 }
 
-function buildRoadSlab() {
-  const curve = getRoadCurve();
-  const frames = curve.computeFrenetFrames(64, false);
-  const half = ROAD_WIDTH / 2;
-  const positions: number[] = [];
-  const indices: number[] = [];
-  const depth = 0.22;
-  for (let i = 0; i <= 64; i++) {
-    const t = i / 64;
-    const p = curve.getPointAt(t);
-    const side = new THREE.Vector3(-frames.tangents[i].z, 0, frames.tangents[i].x).normalize();
-    const left = p.clone().addScaledVector(side, -half);
-    const right = p.clone().addScaledVector(side, half);
-    const yTop = p.y + ROAD_SURFACE_LIFT;
-    const yBot = yTop - depth;
-    positions.push(left.x, yTop, left.z, right.x, yTop, right.z, left.x, yBot, left.z, right.x, yBot, right.z);
-    if (i < 64) {
-      const a = i * 4;
-      const b = a + 4;
-      // sides so a thin ribbon never lets sand show through
-      indices.push(a, b, a + 2, b, b + 2, a + 2);
-      indices.push(a + 1, a + 3, b + 1, b + 1, a + 3, b + 3);
-    }
-  }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-  geo.setIndex(indices);
-  geo.computeVertexNormals();
-  return geo;
-}
-
 export function Road() {
-  const geo = useMemo(() => buildRoadGeometry(), []);
-  const slab = useMemo(() => buildRoadSlab(), []);
+  const prism = useMemo(() => buildRoadPrism(), []);
+  const asphalt = useMemo(() => makeAsphaltTexture(), []);
 
   return (
     <group>
-      <mesh geometry={slab} renderOrder={1}>
-        <meshStandardMaterial color="#1f1f1d" roughness={1} />
-      </mesh>
-      <mesh geometry={geo} receiveShadow castShadow renderOrder={2}>
+      <mesh geometry={prism} receiveShadow castShadow renderOrder={2}>
         <meshStandardMaterial
-          color="#2c2c2a"
-          roughness={0.88}
-          metalness={0.06}
+          color="#2a2a28"
+          map={asphalt}
+          roughness={0.9}
+          metalness={0.04}
           polygonOffset
-          polygonOffsetFactor={-2}
-          polygonOffsetUnits={-2}
+          polygonOffsetFactor={-3}
+          polygonOffsetUnits={-3}
         />
       </mesh>
       <RoadMarkings />
@@ -133,7 +141,7 @@ export function Road() {
 function RoadEdgeLines() {
   const edges = useMemo(() => {
     const curve = getRoadCurve();
-    const half = ROAD_WIDTH / 2 - 0.22;
+    const half = ROAD_WIDTH / 2 - 0.28;
     return [1, -1].flatMap((side) =>
       Array.from({ length: 52 }, (_, i) => {
         const t = (i + 0.5) / 52;
@@ -142,7 +150,7 @@ function RoadEdgeLines() {
         const lateral = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
         const pos = p.clone().addScaledVector(lateral, side * half);
         return {
-          position: [pos.x, p.y + ROAD_SURFACE_LIFT + 0.012, pos.z] as [number, number, number],
+          position: [pos.x, p.y + ROAD_SURFACE_LIFT + 0.014, pos.z] as [number, number, number],
           yaw: Math.atan2(tangent.x, tangent.z),
         };
       }),
@@ -153,8 +161,8 @@ function RoadEdgeLines() {
     <group>
       {edges.map((m, i) => (
         <mesh key={i} position={m.position} rotation={[0, m.yaw, 0]} receiveShadow renderOrder={3}>
-          <boxGeometry args={[0.11, 0.01, 3.4]} />
-          <meshStandardMaterial color="#e6deca" roughness={0.7} polygonOffset polygonOffsetFactor={-3} />
+          <boxGeometry args={[0.11, 0.012, 3.4]} />
+          <meshStandardMaterial color="#e6deca" roughness={0.7} polygonOffset polygonOffsetFactor={-4} />
         </mesh>
       ))}
     </group>
@@ -169,7 +177,7 @@ function RoadMarkings() {
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const yaw = Math.atan2(tangent.x, tangent.z);
-      return { position: [p.x, p.y + ROAD_SURFACE_LIFT + 0.01, p.z] as [number, number, number], yaw };
+      return { position: [p.x, p.y + ROAD_SURFACE_LIFT + 0.012, p.z] as [number, number, number], yaw };
     });
   }, []);
 
@@ -177,8 +185,8 @@ function RoadMarkings() {
     <group>
       {marks.map((m, i) => (
         <mesh key={i} position={m.position} rotation={[0, m.yaw, 0]} receiveShadow renderOrder={3}>
-          <boxGeometry args={[0.16, 0.01, 1.85]} />
-          <meshStandardMaterial color="#efe6d0" roughness={0.68} polygonOffset polygonOffsetFactor={-3} />
+          <boxGeometry args={[0.16, 0.012, 1.85]} />
+          <meshStandardMaterial color="#efe6d0" roughness={0.68} polygonOffset polygonOffsetFactor={-4} />
         </mesh>
       ))}
     </group>

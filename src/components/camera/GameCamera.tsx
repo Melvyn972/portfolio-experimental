@@ -113,6 +113,8 @@ export function GameCamera() {
 
     dist.current = THREE.MathUtils.lerp(dist.current, targetDist, 1 - Math.exp(-3.2 * dt));
     offsetPos(_desired, _subject, yaw, pitch, dist.current, height, side);
+    // Hard rule: camera stays behind the look/car yaw. Obstacle pull must
+    // never flip in front — that reads as "controls inverted" mid-session.
 
     // Rapier ray obstacle avoidance — pull camera in + lift when blocked
     _dir.copy(_desired).sub(_subject);
@@ -136,15 +138,24 @@ export function GameCamera() {
       });
       if (hit && hit.timeOfImpact < fullLen - 0.25) {
         const hitY = _from.y + _rayDir.y * hit.timeOfImpact;
-        const groundHit = hitY < _subject.y - 0.2;
+        const groundHit = hitY < _subject.y - 0.2 || _rayDir.y < -0.32;
         if (groundHit) {
-          // Heightfield / road — lift, never pull into the cockpit
           _desired.y = Math.max(_desired.y, sampleGroundHeight(_desired.x, _desired.z) + (walking ? 1.9 : 2.2));
         } else {
-          const pull = Math.max(walking ? 2.6 : 4.6, hit.timeOfImpact - 0.55);
+          const pull = Math.max(walking ? 2.8 : 4.8, hit.timeOfImpact - 0.55);
           _desired.copy(_subject).addScaledVector(_dir, pull);
-          _desired.y += walking ? 1.15 : 0.7;
+          _desired.y += walking ? 1.05 : 0.65;
         }
+      }
+    }
+
+    {
+      const fwdX = Math.sin(yaw);
+      const fwdZ = Math.cos(yaw);
+      const toCamX = _desired.x - _subject.x;
+      const toCamZ = _desired.z - _subject.z;
+      if (toCamX * fwdX + toCamZ * fwdZ > 0.35) {
+        offsetPos(_desired, _subject, yaw, pitch, dist.current, height, side);
       }
     }
 

@@ -475,10 +475,15 @@ function TouchControls() {
 
   useEffect(() => {
     const mq = window.matchMedia("(pointer: coarse)");
+    let locked = false;
     const apply = () => {
+      // Safari URL-bar resize must not remount sticks (axis invert mid-session).
+      if (locked) return;
       const touch = mq.matches || window.innerWidth < 768;
-      setIsTouch(touch);
-      setGameState({ isMobile: touch });
+      if (!touch) return;
+      locked = true;
+      setIsTouch(true);
+      setGameState({ isMobile: true });
     };
     apply();
     mq.addEventListener("change", apply);
@@ -487,6 +492,15 @@ function TouchControls() {
       mq.removeEventListener("change", apply);
       window.removeEventListener("resize", apply);
     };
+  }, []);
+
+  useEffect(() => {
+    const blockScroll = (e: TouchEvent) => {
+      if (e.target instanceof HTMLElement && e.target.closest("button, a, select, input, textarea")) return;
+      e.preventDefault();
+    };
+    document.addEventListener("touchmove", blockScroll, { passive: false });
+    return () => document.removeEventListener("touchmove", blockScroll);
   }, []);
 
   useEffect(() => {
@@ -612,7 +626,8 @@ function VirtualStick({
       if (!el || !el.contains(e.target as Node)) return;
       if (gesture.current) return;
       e.preventDefault();
-      el.setPointerCapture(e.pointerId);
+      // Origin = this pointerdown. Never re-read getBoundingClientRect.
+      // No setPointerCapture — iOS Safari drops capture when chrome hides.
       gesture.current = { id: e.pointerId, ox: e.clientX, oy: e.clientY };
       apply(e.clientX, e.clientY);
     };
@@ -632,12 +647,17 @@ function VirtualStick({
     window.addEventListener("pointermove", move, { passive: false });
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", up);
+    window.addEventListener("lostpointercapture", up);
     window.addEventListener("blur", reset);
+    window.addEventListener("visibilitychange", () => {
+      if (document.hidden) reset();
+    });
     return () => {
       el.removeEventListener("pointerdown", down);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
+      window.removeEventListener("lostpointercapture", up);
       window.removeEventListener("blur", reset);
       reset();
     };

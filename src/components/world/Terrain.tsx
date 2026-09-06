@@ -2,11 +2,16 @@
 
 import { useMemo } from "react";
 import * as THREE from "three";
-import { computeTerrainHeight } from "@/lib/ground";
+import { computeTerrainHeight, isRoadCutProbe, ROAD_CUT_MARGIN, roadClearance } from "@/lib/ground";
 
+/**
+ * Coastal heightfield with a hard hole under the asphalt.
+ * Vertices in the corridor are dropped; triangles that still cross the ribbon
+ * are deleted so iPhone Metal cannot z-fight sand through the road.
+ */
 export function Terrain() {
   const land = useMemo(() => {
-    const geo = new THREE.PlaneGeometry(95, 260, 80, 120);
+    const geo = new THREE.PlaneGeometry(95, 260, 100, 160);
     geo.rotateX(-Math.PI / 2);
     const pos = geo.attributes.position as THREE.BufferAttribute;
     for (let i = 0; i < pos.count; i++) {
@@ -18,14 +23,14 @@ export function Terrain() {
 
     const colors = new Float32Array(pos.count * 3);
     const c = new THREE.Color();
+    const dist = new Float32Array(pos.count);
 
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i);
       const z = pos.getZ(i);
-      const y = computeTerrainHeight(x, z);
-
-      pos.setY(i, y);
-
+      const { y, roadDist } = roadClearance(x, z);
+      pos.setY(i, computeTerrainHeight(x, z));
+      dist[i] = roadDist;
       if (x < -8) c.set("#e8dcc4");
       else if (y > 4.5) c.set("#c4b49e");
       else if (y > 2.2) c.set("#cfc0a8");
@@ -37,6 +42,12 @@ export function Terrain() {
         c.offsetHSL(0, -0.05, Math.sin(x * 2.1 + z * 1.7) * 0.04);
       }
 
+      // Near the ribbon: never paint beige — leftover slivers read as soil, not sand.
+      if (roadDist < ROAD_CUT_MARGIN + 3.2) {
+        c.set("#5a5448");
+        c.offsetHSL(0, 0, (Math.sin(x * 3.1 + z * 2.4) * 0.03));
+      }
+
       colors[i * 3] = c.r;
       colors[i * 3 + 1] = c.g;
       colors[i * 3 + 2] = c.b;
@@ -44,6 +55,7 @@ export function Terrain() {
 
     pos.needsUpdate = true;
     geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    cutRoadTriangles(geo, dist);
     geo.computeVertexNormals();
     return geo;
   }, []);
@@ -57,10 +69,47 @@ export function Terrain() {
           metalness={0}
           flatShading={false}
           polygonOffset
-          polygonOffsetFactor={2}
-          polygonOffsetUnits={2}
+          polygonOffsetFactor={4}
+          polygonOffsetUnits={4}
         />
       </mesh>
     </group>
   );
+}
+
+function cutRoadTriangles(geo: THREE.BufferGeometry, dist: Float32Array) {
+  const index = geo.index;
+  const pos = geo.attributes.position as THREE.BufferAttribute;
+  if (!index) return;
+
+  const kept: number[] = [];
+  const ax = new THREE.Vector3();
+  const bx = new THREE.Vector3();
+  const cx = new THREE.Vector3();
+
+  for (let i = 0; i < index.count; i += 3) {
+    const a = index.getX(i);
+    const b = index.getX(i + 1);
+    const c = index.getX(i + 2);
+    const minD = Math.min(dist[a], dist[b], dist[c]);
+    if (minD < ROAD_CUT_MARGIN) continue;
+    if (minD > ROAD_CUT_MARGIN + 10) {
+      kept.push(a, b, c);
+      continue;
+    }
+
+    ax.set(pos.getX(a), 0, pos.getZ(a));
+    bx.set(pos.getX(b), 0, pos.getZ(b));
+    cx.set(pos.getX(c), 0, pos.getZ(c));
+    const mx = (ax.x + bx.x + cx.x) / 3;
+    const mz = (ax.z + bx.z + cx.z) / 3;
+    if (isRoadCutProbe(mx, mz)) continue;
+    if (isRoadCutProbe((ax.x + bx.x) * 0.5, (ax.z + bx.z) * 0.5)) continue;
+    if (isRoadCutProbe((bx.x + cx.x) * 0.5, (bx.z + cx.z) * 0.5)) continue;
+    if (isRoadCutProbe((cx.x + ax.x) * 0.5, (cx.z + ax.z) * 0.5)) continue;
+
+    kept.push(a, b, c);
+  }
+
+  geo.setIndex(kept);
 }

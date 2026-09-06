@@ -6,7 +6,6 @@ import * as THREE from "three";
 import { content } from "@/lib/content";
 import { getBelvedereWorldAnchor, getRoadCurve, ROAD_SURFACE_LIFT, ROAD_WIDTH } from "@/lib/road";
 import {
-  computeTerrainHeight,
   sampleGroundHeight,
   TERRAIN_MAX_X,
   TERRAIN_MAX_Z,
@@ -217,11 +216,11 @@ function buildWalkPaths() {
   });
 
   // Beach access near plage marker (−11, −95)
-  boxes.push({ pos: [-12, computeTerrainHeight(-12, -95) + 0.06, -95], yaw: 0.15, half: [8.5, 0.1, 7] });
+  boxes.push({ pos: [-12, sampleGroundHeight(-12, -95) + 0.06, -95], yaw: 0.15, half: [8.5, 0.1, 7] });
   // Maison plaza (in front of the building, +Z)
-  boxes.push({ pos: [16, computeTerrainHeight(16, -37) + 0.06, -37], yaw: 0, half: [6, 0.1, 5] });
+  boxes.push({ pos: [16, sampleGroundHeight(16, -37) + 0.06, -37], yaw: 0, half: [6, 0.1, 5] });
   // Studio plaza
-  boxes.push({ pos: [18, computeTerrainHeight(18, -113) + 0.06, -113], yaw: 0, half: [5, 0.1, 5] });
+  boxes.push({ pos: [18, sampleGroundHeight(18, -113) + 0.06, -113], yaw: 0, half: [5, 0.1, 5] });
   return boxes;
 }
 

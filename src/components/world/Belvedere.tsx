@@ -22,7 +22,7 @@ export function Belvedere() {
   return (
     <group>
       <group position={[terrace.x, 0, terrace.z]} rotation={[0, yaw, 0]}>
-        {/* Deck */}
+        {/* Deck + plinth */}
         <mesh position={[0, 0.92, 0.2]} receiveShadow castShadow>
           <boxGeometry args={[8.4, 0.26, 7.2]} />
           <meshStandardMaterial color={STONE} roughness={0.9} />
@@ -31,8 +31,20 @@ export function Belvedere() {
           <boxGeometry args={[9.0, 0.16, 7.8]} />
           <meshStandardMaterial color={STONE_DARK} roughness={0.94} />
         </mesh>
+        <mesh position={[0, 0.64, 0.2]} receiveShadow>
+          <boxGeometry args={[9.4, 0.12, 8.2]} />
+          <meshStandardMaterial color="#9a8c70" roughness={0.96} />
+        </mesh>
+        {[-2.4, 0, 2.4].map((x) =>
+          [-1.8, 0.2, 2.2].map((z) => (
+            <mesh key={`tile-${x}-${z}`} position={[x, 1.06, z]} receiveShadow>
+              <boxGeometry args={[2.2, 0.04, 1.7]} />
+              <meshStandardMaterial color={STONE_DARK} roughness={0.92} />
+            </mesh>
+          )),
+        )}
 
-        {/* Sea parapet (−Z) */}
+        {/* Sea parapet (−Z) + corner posts */}
         <mesh position={[0, 1.42, -3.35]} castShadow receiveShadow>
           <boxGeometry args={[8.2, 0.72, 0.38]} />
           <meshStandardMaterial color={LIME} roughness={0.88} />
@@ -45,6 +57,17 @@ export function Belvedere() {
           <boxGeometry args={[0.38, 0.72, 4.6]} />
           <meshStandardMaterial color={LIME} roughness={0.88} />
         </mesh>
+        {[
+          [-4.05, -3.35],
+          [4.05, -3.35],
+          [-4.05, 2.4],
+          [4.05, 1.1],
+        ].map(([x, z], i) => (
+          <mesh key={`cap-${i}`} position={[x, 1.88, z]} castShadow>
+            <boxGeometry args={[0.5, 0.22, 0.5]} />
+            <meshStandardMaterial color="#c9b896" roughness={0.82} />
+          </mesh>
+        ))}
 
         {/* Shelter — four posts + terracotta roof */}
         {[
@@ -54,24 +77,34 @@ export function Belvedere() {
           [2.6, 0.6],
         ].map(([x, z], i) => (
           <mesh key={`post-${i}`} position={[x, 2.45, z]} castShadow>
-            <boxGeometry args={[0.26, 1.55, 0.26]} />
+            <boxGeometry args={[0.28, 1.55, 0.28]} />
             <meshStandardMaterial color="#7a6a52" roughness={0.78} />
           </mesh>
         ))}
         <mesh position={[0, 3.28, -0.5]} rotation={[0.08, 0, 0]} castShadow receiveShadow>
-          <boxGeometry args={[6.2, 0.14, 3.8]} />
+          <boxGeometry args={[6.2, 0.16, 3.8]} />
           <meshStandardMaterial color="#c45c3e" roughness={0.7} />
+        </mesh>
+        <mesh position={[0, 3.42, -0.65]} rotation={[0.08, 0, 0]} castShadow>
+          <boxGeometry args={[6.5, 0.08, 4.05]} />
+          <meshStandardMaterial color="#a44c32" roughness={0.68} />
         </mesh>
         <mesh position={[0, 3.18, 1.2]} castShadow>
           <boxGeometry args={[6.4, 0.1, 0.28]} />
           <meshStandardMaterial color="#a44c32" roughness={0.68} />
         </mesh>
 
-        {/* Stairs toward the road (+Z) */}
+        {/* Stairs toward the road (+Z) + cheek walls */}
         {[0, 1, 2, 3, 4].map((i) => (
           <mesh key={i} position={[0, 0.18 + i * 0.16, 3.55 + i * 0.55]} receiveShadow castShadow>
             <boxGeometry args={[2.6, 0.16, 0.58]} />
             <meshStandardMaterial color={i % 2 ? STONE : STONE_DARK} roughness={0.92} />
+          </mesh>
+        ))}
+        {[1, -1].map((side) => (
+          <mesh key={`cheek-${side}`} position={[side * 1.45, 0.7, 4.7]} receiveShadow castShadow>
+            <boxGeometry args={[0.22, 0.85, 2.8]} />
+            <meshStandardMaterial color={LIME} roughness={0.9} />
           </mesh>
         ))}
 
