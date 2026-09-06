@@ -24,12 +24,14 @@ export function Belvedere() {
   }, [scene]);
 
   return (
-    <group position={[terrace.x, 0, terrace.z]} rotation={[0, yaw, 0]}>
-      <primitive object={structure} />
-      <BelvedereBench position={[2.2, 0.96, 2.0]} />
-      <BougainvilleaCluster />
-      <IdentityCarnetModel position={[0, 0.96, -0.55]} />
-      <StopMarker position={[7.8, 0.02, 1.6]} />
+    <group>
+      <group position={[terrace.x, 0, terrace.z]} rotation={[0, yaw, 0]}>
+        <primitive object={structure} />
+        <BelvedereBench position={[2.2, 0.96, 2.0]} />
+        <BougainvilleaCluster />
+        <IdentityCarnetModel position={[0, 0.96, -0.55]} />
+      </group>
+      <StopMarker position={[anchor.stop.x, 0.03, anchor.stop.z]} />
     </group>
   );
 }
@@ -149,10 +151,9 @@ export function getBelvedereInteractPosition() {
 }
 
 export function getBelvedereStopPosition() {
-  const { terrace, yaw } = getBelvedereWorldAnchor();
-  // Must match <StopMarker position={[7.8, 0.02, 1.6]} /> in Belvedere group space
-  const local = new THREE.Vector3(7.8, 0.02, 1.6).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
-  return terrace.clone().add(local).setY(0.05);
+  // Trigger on the road ribbon at belvedere (not terrace-local offset)
+  const { stop } = getBelvedereWorldAnchor();
+  return stop.clone().setY(0.05);
 }
 
 useGLTF.preload("/models/belvedere.glb");
