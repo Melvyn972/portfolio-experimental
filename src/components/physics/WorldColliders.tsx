@@ -4,7 +4,7 @@ import { CuboidCollider, HeightfieldCollider, RigidBody } from "@react-three/rap
 import { useMemo } from "react";
 import * as THREE from "three";
 import { content } from "@/lib/content";
-import { getBelvedereWorldAnchor, getRoadCurve, ROAD_SURFACE_LIFT, ROAD_WIDTH } from "@/lib/road";
+import { getBelvedereWorldAnchor, getRoadCurve, nearestRoadSample, ROAD_SURFACE_LIFT, ROAD_WIDTH } from "@/lib/road";
 import {
   accessCorridors,
   sampleGroundHeight,
@@ -229,13 +229,14 @@ function buildWalkPaths() {
       const midX = (a.x + b.x) * 0.5;
       const midZ = (a.z + b.z) * 0.5;
       const midY = (a.y + b.y) * 0.5;
+      if (Math.abs(nearestRoadSample(new THREE.Vector3(midX, 0, midZ)).lateral) < ROAD_WIDTH * 0.55) continue;
       const dx = b.x - a.x;
       const dz = b.z - a.z;
       const len = Math.max(0.6, Math.hypot(dx, dz) * 0.55);
       boxes.push({
-        pos: [midX, midY + 0.04, midZ],
+        pos: [midX, midY - 0.04, midZ],
         yaw: Math.atan2(dx, dz),
-        half: [c.width * 0.42, 0.12, len],
+        half: [c.width * 0.38, 0.07, len],
       });
     }
   }
