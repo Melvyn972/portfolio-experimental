@@ -419,17 +419,52 @@ function buildCarnet() {
 function buildAvatar() {
   const g = new THREE.Group();
   g.name = "Explorer";
-  // Legs
-  g.add(mesh(new THREE.CapsuleGeometry(0.12, 0.45, 4, 8), MAT.pants(), [0.14, 0.45, 0]));
-  g.add(mesh(new THREE.CapsuleGeometry(0.12, 0.45, 4, 8), MAT.pants(), [-0.14, 0.45, 0]));
+
+  // Hip root for stance
+  g.add(mesh(new THREE.SphereGeometry(0.16, 10, 10), MAT.pants(), [0, 0.88, 0]));
+
+  // Legs as named groups (pivot at hip) for walk/run swing
+  const legL = new THREE.Group();
+  legL.name = "legL";
+  legL.position.set(0.15, 0.9, 0);
+  legL.add(mesh(new THREE.CapsuleGeometry(0.11, 0.38, 4, 10), MAT.pants(), [0, -0.32, 0]));
+  legL.add(mesh(new THREE.CapsuleGeometry(0.09, 0.34, 4, 8), MAT.pants(), [0, -0.72, 0]));
+  legL.add(mesh(new THREE.BoxGeometry(0.2, 0.1, 0.32), MAT.leather(), [0, -1.0, 0.04]));
+  g.add(legL);
+
+  const legR = new THREE.Group();
+  legR.name = "legR";
+  legR.position.set(-0.15, 0.9, 0);
+  legR.add(mesh(new THREE.CapsuleGeometry(0.11, 0.38, 4, 10), MAT.pants(), [0, -0.32, 0]));
+  legR.add(mesh(new THREE.CapsuleGeometry(0.09, 0.34, 4, 8), MAT.pants(), [0, -0.72, 0]));
+  legR.add(mesh(new THREE.BoxGeometry(0.2, 0.1, 0.32), MAT.leather(), [0, -1.0, 0.04]));
+  g.add(legR);
+
   // Torso
-  g.add(mesh(new THREE.CapsuleGeometry(0.28, 0.55, 4, 10), MAT.shirt(), [0, 1.15, 0]));
-  // Arms
-  g.add(mesh(new THREE.CapsuleGeometry(0.08, 0.4, 4, 8), MAT.shirt(), [0.38, 1.15, 0], [0, 0, 0.2]));
-  g.add(mesh(new THREE.CapsuleGeometry(0.08, 0.4, 4, 8), MAT.shirt(), [-0.38, 1.15, 0], [0, 0, -0.2]));
-  // Head
-  g.add(mesh(new THREE.SphereGeometry(0.22, 12, 12), MAT.skin(), [0, 1.72, 0]));
-  g.add(mesh(new THREE.SphereGeometry(0.23, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), MAT.hair(), [0, 1.82, -0.02]));
+  g.add(mesh(new THREE.CapsuleGeometry(0.26, 0.5, 4, 12), MAT.shirt(), [0, 1.28, 0]));
+  g.add(mesh(new THREE.BoxGeometry(0.52, 0.12, 0.36), MAT.shirt(), [0, 1.52, 0.02]));
+
+  // Arms named for swing
+  const armL = new THREE.Group();
+  armL.name = "armL";
+  armL.position.set(0.36, 1.42, 0);
+  armL.add(mesh(new THREE.CapsuleGeometry(0.075, 0.36, 4, 8), MAT.shirt(), [0.04, -0.22, 0], [0, 0, 0.15]));
+  armL.add(mesh(new THREE.SphereGeometry(0.07, 8, 8), MAT.skin(), [0.08, -0.48, 0]));
+  g.add(armL);
+
+  const armR = new THREE.Group();
+  armR.name = "armR";
+  armR.position.set(-0.36, 1.42, 0);
+  armR.add(mesh(new THREE.CapsuleGeometry(0.075, 0.36, 4, 8), MAT.shirt(), [-0.04, -0.22, 0], [0, 0, -0.15]));
+  armR.add(mesh(new THREE.SphereGeometry(0.07, 8, 8), MAT.skin(), [-0.08, -0.48, 0]));
+  g.add(armR);
+
+  // Head + hair
+  g.add(mesh(new THREE.SphereGeometry(0.2, 14, 14), MAT.skin(), [0, 1.78, 0]));
+  g.add(mesh(new THREE.SphereGeometry(0.215, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.58), MAT.hair(), [0, 1.88, -0.02]));
+  // Simple face accents
+  g.add(mesh(new THREE.SphereGeometry(0.025, 6, 6), new THREE.MeshStandardMaterial({ color: "#2a221c" }), [0.07, 1.8, 0.17]));
+  g.add(mesh(new THREE.SphereGeometry(0.025, 6, 6), new THREE.MeshStandardMaterial({ color: "#2a221c" }), [-0.07, 1.8, 0.17]));
   return g;
 }
 
@@ -596,23 +631,43 @@ function buildStudio() {
 function buildPhare() {
   const g = new THREE.Group();
   g.name = "Phare";
-  // Base
-  g.add(mesh(new THREE.CylinderGeometry(2.4, 2.8, 0.6, 12), MAT.stone(), [0, 0.3, 0]));
-  // Tower taper
-  g.add(mesh(new THREE.CylinderGeometry(1.1, 1.55, 7.5, 14), MAT_EXTRA.lighthouse(), [0, 4.2, 0]));
-  // Bands
-  for (const y of [2.2, 4.0, 5.8]) {
-    g.add(mesh(new THREE.CylinderGeometry(1.35, 1.45, 0.35, 14), MAT_EXTRA.lighthouseBand(), [0, y, 0]));
+  // Rocky plinth
+  g.add(mesh(new THREE.CylinderGeometry(3.2, 3.6, 0.8, 16), MAT.stone(), [0, 0.35, 0]));
+  g.add(mesh(new THREE.CylinderGeometry(2.6, 2.9, 0.45, 14), MAT.stoneDark(), [0, 0.85, 0]));
+  // Tower shaft (higher detail taper)
+  g.add(mesh(new THREE.CylinderGeometry(1.05, 1.65, 8.2, 20), MAT_EXTRA.lighthouse(), [0, 5.0, 0]));
+  // Red/white bands
+  for (const y of [2.4, 4.2, 6.0, 7.6]) {
+    g.add(mesh(new THREE.CylinderGeometry(1.28, 1.42, 0.42, 20), MAT_EXTRA.lighthouseBand(), [0, y, 0]));
   }
+  // Vertical window slits
+  for (const y of [3.3, 5.1, 6.9]) {
+    g.add(mesh(new THREE.BoxGeometry(0.35, 0.7, 0.08), MAT.glass(), [0, y, 1.35]));
+  }
+  // Watch gallery
+  g.add(mesh(new THREE.CylinderGeometry(1.55, 1.55, 0.18, 16), MAT.stoneDark(), [0, 9.15, 0]));
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    g.add(
+      mesh(
+        new THREE.CylinderGeometry(0.04, 0.04, 0.55, 6),
+        MAT.brass(),
+        [Math.cos(a) * 1.45, 9.45, Math.sin(a) * 1.45],
+      ),
+    );
+  }
+  g.add(mesh(new THREE.TorusGeometry(1.45, 0.045, 6, 24), MAT.brass(), [0, 9.72, 0], [Math.PI / 2, 0, 0]));
   // Lantern room
-  g.add(mesh(new THREE.CylinderGeometry(1.25, 1.25, 0.2, 12), MAT.stoneDark(), [0, 8.05, 0]));
-  g.add(mesh(new THREE.CylinderGeometry(0.95, 1.05, 1.6, 10), MAT.glass(), [0, 8.9, 0]));
-  g.add(mesh(new THREE.SphereGeometry(0.35, 12, 12), MAT_EXTRA.lantern(), [0, 8.9, 0]));
-  g.add(mesh(new THREE.ConeGeometry(1.2, 0.9, 10), MAT_EXTRA.tile(), [0, 10.0, 0]));
-  // Door
-  g.add(mesh(new THREE.BoxGeometry(0.7, 1.6, 0.15), MAT.woodDark(), [0, 1.1, 1.55]));
-  // Gallery rail
-  g.add(mesh(new THREE.TorusGeometry(1.2, 0.04, 6, 20), MAT.brass(), [0, 8.15, 0], [Math.PI / 2, 0, 0]));
+  g.add(mesh(new THREE.CylinderGeometry(1.05, 1.15, 1.9, 12), MAT.glass(), [0, 10.55, 0]));
+  g.add(mesh(new THREE.SphereGeometry(0.42, 14, 14), MAT_EXTRA.lantern(), [0, 10.55, 0]));
+  g.add(mesh(new THREE.CylinderGeometry(0.15, 0.15, 1.5, 8), MAT.chrome(), [0, 10.55, 0]));
+  // Dome roof
+  g.add(mesh(new THREE.ConeGeometry(1.35, 1.1, 14), MAT_EXTRA.tile(), [0, 11.85, 0]));
+  g.add(mesh(new THREE.SphereGeometry(0.12, 8, 8), MAT.brass(), [0, 12.45, 0]));
+  // Door + steps
+  g.add(mesh(new THREE.BoxGeometry(0.85, 1.85, 0.16), MAT.woodDark(), [0, 1.55, 1.72]));
+  g.add(mesh(new THREE.BoxGeometry(1.4, 0.18, 0.7), MAT.stone(), [0, 0.55, 2.3]));
+  g.add(mesh(new THREE.BoxGeometry(1.1, 0.16, 0.55), MAT.stoneDark(), [0, 0.72, 2.0]));
   return g;
 }
 
@@ -641,25 +696,37 @@ async function exportGLB(object, filename) {
 }
 
 async function main() {
-  await exportGLB(buildConvertible(), "roadster.glb");
-  await exportGLB(buildStonePine(), "pine.glb");
-  await exportGLB(buildCypress(), "cypress.glb");
-  await exportGLB(buildOlive(), "olive.glb");
-  await exportGLB(buildBougainvillea(), "bougainvillea.glb");
-  await exportGLB(buildRock(0), "rock-a.glb");
-  await exportGLB(buildRock(1), "rock-b.glb");
-  await exportGLB(buildRock(2), "rock-c.glb");
-  await exportGLB(buildBench(), "bench.glb");
-  await exportGLB(buildCarnet(), "carnet.glb");
-  await exportGLB(buildAvatar(), "explorer.glb");
-  await exportGLB(buildLamp(), "lamp.glb");
-  await exportGLB(buildZonePlinth(), "plinth.glb");
-  await exportGLB(buildBelvedereStructure(), "belvedere.glb");
-  await exportGLB(buildMaison(), "maison.glb");
-  await exportGLB(buildStudio(), "studio.glb");
-  await exportGLB(buildPhare(), "phare.glb");
-  await exportGLB(buildStoneWall(), "stone-wall.glb");
-  console.log("done");
+  const only = process.argv.slice(2);
+  const jobs = {
+    // roadster: Kenney CC0 sedan-sports — do NOT overwrite with procedural
+    pine: () => exportGLB(buildStonePine(), "pine.glb"),
+    cypress: () => exportGLB(buildCypress(), "cypress.glb"),
+    olive: () => exportGLB(buildOlive(), "olive.glb"),
+    bougainvillea: () => exportGLB(buildBougainvillea(), "bougainvillea.glb"),
+    "rock-a": () => exportGLB(buildRock(0), "rock-a.glb"),
+    "rock-b": () => exportGLB(buildRock(1), "rock-b.glb"),
+    "rock-c": () => exportGLB(buildRock(2), "rock-c.glb"),
+    bench: () => exportGLB(buildBench(), "bench.glb"),
+    carnet: () => exportGLB(buildCarnet(), "carnet.glb"),
+    explorer: () => exportGLB(buildAvatar(), "explorer.glb"),
+    lamp: () => exportGLB(buildLamp(), "lamp.glb"),
+    plinth: () => exportGLB(buildZonePlinth(), "plinth.glb"),
+    belvedere: () => exportGLB(buildBelvedereStructure(), "belvedere.glb"),
+    maison: () => exportGLB(buildMaison(), "maison.glb"),
+    studio: () => exportGLB(buildStudio(), "studio.glb"),
+    phare: () => exportGLB(buildPhare(), "phare.glb"),
+    "stone-wall": () => exportGLB(buildStoneWall(), "stone-wall.glb"),
+  };
+
+  const keys = only.length ? only : Object.keys(jobs);
+  for (const key of keys) {
+    if (!jobs[key]) {
+      console.warn("skip unknown", key);
+      continue;
+    }
+    await jobs[key]();
+  }
+  console.log("done — roadster remains Kenney CC0 (public/models/roadster.glb)");
 }
 
 main().catch((e) => {

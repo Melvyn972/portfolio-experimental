@@ -128,16 +128,17 @@ function RoadMarkings() {
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const yaw = Math.atan2(tangent.x, tangent.z);
-      return { position: [p.x, p.y + 0.035, p.z] as [number, number, number], yaw };
+      // Sit flush on asphalt ribbon (road mesh y ≈ p.y + 0.02)
+      return { position: [p.x, p.y + 0.028, p.z] as [number, number, number], yaw };
     });
   }, []);
 
   return (
     <group>
       {marks.map((m, i) => (
-        <mesh key={i} position={m.position} rotation={[0, m.yaw, 0]} receiveShadow>
-          <boxGeometry args={[0.12, 0.01, 1.6]} />
-          <meshStandardMaterial color="#e8e0c8" roughness={0.7} />
+        <mesh key={i} position={m.position} rotation={[-0.01, m.yaw, 0]} receiveShadow>
+          <boxGeometry args={[0.14, 0.006, 1.75]} />
+          <meshStandardMaterial color="#e8e0c8" roughness={0.72} depthWrite={false} polygonOffset polygonOffsetFactor={-1} />
         </mesh>
       ))}
     </group>

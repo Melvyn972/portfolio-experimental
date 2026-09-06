@@ -155,9 +155,22 @@ export function openChapter(id: ChapterId | null) {
 
 /** Dev helper for Playwright / QA */
 if (typeof window !== "undefined") {
-  (window as unknown as { __coteMelvyn?: { getState: typeof getGameState; setState: typeof setGameState } }).__coteMelvyn = {
+  (window as unknown as {
+    __coteMelvyn?: {
+      getState: typeof getGameState;
+      setState: typeof setGameState;
+      teleportBelvedere: () => void;
+      teleportWalk: (x: number, y: number, z: number, yaw?: number) => void;
+    };
+  }).__coteMelvyn = {
     getState: getGameState,
     setState: setGameState,
+    teleportBelvedere: () => {
+      window.dispatchEvent(new CustomEvent("cote:teleport-belvedere"));
+    },
+    teleportWalk: (x, y, z, yaw) => {
+      window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: { x, y, z, yaw } }));
+    },
   };
 }
 

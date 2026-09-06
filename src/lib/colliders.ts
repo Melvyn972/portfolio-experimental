@@ -49,16 +49,20 @@ export function buildWorldColliders(): Collider[] {
   }
 
   for (const zone of content.zones.zones) {
-    const { x, y, z } = zone.marker;
+    const { x, z } = zone.marker;
     if (zone.id === "maison-atelier") {
-      list.push(box("maison", x, y + 1.7, z, 9.2, 3.4, 6.8));
-      list.push(box("maison-wing", x + 5.2, y + 1.2, z + 1.2, 4.0, 2.4, 4.2));
+      // Kenney City building-type-b @ ×6.2 + atelier wing @ ×5.2
+      list.push(box("maison", x, 3.55, z, 11.4, 7.1, 7.2));
+      list.push(box("maison-wing", x + 7.5, 3.25, z + 2, 9.2, 6.5, 5.4));
     }
     if (zone.id === "studio") {
-      list.push(box("studio", x, y + 1.4, z, 7.2, 2.8, 5.2));
+      // Kenney City building-type-e @ ×6.0
+      list.push(box("studio", x, 3.45, z, 8.0, 6.9, 6.3));
     }
     if (zone.id === "phare") {
-      list.push(box("phare", x, y + 4, z, 3.0, 8, 3.0));
+      // Daniel Dormin lighthouse @ ×0.34 — mesh already grounded at local y=0
+      list.push(box("phare", x, 5.5, z, 3.8, 9.9, 3.8));
+      list.push(box("phare-base", x, 0.55, z, 8.4, 1.1, 8.0));
     }
   }
 

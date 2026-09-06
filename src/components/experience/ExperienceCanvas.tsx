@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Suspense } from "react";
 import { World } from "@/components/world/World";
-import { VehicleController } from "@/components/vehicle/VehicleController";
+import { PlayerSystem } from "@/components/player/PlayerSystem";
+import { PhysicsWorld } from "@/components/physics/PhysicsWorld";
+import { WorldColliders } from "@/components/physics/WorldColliders";
 import { GameCamera } from "@/components/camera/GameCamera";
 import { PostFX } from "@/components/experience/PostFX";
 import { ProgressiveLoader } from "@/components/experience/ProgressiveLoader";
@@ -14,17 +16,18 @@ import { getGameState, setGameState } from "@/lib/gameStore";
 import { useKeyboard } from "@/hooks/useKeyboard";
 
 function Scene({ isMobile }: { isMobile: boolean }) {
-  const { quality: preset, phase, loadStage } = useGameStore();
+  const { quality: preset, phase } = useGameStore();
   const quality = useMemo(() => resolveQuality(preset, isMobile), [preset, isMobile]);
 
   return (
-    <>
-      <ProgressiveLoader />
+    <PhysicsWorld>
       <GameCamera />
-      {loadStage >= 1 && <World quality={quality} />}
-      {loadStage >= 2 && (phase === "playing" || phase === "intro") && <VehicleController />}
-      {loadStage >= 3 && <PostFX enabled={quality.postfx} />}
-    </>
+      <World quality={quality} />
+      <WorldColliders />
+      {(phase === "playing" || phase === "intro") && <PlayerSystem />}
+      <PostFX enabled={quality.postfx} />
+      <ProgressiveLoader />
+    </PhysicsWorld>
   );
 }
 
@@ -54,27 +57,22 @@ export function ExperienceCanvas() {
   }, []);
 
   return (
-    <div className="absolute inset-0" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
-      <Canvas
-        className="!absolute inset-0 h-full w-full touch-none"
-        style={{ width: "100%", height: "100%", touchAction: "none" }}
-        shadows={quality.shadows}
-        dpr={quality.dpr}
-        gl={{
-          antialias: quality.aa,
-          powerPreference: "high-performance",
-          toneMappingExposure: 1.08,
-        }}
-        camera={{ fov: 42, near: 0.15, far: 320, position: [32, 24, 58] }}
-        onCreated={({ gl }) => {
-          gl.setClearColor("#c8dde8");
-          gl.domElement.style.touchAction = "none";
-        }}
-      >
-        <Suspense fallback={null}>
-          <Scene isMobile={isMobile} />
-        </Suspense>
-      </Canvas>
-    </div>
+    <Canvas
+      shadows={quality.shadows}
+      dpr={quality.dpr}
+      gl={{
+        antialias: quality.aa,
+        powerPreference: "high-performance",
+        toneMappingExposure: 1.08,
+      }}
+      camera={{ fov: 42, near: 0.1, far: 280, position: [32, 24, 58] }}
+      onCreated={({ gl }) => {
+        gl.setClearColor("#c8dde8");
+      }}
+    >
+      <Suspense fallback={null}>
+        <Scene isMobile={isMobile} />
+      </Suspense>
+    </Canvas>
   );
 }

@@ -2,16 +2,17 @@
 
 Portfolio-jeu interactif 3D de **Melvyn Thierry-Bellefond** — Développeur Full-Stack & Expert IT.
 
-Concept : une côte méditerranéenne à explorer. Conduire un cabriolet, descendre, marcher de zone en zone — le monde *est* le portfolio. Pas de landing classique.
+Concept : une côte méditerranéenne stylisée à explorer. Conduire un roadster, descendre, marcher, découvrir le portfolio dans le monde (pas de landing « Bonjour je suis… »).
 
 ## Lancer
 
 ```bash
 npm install
+npm run assets   # régénère props stylisés (PAS le roadster Kenney / assets CC0)
 npm run dev
 ```
 
-Build : `npm run build` · Assets GLB : `node scripts/generate-assets.mjs`
+Build : `npm run build && npm start`
 
 ## Boucle de jeu
 
@@ -20,18 +21,27 @@ Build : `npm run build` · Assets GLB : `node scripts/generate-assets.mjs`
 3. Marcher : identité (carnet) → Maison (parcours) → Studio (projets) → Plage → Phare (CV / contact)
 4. Remonter dans la voiture, continuer vers le phare
 
-**Desktop** : ZQSD + Shift (courir) + E · **Mobile** : stick gauche (déplacer), stick droit (regard), Interagir uniquement si disponible, Courir.
+**Desktop** : ZQSD + Shift (courir) + E · **Mobile** : stick gauche (déplacer), stick droit (regard), Interagir contextuel, Courir.
 
 Menu = carte + checklist découverte ; fermer restaure l’état monde. Debug colliders : **F3** (off en prod).
 
-## Contenu
-
-Source de vérité `/content/*.json` — voir `docs/CONTENT_MAP.md`. Pas de SIRET ni téléphone publics.
-
 ## Stack
 
-Next.js App Router · React Three Fiber · Drei · postprocessing · Tailwind · Web Audio procédural.
+Next.js 15 · React Three Fiber · Drei · **@react-three/rapier** · postprocessing · Tailwind · Web Audio
 
-## Crédits
+## Contenu
 
-`public/licenses/ATTRIBUTIONS.md` — modèles GLB maison (pipeline `generate-assets.mjs`).
+Source de vérité : `/content/*.json` — voir `docs/CONTENT_MAP.md`. Pas de SIRET ni téléphone publics.  
+Licences assets : `ASSET_LICENSES.md` · attributions : `public/licenses/ATTRIBUTIONS.md`
+
+## Zones jouables
+
+Route · Belvédère · Maison/Atelier · Studio · Plage · Phare · WOW overlook
+
+## Physique
+
+Rapier : capsule personnage + CharacterController, colliders monde (route, bâtiments, rochers, mer, bornes), respawn sûr. Véhicule cinématique arcade sur ruban de route + collider.
+
+## Crédits assets
+
+Kenney (voiture / city / fantasy) · Quaternius (avatar / pins) · Daniel Dormin (phare) · Poly Haven (rochers / jetée / HDRI) — détail dans `ASSET_LICENSES.md`.
