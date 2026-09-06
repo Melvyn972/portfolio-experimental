@@ -1,37 +1,39 @@
 # Côte Melvyn
 
-Portfolio-jeu interactif 3D de **Melvyn Thierry-Bellefond** — Développeur Full-Stack & Expert IT.
+Portfolio-jeu cinématique de **Melvyn Thierry-Bellefond** — Développeur Full-Stack & Expert IT.
 
-Concept : une côte méditerranéenne à explorer. Conduire un cabriolet, descendre, marcher de zone en zone — le monde *est* le portfolio. Pas de landing classique.
+Concept : une côte méditerranéenne stylisée à explorer. Conduire un roadster, descendre, marcher, découvrir le portfolio dans le monde (pas de landing « Bonjour je suis… »).
 
-## Lancer
+## Lancer en local
 
 ```bash
 npm install
+npm run assets   # régénère props stylisés (PAS le roadster Kenney)
 npm run dev
 ```
 
-Build : `npm run build` · Assets GLB : `node scripts/generate-assets.mjs`
-
-## Boucle de jeu
-
-1. Intro cinématique (mer, falaises, soleil bas)
-2. Conduire (ZQSD / flèches, joystick) jusqu’au belvédère → **Descendre**
-3. Marcher : identité (carnet) → Maison (parcours) → Studio (projets) → Plage → Phare (CV / contact)
-4. Remonter dans la voiture, continuer vers le phare
-
-**Desktop** : ZQSD + Shift (courir) + E · **Mobile** : stick gauche (déplacer), stick droit (regard), Interagir uniquement si disponible, Courir.
-
-Menu = carte + checklist découverte ; fermer restaure l’état monde. Debug colliders : **F3** (off en prod).
-
-## Contenu
-
-Source de vérité `/content/*.json` — voir `docs/CONTENT_MAP.md`. Pas de SIRET ni téléphone publics.
+Build : `npm run build && npm start`
 
 ## Stack
 
-Next.js App Router · React Three Fiber · Drei · postprocessing · Tailwind · Web Audio procédural.
+Next.js 15 · React Three Fiber · Drei · **@react-three/rapier** · postprocessing · Tailwind · Web Audio
 
-## Crédits
+## Jouer
 
-`public/licenses/ATTRIBUTIONS.md` — modèles GLB maison (pipeline `generate-assets.mjs`).
+1. Intro cinématique
+2. Conduire (ZQSD / flèches, stick tactile) jusqu’au belvédère
+3. **Descendre** → marcher → découvrir chapitres (carnet, maison, studio, plage, phare)
+4. Mobile : stick gauche = move, stick droit = look, **Courir**, Interagir contextuel
+
+## Contenu
+
+Source de vérité : `/content/*.json` — voir `docs/CONTENT_MAP.md`.  
+Licences assets : `ASSET_LICENSES.md`.
+
+## Zones jouables
+
+Route · Belvédère · Maison/Atelier · Studio · Plage · Phare · WOW overlook
+
+## Physique
+
+Rapier : capsule personnage + CharacterController, colliders monde (route, bâtiments, rochers, mer, bornes), respawn sûr. Véhicule cinématique arcade sur ruban de route + collider.

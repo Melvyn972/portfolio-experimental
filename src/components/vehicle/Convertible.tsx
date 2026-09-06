@@ -10,54 +10,55 @@ type Props = {
 };
 
 /**
- * Fictional Mediterranean convertible — GLB stylized roadster
- * with nested steer → spin wheel hierarchy.
+ * Kenney sedan-sports roadster (CC0) — wheel spin / steer by mesh name.
+ * Scale/pivot normalized for the coastal road.
  */
 export function Convertible({ color = "#c45c3e" }: Props) {
   const { scene } = useGLTF("/models/roadster.glb");
   const root = useRef<THREE.Group>(null);
   const wheelSpin = useRef(0);
   const steer = useRef(0);
-  const spinNodes = useRef<THREE.Object3D[]>([]);
-  const steerNodes = useRef<THREE.Object3D[]>([]);
+  const frontWheels = useRef<THREE.Object3D[]>([]);
+  const allWheels = useRef<THREE.Object3D[]>([]);
   const bodyMats = useRef<THREE.MeshStandardMaterial[]>([]);
 
   const model = useMemo(() => {
     const clone = scene.clone(true);
-    const spins: THREE.Object3D[] = [];
-    const steers: THREE.Object3D[] = [];
+    const fronts: THREE.Object3D[] = [];
+    const wheels: THREE.Object3D[] = [];
     const mats: THREE.MeshStandardMaterial[] = [];
 
     clone.traverse((obj) => {
+      const name = obj.name.toLowerCase();
+      if (name.includes("wheel")) {
+        wheels.push(obj);
+        if (name.includes("front")) fronts.push(obj);
+      }
       const mesh = obj as THREE.Mesh;
       if (mesh.isMesh) {
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         const mat = mesh.material as THREE.MeshStandardMaterial;
-        if (mat?.color) {
-          const hex = `#${mat.color.getHexString()}`;
-          if (hex === "#c45c3e" || hex === "#9a3f2a") {
-            const cloned = mat.clone();
+        if (mat && "color" in mat) {
+          const cloned = mat.clone();
+          // Tint body toward terracotta while keeping Kenney atlas readable
+          if (name.includes("body") || name.includes("spoiler") || !name.includes("wheel")) {
+            cloned.color.lerp(new THREE.Color(color), 0.55);
+            cloned.metalness = Math.max(cloned.metalness ?? 0, 0.25);
+            cloned.roughness = Math.min(cloned.roughness ?? 1, 0.55);
             mats.push(cloned);
             mesh.material = cloned;
           }
         }
       }
-      if (obj.name.endsWith("_spin")) spins.push(obj);
-      if (obj.name.endsWith("_steer")) steers.push(obj);
     });
 
-    spinNodes.current = spins;
-    steerNodes.current = steers;
+    frontWheels.current = fronts;
+    allWheels.current = wheels;
     bodyMats.current = mats;
     return clone;
-  }, [scene]);
+  }, [scene, color]);
 
-  useEffect(() => {
-    bodyMats.current.forEach((m) => m.color.set(color));
-  }, [color]);
-
-  // Expose wheel API on this root AND parent group (VehicleController holds the parent ref)
   useEffect(() => {
     const node = root.current;
     if (!node) return;
@@ -71,30 +72,29 @@ export function Convertible({ color = "#c45c3e" }: Props) {
     };
     node.userData.setWheelSpin = api.setWheelSpin;
     node.userData.setSteer = api.setSteer;
-    const parent = node.parent;
-    if (parent) {
-      parent.userData.setWheelSpin = api.setWheelSpin;
-      parent.userData.setSteer = api.setSteer;
+    if (node.parent) {
+      node.parent.userData.setWheelSpin = api.setWheelSpin;
+      node.parent.userData.setSteer = api.setSteer;
     }
   }, [model]);
 
   useFrame(() => {
-    // Re-bind parent each frame once in case parent mounts after us
     const node = root.current;
     if (node?.parent && !node.parent.userData.setWheelSpin) {
       node.parent.userData.setWheelSpin = node.userData.setWheelSpin;
       node.parent.userData.setSteer = node.userData.setSteer;
     }
-    spinNodes.current.forEach((w) => {
+    allWheels.current.forEach((w) => {
       w.rotation.x = wheelSpin.current;
     });
-    steerNodes.current.forEach((w) => {
+    frontWheels.current.forEach((w) => {
       w.rotation.y = steer.current;
     });
   });
 
+  // Kenney cars are ~2.5m long, sit on y=0 — scale up slightly for presence
   return (
-    <group ref={root}>
+    <group ref={root} scale={1.35} position={[0, 0, 0]} rotation={[0, Math.PI, 0]}>
       <primitive object={model} />
     </group>
   );

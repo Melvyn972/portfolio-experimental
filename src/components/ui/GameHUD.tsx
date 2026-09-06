@@ -581,7 +581,7 @@ function VirtualStick({
   return (
     <div
       ref={zone}
-      className="pointer-events-auto absolute h-14 w-14 rounded-full border border-[#c4a574]/35 bg-[#f3ead8]/28 backdrop-blur-[2px] sm:h-16 sm:w-16"
+      className="pointer-events-auto absolute h-[4.5rem] w-[4.5rem] rounded-full border border-[#c4a574]/40 bg-[#f3ead8]/32 backdrop-blur-[2px] touch-none sm:h-20 sm:w-20"
       style={style}
       onPointerDown={(e) => {
         setActive(true);
@@ -597,7 +597,7 @@ function VirtualStick({
     >
       <div
         className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#3d3226]/55 sm:h-6 sm:w-6"
-        style={{ transform: `translate(calc(-50% + ${knob.x * 16}px), calc(-50% + ${-knob.y * 16}px))` }}
+        style={{ transform: `translate(calc(-50% + ${knob.x * 22}px), calc(-50% + ${-knob.y * 22}px))` }}
       />
     </div>
   );
