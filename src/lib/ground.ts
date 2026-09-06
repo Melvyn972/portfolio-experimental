@@ -15,7 +15,7 @@ const TRENCH_DROP = 2.4;
 /** Delete only faces under the asphalt prism — shoulders keep trenched terrain. */
 export const ROAD_CUT_MARGIN = ROAD_WIDTH * 0.5 + 0.42;
 
-function scenicHeight(x: number, z: number): { y: number; roadDist: number; roadY: number } {
+function scenicHeight(x: number, z: number): { y: number; roadDist: number; roadY: number; onAccess: boolean } {
   const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 160);
   const lat = sample.lateral;
   const roadDist = Math.min(Math.abs(lat), sample.dist);
@@ -80,7 +80,7 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
   const access = walkAccessHeight(x, z);
   if (access != null) y = access;
 
-  return { y, roadDist, roadY };
+  return { y, roadDist, roadY, onAccess: access != null };
 }
 
 export function roadClearance(x: number, z: number) {
@@ -111,7 +111,8 @@ export function isRoadCutProbe(x: number, z: number): boolean {
  * Walk / camera / heightfield — stand on the road, never in the visual trench.
  */
 export function sampleGroundHeight(x: number, z: number): number {
-  const { y, roadDist, roadY } = scenicHeight(x, z);
+  const { y, roadDist, roadY, onAccess } = scenicHeight(x, z);
+  if (onAccess) return y;
   if (roadDist < ROAD_WIDTH * 0.55) return roadY;
   return y;
 }

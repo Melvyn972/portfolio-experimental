@@ -415,8 +415,17 @@ export function PlayerSystem() {
           playerVel.current.set(0, 0, 0);
           setPlayerKinematic(playerPos.current, walkYaw.current, true);
         } else {
-          body.setNextKinematicTranslation(next);
-          playerPos.current.set(next.x, next.y - CAPSULE_Y, next.z);
+          const want = Math.hypot(desired.current.x, desired.current.z);
+          const got = Math.hypot(mv.x, mv.z);
+          if (want > 0.008 && got < 0.00015) {
+            playerPos.current.x += desired.current.x;
+            playerPos.current.z += desired.current.z;
+            playerPos.current.y = sampleGroundHeight(playerPos.current.x, playerPos.current.z);
+            setPlayerKinematic(playerPos.current, walkYaw.current, true);
+          } else {
+            body.setNextKinematicTranslation(next);
+            playerPos.current.set(next.x, next.y - CAPSULE_Y, next.z);
+          }
         }
       }
     } else {
