@@ -170,7 +170,7 @@ export function CoastalZones() {
 
       {plage && (
         <group>
-          <WoodenPier position={[plage.x - 5.8, 0.14, plage.z - 0.4]} yaw={-Math.PI / 2 + 0.12} />
+          <WoodenPier position={[plage.x - 2.6, 0.12, plage.z]} yaw={-Math.PI / 2 + 0.08} />
           <Placed scene={pine} position={[plage.x + 0.8, 0.16, plage.z + 5.4]} scale={0.36} />
           <Placed scene={pine} position={[plage.x - 0.4, 0.16, plage.z - 5.8]} scale={0.3} />
           <Placed scene={hedge} position={[plage.x + 2.8, 0.16, plage.z + 6.2]} scale={1.7} />

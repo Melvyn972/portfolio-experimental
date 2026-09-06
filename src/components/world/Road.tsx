@@ -164,9 +164,9 @@ function SeaCurb() {
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const lateral = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-      const pos = p.clone().addScaledVector(lateral, -(ROAD_HALF - 0.05));
+      const pos = p.clone().addScaledVector(lateral, -(ROAD_HALF - 0.28));
       return {
-        position: [pos.x, p.y + ROAD_SURFACE_LIFT - 0.55, pos.z] as [number, number, number],
+        position: [pos.x, p.y + ROAD_SURFACE_LIFT - 0.62, pos.z] as [number, number, number],
         yaw: Math.atan2(tangent.x, tangent.z),
       };
     });
@@ -176,8 +176,8 @@ function SeaCurb() {
     <group>
       {blocks.map((b, i) => (
         <mesh key={i} position={b.position} rotation={[0, b.yaw, 0]} receiveShadow>
-          <boxGeometry args={[0.55, 1.15, 6.2]} />
-          <meshStandardMaterial color="#c4b08e" roughness={0.95} />
+          <boxGeometry args={[0.72, 1.35, 6.4]} />
+          <meshStandardMaterial color="#c8b492" roughness={0.95} />
         </mesh>
       ))}
     </group>
