@@ -46,7 +46,8 @@ function buildOverlay() {
     uvs.push(0, t * 36, 1, t * 36);
     if (i < SEGMENTS) {
       const a = i * 2;
-      indices.push(a, a + 2, a + 1, a + 1, a + 2, a + 3);
+      // left0, right0, left1 / right0, right1, left1 — upward normal from above
+      indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
     }
   }
 
@@ -66,11 +67,11 @@ export function Road() {
     <group>
       <mesh geometry={overlay} receiveShadow renderOrder={2}>
         <meshStandardMaterial
-          color="#2a2926"
+          color="#1c1b18"
           map={asphalt}
-          roughness={0.84}
-          metalness={0.05}
-          envMapIntensity={0.32}
+          roughness={0.9}
+          metalness={0.02}
+          envMapIntensity={0.18}
           depthWrite
           polygonOffset
           polygonOffsetFactor={-3}
