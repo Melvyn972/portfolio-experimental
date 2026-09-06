@@ -81,7 +81,7 @@ export function Vegetation({ count = 60 }: { count?: number }) {
       const pos = p.clone().addScaledVector(side, dist);
       // Never plant in the sea ( Melvyn QA: floating pink shards over water )
       if (pos.x < -8.5) continue;
-      if (Math.abs(nearestRoadSample(pos).lateral) < ROAD_WIDTH * 0.5 + 2.2) continue;
+      if (Math.abs(nearestRoadSample(pos).lateral) < ROAD_WIDTH * 0.5 + 4.5) continue;
       pos.y = computeTerrainHeight(pos.x, pos.z);
       let type: TreeType = "pine";
       if (!cliffSide) type = i % 3 === 0 ? "bougainvillea" : "pine";
