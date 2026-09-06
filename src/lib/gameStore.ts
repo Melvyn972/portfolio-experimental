@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { computeTerrainHeight, sampleGroundHeight } from "@/lib/ground";
 import { getBelvedereWorldAnchor, nearestRoadSample, ROAD_SURFACE_LIFT } from "@/lib/road";
 import { isFinitePos, sanitizeWalkSpawn, zoneWalkSpawns } from "@/lib/spawn";
+import { inputRef } from "@/hooks/useKeyboard";
 
 export type GamePhase = "boot" | "intro" | "playing";
 export type ControlMode = "driving" | "walking";
@@ -175,7 +176,7 @@ if (typeof window !== "undefined") {
       teleportPlage: () => void;
       teleportPhare: () => void;
       teleportBelvedereWalk: () => void;
-      setWalkStick?: (x: number, y: number) => void;
+      setWalkStick: (x: number, y: number) => void;
       sampleHeights: (x: number, z: number) => {
         visual: number;
         walk: number;
@@ -215,6 +216,10 @@ if (typeof window !== "undefined") {
     teleportBelvedereWalk: () => {
       const p = zoneWalkSpawns().belvedere;
       window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: p }));
+    },
+    setWalkStick: (x, y) => {
+      inputRef.touch.x = Number.isFinite(x) ? Math.max(-1, Math.min(1, x)) : 0;
+      inputRef.touch.y = Number.isFinite(y) ? Math.max(-1, Math.min(1, y)) : 0;
     },
     belvedereAnchor: () => {
       const a = getBelvedereWorldAnchor();

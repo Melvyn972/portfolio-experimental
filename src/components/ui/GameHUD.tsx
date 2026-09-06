@@ -507,8 +507,6 @@ function TouchControls() {
     if (mode !== "walking") {
       inputRef.look.x = 0;
       inputRef.look.y = 0;
-    }
-    if (mode !== "driving") {
       inputRef.touch.x = 0;
       inputRef.touch.y = 0;
     }
