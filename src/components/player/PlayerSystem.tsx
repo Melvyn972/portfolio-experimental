@@ -122,6 +122,7 @@ export function PlayerSystem() {
       playerPos.current.set(detail.x, detail.y, detail.z);
       walkYaw.current = detail.yaw ?? walkYaw.current;
       lookYaw.current = walkYaw.current;
+      lookPitch.current = 0.12;
       playerVel.current.set(0, 0, 0);
       setPlayerKinematic(playerPos.current, walkYaw.current, true);
       if (playerVisual.current) {
@@ -297,6 +298,7 @@ export function PlayerSystem() {
         playerPos.current.copy(pos.current);
         walkYaw.current = Math.atan2(toward.x, toward.z);
         lookYaw.current = walkYaw.current;
+        lookPitch.current = 0.12;
         velocity.current = 0;
         exitCooldown.current = 0.8;
         setPlayerKinematic(playerPos.current, walkYaw.current, true);

@@ -38,11 +38,15 @@ const MAT = {
   leather: () => new THREE.MeshStandardMaterial({ color: "#2a2420", roughness: 0.75 }),
   glass: () =>
     new THREE.MeshStandardMaterial({
-      color: "#b9d6e0",
-      metalness: 0.35,
-      roughness: 0.06,
+      color: "#7eb8c8",
+      metalness: 0.45,
+      roughness: 0.05,
       transparent: true,
-      opacity: 0.42,
+      opacity: 0.58,
+      depthWrite: false,
+      emissive: "#3a6a78",
+      emissiveIntensity: 0.18,
+      side: THREE.DoubleSide,
     }),
   softTop: () => new THREE.MeshStandardMaterial({ color: "#2a221c", roughness: 0.88 }),
   cabin: () => new THREE.MeshStandardMaterial({ color: "#1c1815", roughness: 0.82 }),
@@ -86,45 +90,30 @@ function mesh(geo, mat, pos, rot, scale) {
 function buildWheel() {
   const g = new THREE.Group();
   g.name = "wheel";
-  // Tire
-  g.add(mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.28, 20), MAT.rubber(), null, [0, 0, Math.PI / 2]));
-  // Sidewall lip
+  // Thick tire — readable from the rear 3/4 camera (not a paper disc)
+  g.add(mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.42, 22), MAT.rubber(), null, [0, 0, Math.PI / 2]));
   g.add(
     mesh(
-      new THREE.TorusGeometry(0.28, 0.035, 8, 20),
+      new THREE.TorusGeometry(0.3, 0.04, 8, 22),
       new THREE.MeshStandardMaterial({ color: "#2a2a2a", roughness: 0.7 }),
       null,
       [0, 0, Math.PI / 2],
     ),
   );
-  // Hub
-  g.add(mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.3, 14), MAT.chrome(), null, [0, 0, Math.PI / 2]));
+  g.add(mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.44, 16), MAT.chrome(), null, [0, 0, Math.PI / 2]));
   g.add(
     mesh(
-      new THREE.CylinderGeometry(0.06, 0.06, 0.32, 10),
+      new THREE.CylinderGeometry(0.07, 0.07, 0.46, 10),
       new THREE.MeshStandardMaterial({ color: "#1a1512", roughness: 0.5 }),
       null,
       [0, 0, Math.PI / 2],
     ),
   );
   for (let i = 0; i < 5; i++) {
-    const spoke = mesh(new THREE.BoxGeometry(0.045, 0.24, 0.055), MAT.chrome());
+    const spoke = mesh(new THREE.BoxGeometry(0.05, 0.26, 0.07), MAT.chrome());
     spoke.rotation.set(0, (i * Math.PI) / 5, Math.PI / 2);
     g.add(spoke);
   }
-  // High-contrast stripe — readable from oblique cam
-  const stripeMat = new THREE.MeshStandardMaterial({ color: "#f0ebe0", roughness: 0.45, emissive: "#3a3020", emissiveIntensity: 0.08 });
-  const stripe = mesh(new THREE.BoxGeometry(0.06, 0.3, 0.16), stripeMat, null, [0, 0, Math.PI / 2]);
-  stripe.position.set(0.14, 0, 0);
-  g.add(stripe);
-  const stripe2 = mesh(
-    new THREE.BoxGeometry(0.06, 0.3, 0.16),
-    new THREE.MeshStandardMaterial({ color: "#c45c3e", roughness: 0.4 }),
-    null,
-    [0, 0, Math.PI / 2],
-  );
-  stripe2.position.set(-0.14, 0, 0);
-  g.add(stripe2);
   return g;
 }
 
@@ -166,8 +155,10 @@ function buildConvertible() {
   const body = new THREE.Group();
   body.name = "body";
 
-  // Main sculpted hull
+  // Main sculpted hull + readable volumes (hood / rear deck)
   body.add(mesh(buildHullExtrusion(), MAT.terracotta()));
+  body.add(mesh(new THREE.BoxGeometry(1.55, 0.16, 1.35), MAT.terracotta(), [0, 0.58, 1.35]));
+  body.add(mesh(new THREE.BoxGeometry(1.5, 0.12, 1.05), MAT.terracottaDark(), [0, 0.7, -1.35]));
 
   // Cabin tub + readable interior (floor, door cards)
   body.add(mesh(new THREE.BoxGeometry(1.55, 0.22, 1.55), MAT.cabin(), [0, 0.58, -0.15]));
@@ -199,11 +190,12 @@ function buildConvertible() {
   body.add(mesh(new THREE.CapsuleGeometry(0.28, 0.9, 4, 10), MAT.softTop(), [0, 0.82, -1.45], [0, 0, Math.PI / 2]));
   body.add(mesh(new THREE.BoxGeometry(1.25, 0.08, 0.45), MAT.softTop(), [0, 0.98, -1.4]));
 
-  // Windshield
-  body.add(mesh(new THREE.BoxGeometry(1.48, 0.55, 0.04), MAT.glass(), [0, 1.0, 0.55], [-0.42, 0, 0]));
-  body.add(mesh(new THREE.BoxGeometry(0.035, 0.55, 0.035), MAT.chrome(), [0.72, 0.92, 0.55], [-0.42, 0, 0]));
-  body.add(mesh(new THREE.BoxGeometry(0.035, 0.55, 0.035), MAT.chrome(), [-0.72, 0.92, 0.55], [-0.42, 0, 0]));
-  body.add(mesh(new THREE.BoxGeometry(1.48, 0.035, 0.035), MAT.chrome(), [0, 1.22, 0.4], [-0.42, 0, 0]));
+  // Windshield — thick tinted pane, readable from the chase cam
+  body.add(mesh(new THREE.BoxGeometry(1.52, 0.62, 0.08), MAT.glass(), [0, 1.08, 0.52], [-0.48, 0, 0]));
+  body.add(mesh(new THREE.BoxGeometry(0.05, 0.64, 0.05), MAT.chrome(), [0.74, 1.0, 0.52], [-0.48, 0, 0]));
+  body.add(mesh(new THREE.BoxGeometry(0.05, 0.64, 0.05), MAT.chrome(), [-0.74, 1.0, 0.52], [-0.48, 0, 0]));
+  body.add(mesh(new THREE.BoxGeometry(1.52, 0.05, 0.05), MAT.chrome(), [0, 1.34, 0.36], [-0.48, 0, 0]));
+  body.add(mesh(new THREE.BoxGeometry(1.52, 0.04, 0.05), MAT.chrome(), [0, 0.82, 0.66], [-0.48, 0, 0]));
 
   // Seats (sculpted)
   for (const sx of [0.34, -0.34]) {
@@ -239,11 +231,15 @@ function buildConvertible() {
 
   root.add(body);
 
+  // Chrome bumper lips so the nose/tail read as a finished car
+  body.add(mesh(new THREE.BoxGeometry(1.55, 0.08, 0.1), MAT.chrome(), [0, 0.22, 2.26]));
+  body.add(mesh(new THREE.BoxGeometry(1.5, 0.08, 0.1), MAT.chrome(), [0, 0.22, -2.16]));
+
   const wheelOffsets = [
-    { name: "wheel_FL", pos: [0.88, 0.34, 1.28], steer: true },
-    { name: "wheel_FR", pos: [-0.88, 0.34, 1.28], steer: true },
-    { name: "wheel_RL", pos: [0.88, 0.34, -1.38], steer: false },
-    { name: "wheel_RR", pos: [-0.88, 0.34, -1.38], steer: false },
+    { name: "wheel_FL", pos: [0.84, 0.36, 1.28], steer: true },
+    { name: "wheel_FR", pos: [-0.84, 0.36, 1.28], steer: true },
+    { name: "wheel_RL", pos: [0.84, 0.36, -1.38], steer: false },
+    { name: "wheel_RR", pos: [-0.84, 0.36, -1.38], steer: false },
   ];
   for (const w of wheelOffsets) {
     const steerG = new THREE.Group();

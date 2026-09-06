@@ -23,10 +23,10 @@ const _dir = new THREE.Vector3();
 const _from = { x: 0, y: 0, z: 0 };
 const _rayDir = { x: 0, y: 0, z: 0 };
 
-const CAM_DIST_DRIVE = 8.6;
-const CAM_DIST_WALK = 5.8;
-const CAM_HEIGHT_DRIVE = 3.15;
-const CAM_HEIGHT_WALK = 2.55;
+const CAM_DIST_DRIVE = 7.8;
+const CAM_DIST_WALK = 5.2;
+const CAM_HEIGHT_DRIVE = 2.85;
+const CAM_HEIGHT_WALK = 2.85;
 
 /**
  * Modern third-person camera:
@@ -143,7 +143,7 @@ export function GameCamera() {
     }
 
     const gY = sampleGroundHeight(_desired.x, _desired.z);
-    _desired.y = Math.max(_desired.y, gY + (walking ? 2.2 : 2.0));
+    _desired.y = Math.max(_desired.y, gY + (walking ? 2.6 : 2.2));
     // Never sink under sea plane
     _desired.y = Math.max(_desired.y, 1.4);
 

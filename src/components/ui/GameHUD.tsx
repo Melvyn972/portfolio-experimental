@@ -53,10 +53,13 @@ export function GameHUD() {
 
 function ExplorerHint() {
   const { isMobile, mode } = useGameStore();
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
+  if (!ready) return null;
   const text = isMobile
     ? mode === "walking"
       ? "Stick gauche : marcher · stick droit : regard"
-      : "Stick : conduire · E : descendre au belvédère"
+      : "Stick : conduire · Interagir au belvédère"
     : mode === "walking"
       ? "ZQSD · souris · Shift — marcher"
       : "ZQSD · Shift · E — explorez la côte";

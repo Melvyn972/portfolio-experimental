@@ -45,10 +45,13 @@ export function Convertible({ color = "#c45c3e" }: Props) {
           const isGlass = cloned.transparent || matName.includes("glass") || (cloned.opacity < 0.95 && cloned.opacity > 0);
           if (isGlass) {
             cloned.transparent = true;
-            cloned.opacity = Math.min(cloned.opacity, 0.42);
+            cloned.opacity = 0.62;
             cloned.depthWrite = false;
-            cloned.metalness = 0.35;
-            cloned.roughness = 0.08;
+            cloned.metalness = 0.4;
+            cloned.roughness = 0.06;
+            cloned.color.set("#6aa8b8");
+            cloned.emissive = new THREE.Color("#245060");
+            cloned.emissiveIntensity = 0.22;
             cloned.side = THREE.DoubleSide;
           } else if (matName.includes("body") || matName.includes("terracotta") || cloned.color.getHexString() === "c45c3e") {
             cloned.color.lerp(new THREE.Color(color), 0.15);
