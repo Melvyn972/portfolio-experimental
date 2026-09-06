@@ -263,7 +263,7 @@ export function PlayerSystem() {
       if (velocity.current > 0) velocity.current = Math.max(0, velocity.current - drag * dt);
       if (velocity.current < 0) velocity.current = Math.min(0, velocity.current + drag * dt);
 
-      const speedFactor = THREE.MathUtils.clamp(Math.abs(velocity.current) / MAX_SPEED, 0.12, 1);
+      const speedFactor = THREE.MathUtils.clamp(Math.abs(velocity.current) / MAX_SPEED, 0.42, 1);
       const turnSign = Math.sign(velocity.current || 1);
       // Same yaw convention as look: +yaw = right (toward +X when facing +Z).
       // A / stick left decreases yaw. D / stick right increases yaw.
