@@ -43,20 +43,9 @@ export function Convertible({ color = "#c45c3e" }: Props) {
           }
         }
       }
-      if (obj.name.endsWith("_spin") || obj.name.includes("wheel") && obj.name.endsWith("_spin")) {
-        spins.push(obj);
-      }
-      if (obj.name.endsWith("_steer")) {
-        steers.push(obj);
-      }
+      if (obj.name.endsWith("_spin")) spins.push(obj);
+      if (obj.name.endsWith("_steer")) steers.push(obj);
     });
-
-    // Fallback: find spin groups by naming convention from exporter
-    if (spins.length === 0) {
-      clone.traverse((obj) => {
-        if (obj.name.includes("_spin")) spins.push(obj);
-      });
-    }
 
     spinNodes.current = spins;
     steerNodes.current = steers;
@@ -68,7 +57,34 @@ export function Convertible({ color = "#c45c3e" }: Props) {
     bodyMats.current.forEach((m) => m.color.set(color));
   }, [color]);
 
+  // Expose wheel API on this root AND parent group (VehicleController holds the parent ref)
+  useEffect(() => {
+    const node = root.current;
+    if (!node) return;
+    const api = {
+      setWheelSpin: (d: number) => {
+        wheelSpin.current += d;
+      },
+      setSteer: (a: number) => {
+        steer.current = THREE.MathUtils.lerp(steer.current, a, 0.28);
+      },
+    };
+    node.userData.setWheelSpin = api.setWheelSpin;
+    node.userData.setSteer = api.setSteer;
+    const parent = node.parent;
+    if (parent) {
+      parent.userData.setWheelSpin = api.setWheelSpin;
+      parent.userData.setSteer = api.setSteer;
+    }
+  }, [model]);
+
   useFrame(() => {
+    // Re-bind parent each frame once in case parent mounts after us
+    const node = root.current;
+    if (node?.parent && !node.parent.userData.setWheelSpin) {
+      node.parent.userData.setWheelSpin = node.userData.setWheelSpin;
+      node.parent.userData.setSteer = node.userData.setSteer;
+    }
     spinNodes.current.forEach((w) => {
       w.rotation.x = wheelSpin.current;
     });
@@ -76,17 +92,6 @@ export function Convertible({ color = "#c45c3e" }: Props) {
       w.rotation.y = steer.current;
     });
   });
-
-  useEffect(() => {
-    const node = root.current;
-    if (!node) return;
-    node.userData.setWheelSpin = (d: number) => {
-      wheelSpin.current += d;
-    };
-    node.userData.setSteer = (a: number) => {
-      steer.current = THREE.MathUtils.lerp(steer.current, a, 0.2);
-    };
-  }, [model]);
 
   return (
     <group ref={root}>

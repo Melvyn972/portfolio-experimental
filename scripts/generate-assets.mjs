@@ -93,6 +93,23 @@ function buildWheel() {
     spoke.rotation.set(0, (i * Math.PI) / 5, Math.PI / 2);
     g.add(spoke);
   }
+  // High-contrast tire stripe — readable spin from oblique camera
+  const stripe = mesh(
+    new THREE.BoxGeometry(0.04, 0.28, 0.12),
+    new THREE.MeshStandardMaterial({ color: "#e8e0d0", roughness: 0.55 }),
+    [0, 0, 0],
+    [0, 0, Math.PI / 2],
+  );
+  stripe.position.set(0.12, 0, 0);
+  g.add(stripe);
+  const stripe2 = mesh(
+    new THREE.BoxGeometry(0.04, 0.28, 0.12),
+    new THREE.MeshStandardMaterial({ color: "#c45c3e", roughness: 0.5 }),
+    null,
+    [0, 0, Math.PI / 2],
+  );
+  stripe2.position.set(-0.12, 0, 0);
+  g.add(stripe2);
   return g;
 }
 

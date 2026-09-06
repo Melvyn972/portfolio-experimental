@@ -151,8 +151,8 @@ export function VehicleController() {
           ((left ? 1 : 0) - (right ? 1 : 0)) * 0.05,
           0.1,
         );
-        car.current.userData.setWheelSpin?.(velocity.current * dt * 1.4);
-        car.current.userData.setSteer?.(((left ? 1 : 0) - (right ? 1 : 0)) * 0.45);
+        car.current.userData.setWheelSpin?.(velocity.current * dt * 2.6);
+        car.current.userData.setSteer?.(((left ? 1 : 0) - (right ? 1 : 0)) * 0.55);
       }
 
       const distStop = Math.hypot(pos.current.x - stopPos.x, pos.current.z - stopPos.z);
