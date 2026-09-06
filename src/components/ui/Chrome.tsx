@@ -57,9 +57,10 @@ export function MobileRail() {
   const updateOverflow = useCallback(() => {
     const el = scrollerRef.current;
     if (!el) return;
-    const max = el.scrollWidth - el.clientWidth;
-    setCanLeft(el.scrollLeft > 4);
-    setCanRight(max - el.scrollLeft > 4);
+    const max = Math.max(0, el.scrollWidth - el.clientWidth);
+    const left = el.scrollLeft;
+    setCanLeft(left > 8);
+    setCanRight(max - left > 8);
   }, []);
 
   useEffect(() => {
@@ -117,6 +118,18 @@ export function MobileRail() {
             canRight ? "opacity-100" : "opacity-0"
           }`}
         />
+
+        {/* Right peek pill — always hint more content when overflow remains */}
+        {canRight && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-1 right-11 z-[9] flex items-center"
+          >
+            <span className="rounded-md bg-[rgba(201,162,39,0.15)] px-1.5 py-2 font-mono text-[9px] text-[var(--brass)]">
+              +3
+            </span>
+          </div>
+        )}
 
         {canLeft && (
           <button
