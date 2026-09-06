@@ -49,7 +49,7 @@ export function buildWorldColliders(): Collider[] {
   }
 
   for (const zone of content.zones.zones) {
-    const { x, y, z } = zone.marker;
+    const { x, z } = zone.marker;
     if (zone.id === "maison-atelier") {
       // Kenney City building-type-b @ ×6.2 + atelier wing @ ×5.2
       list.push(box("maison", x, 3.55, z, 11.4, 7.1, 7.2));
