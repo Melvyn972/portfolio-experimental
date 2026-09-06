@@ -49,8 +49,8 @@ export function useKeyboard() {
       if (k === "e" || k === "f") {
         inputRef.current.interact = true;
         inputRef.interactPulse = 1;
+        inputRef.current.exit = true;
       }
-      if (k === "r" || k === "shift") inputRef.current.exit = true;
     };
 
     const up = (e: KeyboardEvent) => {
@@ -60,8 +60,10 @@ export function useKeyboard() {
       if (k === "arrowleft" || k === "a" || k === "q") inputRef.current.left = false;
       if (k === "arrowright" || k === "d") inputRef.current.right = false;
       if (k === " ") inputRef.current.brake = false;
-      if (k === "e" || k === "f") inputRef.current.interact = false;
-      if (k === "r" || k === "shift") inputRef.current.exit = false;
+      if (k === "e" || k === "f") {
+        inputRef.current.interact = false;
+        inputRef.current.exit = false;
+      }
     };
 
     window.addEventListener("keydown", down, { passive: false });

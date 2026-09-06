@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { content } from "@/lib/content";
 import { CvToolbar } from "@/components/ui/CvToolbar";
+import { CvScrollUnlock } from "@/components/ui/CvScrollUnlock";
 
 export const metadata: Metadata = {
   title: "CV",
@@ -12,6 +13,7 @@ export default function CvPage() {
 
   return (
     <div className="min-h-screen overflow-x-auto overflow-y-auto bg-[#f7f1e6] text-[#2c241c]">
+      <CvScrollUnlock />
       <CvToolbar />
 
       <article className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10 print:max-w-none print:px-0 print:py-0">

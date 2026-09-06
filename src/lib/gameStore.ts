@@ -18,6 +18,7 @@ export interface GameState {
   playerPos: { x: number; y: number; z: number };
   carPos: { x: number; y: number; z: number };
   carYaw: number;
+  walkYaw: number;
   prompt: string | null;
 }
 
@@ -41,15 +42,60 @@ let state: GameState = {
   playerPos: { x: 0, y: 0, z: 0 },
   carPos: { x: 0, y: 0, z: 0 },
   carYaw: 0,
+  walkYaw: 0,
   prompt: null,
 };
+
+function shallowEqualPos(
+  a: { x: number; y: number; z: number },
+  b: { x: number; y: number; z: number },
+  eps = 0.08,
+) {
+  return Math.abs(a.x - b.x) < eps && Math.abs(a.y - b.y) < eps && Math.abs(a.z - b.z) < eps;
+}
 
 export function getGameState() {
   return state;
 }
 
+/** Push state; skips notify when nothing UI-relevant changed. */
 export function setGameState(partial: Partial<GameState>) {
-  state = { ...state, ...partial };
+  let changed = false;
+  const next = { ...state };
+
+  for (const key of Object.keys(partial) as (keyof GameState)[]) {
+    const value = partial[key];
+    if (value === undefined) continue;
+
+    if (key === "playerPos" || key === "carPos") {
+      const cur = state[key];
+      const val = value as { x: number; y: number; z: number };
+      if (!shallowEqualPos(cur, val)) {
+        next[key] = val;
+        changed = true;
+      }
+      continue;
+    }
+
+    if (key === "speed" || key === "carYaw" || key === "walkYaw") {
+      const cur = state[key] as number;
+      const val = value as number;
+      const eps = key === "speed" ? 0.15 : 0.02;
+      if (Math.abs(cur - val) >= eps) {
+        (next as Record<string, unknown>)[key] = val;
+        changed = true;
+      }
+      continue;
+    }
+
+    if (state[key] !== value) {
+      (next as Record<string, unknown>)[key] = value;
+      changed = true;
+    }
+  }
+
+  if (!changed) return;
+  state = next;
   listeners.forEach((l) => l());
 }
 
@@ -71,4 +117,8 @@ export function toggleMute() {
 
 export function setQuality(quality: QualityPreset) {
   setGameState({ quality });
+}
+
+export function menusBlockInput() {
+  return state.identityOpen || state.rescueOpen || state.phase !== "playing";
 }

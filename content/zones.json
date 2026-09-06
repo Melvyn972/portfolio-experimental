@@ -18,13 +18,15 @@
       "name": "Le Belvédère",
       "status": "playable",
       "role": "Interaction d’identité — carnet de cuivre et verre",
-      "marker": { "x": -2, "y": 1.2, "z": -85 }
+      "marker": { "x": -6, "y": 1.2, "z": -85 },
+      "roadT": 0.58
     },
     {
       "id": "maison-atelier",
       "name": "Maison / Atelier",
       "status": "scaffold",
       "role": "Futur hub parcours & expérience terrain",
+      "contentKeys": ["experiences", "formations", "competences"],
       "marker": { "x": 18, "y": 2, "z": -40 }
     },
     {
@@ -32,6 +34,7 @@
       "name": "Le Studio",
       "status": "scaffold",
       "role": "Mini-expériences projets",
+      "contentKeys": ["projets"],
       "marker": { "x": 22, "y": 2, "z": -120 }
     },
     {
@@ -39,6 +42,7 @@
       "name": "La Plage",
       "status": "scaffold",
       "role": "Zone contemplative / passions",
+      "contentKeys": ["passions"],
       "marker": { "x": -28, "y": 0.2, "z": -60 }
     },
     {
@@ -46,6 +50,7 @@
       "name": "Le Phare",
       "status": "scaffold",
       "role": "CV & contact",
+      "contentKeys": ["contact", "activite"],
       "marker": { "x": -12, "y": 4, "z": -160 }
     },
     {

@@ -1,10 +1,18 @@
 # Licences & crédits — Côte Melvyn
 
-## Prototype actuel
-L’environnement méditerranéen, la route, le cabriolet, le belvédère et l’interaction d’identité sont des géométries procédurales art-dirigées créées pour ce dépôt (pas de modèles tiers requis au runtime pour la vertical slice).
+## Assets 3D (`/public/models/*.glb`)
+Géométries stylisées méditerranéennes générées pour ce dépôt (cabriolet fictionnel, pins, oliviers, cyprès, bougainvilliers, rochers, banc, carnet, explorateur, lampadaires, plinths).
+
+- Licence : **CC0 / domaine public maison** — usage libre sur le portfolio web public.
+- Générateur : `npm run assets` → `scripts/generate-assets.mjs` (Three.js + GLTFExporter).
+- Langage visuel unique : low-poly premium stylisé (pas de mix cartoon / photoréaliste).
+- Aucune copie de marque automobile.
+
+## Environnement procédural
+Route, terrain, mer (shader), ciel (`@react-three/drei` Sky), éclairage — art direction maison.
 
 ## Audio
-Ambiance générée procéduralement via Web Audio API (vagues, vent, oiseaux, moteur, pneus) — aucun sample tiers embarqué.
+Ambiance procédurale Web Audio API (vagues, vent, oiseaux, moteur, pneus) — aucun sample tiers.
 
-## Historique (assets abandonnés de l’ancien Atelier)
-Les packs Kenney / Poly Haven de l’ancien concept « Atelier Mécanique Digitale » ne sont plus utilisés dans l’expérience Côte Melvyn. S’ils restent physiquement dans `/public`, ils sont legacy et peuvent être retirés.
+## Typographie
+Fraunces, Outfit, JetBrains Mono via `next/font` (Google Fonts).

@@ -2,17 +2,15 @@
 
 import { useMemo } from "react";
 import * as THREE from "three";
-import { getRoadCurve, nearestRoadSample } from "@/lib/road";
+import { getRoadCurve, nearestRoadSample, getBelvedereWorldAnchor } from "@/lib/road";
 
 export function Terrain() {
   const land = useMemo(() => {
-    // Land only: from shore (~-12) inland — sea is a separate mesh
     const geo = new THREE.PlaneGeometry(95, 260, 80, 120);
     geo.rotateX(-Math.PI / 2);
     const pos = geo.attributes.position as THREE.BufferAttribute;
     for (let i = 0; i < pos.count; i++) {
-      // Remap local X so plane spans roughly x=-12 → x=70
-      const lx = pos.getX(i); // -47.5 … 47.5
+      const lx = pos.getX(i);
       const nx = ((lx + 47.5) / 95) * 82 - 12;
       pos.setX(i, nx);
       pos.setZ(i, pos.getZ(i) - 55);
@@ -20,39 +18,31 @@ export function Terrain() {
 
     const colors = new Float32Array(pos.count * 3);
     const c = new THREE.Color();
-    const curve = getRoadCurve();
+    const terrace = getBelvedereWorldAnchor().terrace;
 
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i);
       const z = pos.getZ(i);
       let y = 0.02;
 
-      // Approximate nearest road in world space
-      const tApprox = THREE.MathUtils.clamp((-z + 40) / 200, 0, 1);
-      const nearest = curve.getPointAt(tApprox);
-      const dx = x - nearest.x;
-      const lateral = dx; // rough; refine with sample
       const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 60);
       const lat = sample.lateral;
       const roadDist = Math.abs(lat);
 
-      // Soft road bed
       if (roadDist < 5) {
         y = sample.position.y;
       } else if (roadDist < 10) {
         const t = (roadDist - 5) / 5;
         y = THREE.MathUtils.lerp(sample.position.y, 0.15, t);
       } else {
-        y = 0.2 + Math.sin(x * 0.04 + z * 0.02) * 0.15;
+        y = 0.2 + Math.sin(x * 0.04 + z * 0.02) * 0.15 + Math.cos(z * 0.03) * 0.08;
       }
 
-      // Sea-side edge: gentle beach lip only (sea mesh handles water)
       if (x < -6) {
         const lip = THREE.MathUtils.smoothstep(-6, -12, -x);
         y = THREE.MathUtils.lerp(y, -0.15, lip);
       }
 
-      // Inland cliffs / hills (+X)
       if (x > 5) {
         const rise = THREE.MathUtils.smoothstep(5, 28, x);
         const ridge =
@@ -60,19 +50,22 @@ export function Terrain() {
           Math.cos(z * 0.09 + x * 0.05) * 0.9 +
           Math.sin(x * 0.12) * 0.6;
         y = Math.max(y, rise * (3.2 + ridge) + Math.pow(rise, 1.6) * 2.8);
-        // Cliff face near road
         if (x > 6 && x < 14 && roadDist > 6) {
           y = Math.max(y, 1.2 + (x - 6) * 0.55 + Math.sin(z * 0.15) * 0.4);
         }
       }
 
-      // Belvedere plateau pocket
-      if (x < -4 && x > -16 && z < -75 && z > -95) {
+      // Belvedere plateau pocket (synced to terrace)
+      const dx = x - terrace.x;
+      const dz = z - terrace.z;
+      if (dx * dx + dz * dz < 120) {
         y = Math.max(y, 0.95);
       }
+
       // Future zone plateaus
       if (x > 12 && z < -30 && z > -50) y = Math.max(y, 1.8);
       if (x > 14 && z < -110 && z > -130) y = Math.max(y, 2.0);
+      if (x > 4 && z < -170 && z > -190) y = Math.max(y, 3.5);
 
       pos.setY(i, y);
 
@@ -83,15 +76,13 @@ export function Terrain() {
       else if (x < -2) c.set("#d4c4a4");
       else c.set("#8f9f68");
 
-      // Dry grass variation
       if (y < 1.2 && x > -2) {
-        c.offsetHSL(0, -0.05, (Math.sin(x * 2.1 + z * 1.7) * 0.04));
+        c.offsetHSL(0, -0.05, Math.sin(x * 2.1 + z * 1.7) * 0.04);
       }
 
       colors[i * 3] = c.r;
       colors[i * 3 + 1] = c.g;
       colors[i * 3 + 2] = c.b;
-      void lateral;
     }
 
     pos.needsUpdate = true;
@@ -130,7 +121,6 @@ export function Terrain() {
           <meshStandardMaterial color={i % 2 === 0 ? "#d4c6b0" : "#c8b9a2"} roughness={0.88} />
         </mesh>
       ))}
-      {/* Pale stone retaining walls */}
       {cliffFaces
         .filter((_, i) => i % 2 === 0)
         .map((w, i) => (

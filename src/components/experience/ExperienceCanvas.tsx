@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Suspense } from "react";
 import { World } from "@/components/world/World";
@@ -29,18 +29,22 @@ function Scene({ isMobile }: { isMobile: boolean }) {
 export function ExperienceCanvas() {
   useKeyboard();
   const { quality: preset } = useGameStore();
-  const isMobile = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia("(max-width: 768px), (pointer: coarse)").matches;
-  }, []);
+  const [isMobile, setIsMobile] = useState(false);
   const quality = useMemo(() => resolveQuality(preset, isMobile), [preset, isMobile]);
   const started = useRef(false);
 
   useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px), (pointer: coarse)");
+    const apply = () => setIsMobile(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
     if (started.current) return;
     started.current = true;
-    // Boot → intro shortly after mount
-    const t = window.setTimeout(() => setGameState({ phase: "intro" }), 400);
+    const t = window.setTimeout(() => setGameState({ phase: "intro" }), 500);
     return () => clearTimeout(t);
   }, []);
 

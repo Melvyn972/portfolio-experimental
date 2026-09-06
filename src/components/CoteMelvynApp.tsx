@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import dynamic from "next/dynamic";
 import { GameHUD } from "@/components/ui/GameHUD";
 import { AmbientAudio, IntroDirector } from "@/components/audio/AmbientAudio";
@@ -23,6 +24,14 @@ function LoaderScreen() {
 
 export function CoteMelvynApp() {
   const { phase } = useGameStore();
+
+  useEffect(() => {
+    document.body.classList.add("game-locked");
+    document.body.classList.remove("cv-page");
+    return () => {
+      document.body.classList.remove("game-locked");
+    };
+  }, []);
 
   return (
     <main className="relative h-[100dvh] w-full overflow-hidden bg-[#d8e6ef]">

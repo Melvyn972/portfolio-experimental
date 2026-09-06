@@ -2,14 +2,14 @@
 
 import { useEffect, useRef } from "react";
 import { useGameStore } from "@/hooks/useGameStore";
-import { setGameState } from "@/lib/gameStore";
+import { setGameState, getGameState } from "@/lib/gameStore";
 
 /**
  * Procedural ambient audio via Web Audio API —
  * waves, wind, birds chirps, idle engine, tire hiss.
  */
 export function AmbientAudio() {
-  const { muted, phase, mode, speed, engineOn } = useGameStore();
+  const { muted, phase } = useGameStore();
   const ctxRef = useRef<AudioContext | null>(null);
   const nodes = useRef<{
     master: GainNode;
@@ -22,6 +22,9 @@ export function AmbientAudio() {
   } | null>(null);
 
   useEffect(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) return;
+
     const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     const ctx = new AudioCtx();
     ctxRef.current = ctx;
@@ -110,19 +113,21 @@ export function AmbientAudio() {
     const n = nodes.current;
     if (!ctx || !n) return;
 
-    const driving = mode === "driving" && phase === "playing";
-    const engineLevel = engineOn || driving ? (driving ? 0.7 + Math.min(1, speed / 22) * 0.5 : 0.35) : 0;
-    n.engine.gain.setTargetAtTime(engineLevel * 0.5, ctx.currentTime, 0.25);
-    n.tires.gain.setTargetAtTime(driving ? Math.min(0.35, speed * 0.02) : 0, ctx.currentTime, 0.2);
-    n.wind.gain.setTargetAtTime(0.08 + (driving ? speed * 0.004 : 0.02), ctx.currentTime, 0.3);
-
-    if (n.engineOsc) {
-      n.engineOsc.frequency.setTargetAtTime(48 + speed * 3.2, ctx.currentTime, 0.15);
-    }
-    if (n.engineOsc2) {
-      n.engineOsc2.frequency.setTargetAtTime(72 + speed * 4.5, ctx.currentTime, 0.15);
-    }
-  }, [mode, phase, speed, engineOn]);
+    let raf = 0;
+    const tick = () => {
+      const { mode, phase, speed, engineOn } = getGameState();
+      const driving = mode === "driving" && phase === "playing";
+      const engineLevel = engineOn || driving ? (driving ? 0.7 + Math.min(1, speed / 22) * 0.5 : 0.35) : 0;
+      n.engine.gain.setTargetAtTime(engineLevel * 0.5, ctx.currentTime, 0.25);
+      n.tires.gain.setTargetAtTime(driving ? Math.min(0.35, speed * 0.02) : 0, ctx.currentTime, 0.2);
+      n.wind.gain.setTargetAtTime(0.08 + (driving ? speed * 0.004 : 0.02), ctx.currentTime, 0.3);
+      if (n.engineOsc) n.engineOsc.frequency.setTargetAtTime(48 + speed * 3.2, ctx.currentTime, 0.15);
+      if (n.engineOsc2) n.engineOsc2.frequency.setTargetAtTime(72 + speed * 4.5, ctx.currentTime, 0.15);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   return null;
 }

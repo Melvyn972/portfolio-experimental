@@ -9,6 +9,17 @@ import { useEffect, useRef, useState } from "react";
 export function GameHUD() {
   const state = useGameStore();
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (state.identityOpen) setGameState({ identityOpen: false });
+        else if (state.rescueOpen) setGameState({ rescueOpen: false });
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [state.identityOpen, state.rescueOpen]);
+
   return (
     <div className="pointer-events-none fixed inset-0 z-20 text-[var(--fg)]">
       <TopBar />
@@ -16,10 +27,10 @@ export function GameHUD() {
       {state.showExplorerHint && state.phase === "playing" && (
         <div className="absolute bottom-24 left-1/2 -translate-x-1/2 animate-fade-in">
           <p className="font-display text-sm tracking-[0.28em] uppercase text-[#5c4a36]">Explorer</p>
-          <p className="mt-1 text-center text-xs text-[#7a6854]">ZQSD · souris tactile · E pour interagir</p>
+          <p className="mt-1 text-center text-xs text-[#7a6854]">ZQSD · tactile · E pour interagir</p>
         </div>
       )}
-      {state.prompt && state.phase === "playing" && !state.identityOpen && (
+      {state.prompt && state.phase === "playing" && !state.identityOpen && !state.rescueOpen && (
         <div className="pointer-events-auto absolute bottom-28 left-1/2 -translate-x-1/2">
           <button
             type="button"
@@ -97,9 +108,7 @@ function IdentityReveal() {
       <div className="identity-panel max-w-lg animate-rise border border-[#c9b896]/70 bg-[#f6f1e6]/88 p-6 shadow-[0_20px_60px_rgba(40,30,15,0.25)] backdrop-blur-xl md:p-8">
         <div className="mb-4 h-px w-16 bg-gradient-to-r from-[#b08d57] to-transparent" />
         <p className="font-display text-2xl text-[#2c241c] md:text-3xl">{id.name}</p>
-        <p className="mt-2 font-display text-sm tracking-[0.14em] text-[#8a6a3e] uppercase">
-          {id.title}
-        </p>
+        <p className="mt-2 font-display text-sm tracking-[0.14em] text-[#8a6a3e] uppercase">{id.title}</p>
         <p className="mt-5 text-sm leading-relaxed text-[#4a3e32]">{id.presentation}</p>
         <p className="mt-4 text-xs italic text-[#7a6854]">{id.credo}</p>
         <div className="mt-6 flex flex-wrap gap-3">
@@ -111,10 +120,16 @@ function IdentityReveal() {
             Continuer l&apos;exploration
           </button>
           <a
+            href="/cv"
+            className="rounded-sm border border-[#b08d57]/50 px-4 py-2 text-xs text-[#5c4a36]"
+          >
+            Lire le CV
+          </a>
+          <a
             href={content.contact.cvPdf}
             className="rounded-sm border border-[#b08d57]/50 px-4 py-2 text-xs text-[#5c4a36]"
           >
-            Télécharger le CV
+            Télécharger le PDF
           </a>
         </div>
       </div>
@@ -139,9 +154,10 @@ function RescueMenu() {
           <p className="text-sm text-[#8a6a3e]">{id.title}</p>
           <p className="mt-3 text-sm leading-relaxed text-[#4a3e32]">{id.tagline}</p>
         </div>
+
         <nav className="flex flex-col gap-2 text-sm">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-[#8a7460]">Parcours</p>
-          {content.experiences.slice(0, 3).map((e) => (
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#8a7460]">Parcours · Maison/Atelier</p>
+          {content.experiences.map((e) => (
             <div key={e.company} className="border-b border-[#dccfb8]/60 py-2">
               <p className="text-[#2c241c]">{e.role}</p>
               <p className="text-xs text-[#7a6854]">
@@ -150,8 +166,50 @@ function RescueMenu() {
             </div>
           ))}
         </nav>
+
         <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-[#8a7460]">Contact</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#8a7460]">Formations</p>
+          <ul className="mt-2 space-y-2 text-sm">
+            {content.formations.map((f) => (
+              <li key={f.title} className="text-[#4a3e32]">
+                <span className="text-[#2c241c]">{f.title}</span>
+                <span className="block text-xs text-[#7a6854]">{f.period}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#8a7460]">Compétences</p>
+          <div className="mt-2 space-y-2 text-sm">
+            {content.competences.clusters.map((c) => (
+              <p key={c.id} className="text-[#4a3e32]">
+                <span className="text-[#2c241c]">{c.title}</span> — {c.items.slice(0, 4).join(" · ")}
+              </p>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#8a7460]">Projets · Studio</p>
+          <ul className="mt-2 space-y-2 text-sm">
+            {content.projets.slice(0, 4).map((p) => (
+              <li key={p.id} className="text-[#4a3e32]">
+                <span className="text-[#2c241c]">{p.name}</span> · {p.tag}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#8a7460]">Passions · Plage</p>
+          <p className="mt-2 text-sm text-[#4a3e32]">
+            {content.passions.map((p) => p.title).join(" · ")}
+          </p>
+        </div>
+
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#8a7460]">Contact · Phare</p>
           <a className="mt-2 block text-sm text-[#3d3226] underline decoration-[#b08d57]/50" href={`mailto:${contact.email}`}>
             {contact.email}
           </a>
@@ -165,13 +223,25 @@ function RescueMenu() {
             <a href={contact.networks.codeur.url} target="_blank" rel="noreferrer" className="text-[#5c4a36]">
               Codeur
             </a>
+            <a href="/cv" className="text-[#5c4a36]">
+              CV en ligne
+            </a>
             <a href={contact.cvPdf} className="text-[#5c4a36]">
-              CV
+              PDF
             </a>
           </div>
         </div>
+
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#8a7460]">Activité</p>
+          <p className="mt-2 text-sm leading-relaxed text-[#4a3e32]">
+            {content.activite.services.slice(0, 4).join(" · ")}.
+          </p>
+          <p className="mt-1 text-xs text-[#9a8874]">{content.activite.publicNote}</p>
+        </div>
+
         <p className="mt-auto text-[10px] leading-relaxed text-[#9a8874]">
-          Menu recruteur — le monde reste la voie principale. Zones futures : Maison/Atelier, Studio, Plage, Phare.
+          Menu recruteur — le monde reste la voie principale. Scaffolds : Maison/Atelier, Studio, Plage, Phare, WOW.
         </p>
       </aside>
     </div>
@@ -199,6 +269,13 @@ function TouchControls() {
   }, []);
 
   if (!isTouch) return null;
+
+  const reset = () => {
+    setActive(false);
+    inputRef.touch.x = 0;
+    inputRef.touch.y = 0;
+    setKnob({ x: 0, y: 0 });
+  };
 
   const onMove = (clientX: number, clientY: number) => {
     const el = zone.current;
@@ -232,11 +309,10 @@ function TouchControls() {
           if (!active) return;
           onMove(e.clientX, e.clientY);
         }}
-        onPointerUp={() => {
-          setActive(false);
-          inputRef.touch.x = 0;
-          inputRef.touch.y = 0;
-          setKnob({ x: 0, y: 0 });
+        onPointerUp={reset}
+        onPointerCancel={reset}
+        onPointerLeave={() => {
+          if (active) reset();
         }}
       >
         <div

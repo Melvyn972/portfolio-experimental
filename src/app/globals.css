@@ -39,8 +39,14 @@ body {
   font-family: var(--font-body), system-ui, sans-serif;
 }
 
-body {
+body.game-locked {
   overflow: hidden;
+  height: 100dvh;
+}
+
+body.cv-page {
+  overflow: auto;
+  height: auto;
 }
 
 ::selection {
