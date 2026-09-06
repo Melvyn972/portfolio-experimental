@@ -697,7 +697,7 @@ async function exportGLB(object, filename) {
 async function main() {
   const only = process.argv.slice(2);
   const jobs = {
-    roadster: () => exportGLB(buildConvertible(), "roadster.glb"),
+    // roadster: RGS Dev CC0 — imported by scripts/import-rgs-roadster.mjs. Do not overwrite.
     pine: () => exportGLB(buildStonePine(), "pine.glb"),
     cypress: () => exportGLB(buildCypress(), "cypress.glb"),
     olive: () => exportGLB(buildOlive(), "olive.glb"),

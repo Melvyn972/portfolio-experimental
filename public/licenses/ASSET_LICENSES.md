@@ -6,7 +6,7 @@ All third-party assets used in this project. House-generated models are CC0.
 
 | File | Source | License | Notes |
 |------|--------|---------|-------|
-| `public/models/roadster.glb` | House-authored convertible (`scripts/generate-assets.mjs`) | CC0 1.0 | Body, glass, cabin, steer→spin wheels |
+| `public/models/roadster.glb` | [RGS Dev — Free Low Poly Vehicles Pack](https://opengameart.org/content/free-low-poly-vehicles-pack) | CC0 1.0 | Authored Roadster FBX → GLB (body, 4 wheels, glass, interior materials) |
 | `public/models/kenney/*` | Kenney Car Kit | CC0 1.0 | Reference copies / wheels (sedan-sports not used as hero) |
 | `public/licenses/KENNEY_LICENSE.txt` | Kenney | CC0 | Full license text |
 

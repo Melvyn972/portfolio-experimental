@@ -52,11 +52,19 @@ export function GameHUD() {
 }
 
 function ExplorerHint() {
-  const { isMobile, mode } = useGameStore();
+  const { mode } = useGameStore();
+  const [touch, setTouch] = useState(false);
   const [ready, setReady] = useState(false);
-  useEffect(() => setReady(true), []);
+  useEffect(() => {
+    const mq = window.matchMedia("(pointer: coarse), (max-width: 768px)");
+    const apply = () => setTouch(mq.matches || window.innerWidth < 768);
+    apply();
+    mq.addEventListener("change", apply);
+    setReady(true);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
   if (!ready) return null;
-  const text = isMobile
+  const text = touch
     ? mode === "walking"
       ? "Stick gauche : marcher · stick droit : regard"
       : "Stick : conduire · Interagir au belvédère"
@@ -468,8 +476,9 @@ function TouchControls() {
   useEffect(() => {
     const mq = window.matchMedia("(pointer: coarse)");
     const apply = () => {
-      setIsTouch(mq.matches);
-      setGameState({ isMobile: mq.matches || window.innerWidth < 768 });
+      const touch = mq.matches || window.innerWidth < 768;
+      setIsTouch(touch);
+      setGameState({ isMobile: touch });
     };
     apply();
     mq.addEventListener("change", apply);
