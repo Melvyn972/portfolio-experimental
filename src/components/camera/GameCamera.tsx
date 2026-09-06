@@ -42,6 +42,8 @@ export function GameCamera() {
   const look = useRef(new THREE.Vector3(0, 1, 10));
   const dist = useRef(CAM_DIST_DRIVE);
   const started = useRef(false);
+  const lastMode = useRef(getGameState().mode);
+  const snapFrames = useRef(4);
 
   useFrame((_, rawDt) => {
     const dt = Math.min(rawDt, 0.05);
@@ -102,6 +104,10 @@ export function GameCamera() {
     }
 
     const walking = state.mode === "walking";
+    if (lastMode.current !== state.mode) {
+      lastMode.current = state.mode;
+      snapFrames.current = 4;
+    }
     const subject = walking ? state.playerPos : state.carPos;
     if (!Number.isFinite(subject.x) || !Number.isFinite(subject.y) || !Number.isFinite(subject.z)) {
       return;
@@ -192,9 +198,10 @@ export function GameCamera() {
     camera.getWorldDirection(_dir);
     _dir.y = 0;
     const camDot = _dir.lengthSq() < 1e-8 ? 1 : _dir.normalize().dot(_a.set(fwdX, 0, fwdZ));
-    if (inFront || camDot < 0.25 || current.current.distanceTo(_desired) > 3.2) {
+    if (snapFrames.current > 0 || inFront || camDot < 0.25 || current.current.distanceTo(_desired) > 3.2) {
       current.current.copy(_desired);
       look.current.copy(_lookTarget);
+      if (snapFrames.current > 0) snapFrames.current -= 1;
     } else {
       current.current.lerp(_desired, 1 - Math.exp(-follow * dt));
       look.current.lerp(_lookTarget, 1 - Math.exp(-11 * dt));
@@ -205,6 +212,7 @@ export function GameCamera() {
     current.current.y = Math.min(current.current.y, maxAbove);
     camera.position.copy(current.current);
     camera.lookAt(look.current);
+    camera.updateMatrixWorld(true);
 
     const persp = camera as THREE.PerspectiveCamera;
     const targetFov = walking ? (mobile ? 48 : 46) : THREE.MathUtils.lerp(40, 50, Math.min(1, state.speed / 20));

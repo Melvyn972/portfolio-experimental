@@ -238,6 +238,7 @@ if (typeof window !== "undefined") {
       travelToChapterZone: (id: ChapterId) => void;
       setWalkStick: (x: number, y: number) => void;
       setLookStick: (x: number, y: number) => void;
+      setKeys: (partial: Partial<import("@/hooks/useKeyboard").InputState>) => void;
       live?: {
         mode: string;
         playerPos: { x: number; y: number; z: number };
@@ -299,6 +300,9 @@ if (typeof window !== "undefined") {
     setLookStick: (x, y) => {
       inputRef.look.x = Number.isFinite(x) ? Math.max(-1, Math.min(1, x)) : 0;
       inputRef.look.y = Number.isFinite(y) ? Math.max(-1, Math.min(1, y)) : 0;
+    },
+    setKeys: (partial) => {
+      Object.assign(inputRef.current, partial);
     },
     belvedereAnchor: () => {
       const a = getBelvedereWorldAnchor();

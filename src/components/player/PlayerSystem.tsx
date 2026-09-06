@@ -172,15 +172,24 @@ export function PlayerSystem() {
     if (!initialized.current) {
       pos.current.copy(START_POSE.position);
       yaw.current = Math.atan2(START_POSE.tangent.x, START_POSE.tangent.z);
-      walkYaw.current = yaw.current;
-      lookYaw.current = yaw.current;
+      // Do not clobber a teleport that landed before the first frame.
+      if (state.mode === "walking" && Number.isFinite(state.lookYaw)) {
+        walkYaw.current = state.walkYaw;
+        lookYaw.current = state.lookYaw;
+        if (Number.isFinite(state.playerPos.x)) {
+          playerPos.current.set(state.playerPos.x, state.playerPos.y, state.playerPos.z);
+        }
+      } else {
+        walkYaw.current = yaw.current;
+        lookYaw.current = yaw.current;
+      }
       syncCar(pos.current, yaw.current, 0, 0);
       initialized.current = true;
       setGameState({
         carPos: { x: pos.current.x, y: pos.current.y, z: pos.current.z },
         carYaw: yaw.current,
-        walkYaw: yaw.current,
-        lookYaw: yaw.current,
+        walkYaw: walkYaw.current,
+        lookYaw: lookYaw.current,
       });
     }
 
