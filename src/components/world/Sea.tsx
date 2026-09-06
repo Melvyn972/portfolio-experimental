@@ -76,11 +76,11 @@ export function Sea({ segments = 80 }: { segments?: number }) {
   return (
     <group>
       {/* Deep water plane — always reads as sea even before shader settles */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-38, -0.55, -60]} receiveShadow>
-        <planeGeometry args={[70, 280]} />
-        <meshStandardMaterial color="#0e6e72" roughness={0.4} metalness={0.08} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-40, -0.62, -60]} receiveShadow>
+        <planeGeometry args={[78, 288]} />
+        <meshPhysicalMaterial color="#0a5c64" roughness={0.22} metalness={0.42} envMapIntensity={1.15} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-30, -0.28, -60]} renderOrder={1}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-30, -0.26, -60]} renderOrder={1}>
         <planeGeometry args={[48, 248, segsX, segsZ]} />
         <shaderMaterial
           ref={mat}

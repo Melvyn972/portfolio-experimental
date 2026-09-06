@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Canvas } from "@react-three/fiber";
+import * as THREE from "three";
 import { Suspense } from "react";
 import { World } from "@/components/world/World";
 import { PlayerSystem } from "@/components/player/PlayerSystem";
@@ -75,11 +76,14 @@ export function ExperienceCanvas() {
       gl={{
         antialias: quality.aa,
         powerPreference: "high-performance",
-        toneMappingExposure: 1.12,
+        toneMapping: THREE.ACESFilmicToneMapping,
+        toneMappingExposure: 1.05,
       }}
       camera={{ fov: 42, near: 0.1, far: 280, position: [32, 24, 58] }}
       onCreated={({ gl }) => {
-        gl.setClearColor("#c8dde8");
+        gl.toneMapping = THREE.ACESFilmicToneMapping;
+        gl.toneMappingExposure = 1.05;
+        gl.setClearColor("#9ec4d6");
       }}
       onPointerDown={(e) => {
         const t = e.target as HTMLElement | undefined;

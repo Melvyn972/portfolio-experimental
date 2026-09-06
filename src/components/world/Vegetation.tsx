@@ -6,6 +6,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { getRoadCurve, getBelvedereWorldAnchor, nearestRoadSample, ROAD_WIDTH } from "@/lib/road";
 import { sampleGroundHeight } from "@/lib/ground";
+import { groundClone } from "@/lib/gltfFit";
 
 type TreeType = "pine" | "olive" | "bougainvillea" | "cypress";
 
@@ -20,6 +21,7 @@ function useClonedScene(path: string) {
         m.receiveShadow = true;
       }
     });
+    groundClone(c);
     return c;
   }, [scene]);
 }

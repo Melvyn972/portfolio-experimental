@@ -77,26 +77,41 @@ function buildRoadPrism() {
   return geo;
 }
 
+/** Solid apron tucked under the asphalt so the trench never shows sky. */
 function Shoulder({ side }: { side: 1 | -1 }) {
   const geo = useMemo(() => {
     const curve = getRoadCurve();
     const positions: number[] = [];
     const indices: number[] = [];
-    const innerW = ROAD_HALF + 0.08;
-    for (let i = 0; i <= 80; i++) {
-      const t = i / 80;
+    const n = 88;
+    const reach = side < 0 ? 6.4 : 3.6;
+    for (let i = 0; i <= n; i++) {
+      const t = i / n;
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const lateral = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-      const inner = p.clone().addScaledVector(lateral, side * innerW);
-      const outer = p.clone().addScaledVector(lateral, side * (innerW + 2.8));
-      inner.y = p.y + ROAD_SURFACE_LIFT - 0.08;
-      outer.y = p.y - 0.35;
-      positions.push(inner.x, inner.y, inner.z, outer.x, outer.y, outer.z);
-      if (i < 80) {
-        const a = i * 2;
-        if (side > 0) indices.push(a, a + 2, a + 1, a + 1, a + 2, a + 3);
-        else indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+      // Tuck under the prism so no blue slit at the asphalt lip.
+      const inner = p.clone().addScaledVector(lateral, side * (ROAD_HALF - 0.22));
+      const mid = p.clone().addScaledVector(lateral, side * (ROAD_HALF + 0.85));
+      const outer = p.clone().addScaledVector(lateral, side * (ROAD_HALF + reach));
+      inner.y = p.y + ROAD_SURFACE_LIFT - 0.012;
+      mid.y = side < 0 ? p.y - 0.08 : p.y + 0.03;
+      outer.y = side < 0 ? -0.16 : p.y + 0.02;
+      const drop = inner.clone();
+      drop.y = inner.y - 1.85;
+      // 0 inner, 1 mid, 2 outer, 3 drop
+      positions.push(inner.x, inner.y, inner.z, mid.x, mid.y, mid.z, outer.x, outer.y, outer.z, drop.x, drop.y, drop.z);
+      if (i < n) {
+        const a = i * 4;
+        const b = a + 4;
+        const flip = side > 0;
+        const quad = (i0: number, i1: number, i2: number, i3: number) => {
+          if (flip) indices.push(i0, i2, i1, i1, i2, i3);
+          else indices.push(i0, i1, i2, i1, i3, i2);
+        };
+        quad(a, a + 1, b, b + 1);
+        quad(a + 1, a + 2, b + 1, b + 2);
+        quad(a, a + 3, b, b + 3);
       }
     }
     const g = new THREE.BufferGeometry();
@@ -108,7 +123,7 @@ function Shoulder({ side }: { side: 1 | -1 }) {
 
   return (
     <mesh geometry={geo} receiveShadow>
-      <meshStandardMaterial color="#6a6458" roughness={0.96} />
+      <meshStandardMaterial color={side < 0 ? "#cbb89a" : "#8a7d68"} roughness={0.94} />
     </mesh>
   );
 }
@@ -121,10 +136,11 @@ export function Road() {
     <group>
       <mesh geometry={prism} receiveShadow castShadow renderOrder={2}>
         <meshStandardMaterial
-          color="#2a2a28"
+          color="#2c2b29"
           map={asphalt}
-          roughness={0.9}
-          metalness={0.04}
+          roughness={0.86}
+          metalness={0.06}
+          envMapIntensity={0.35}
           polygonOffset
           polygonOffsetFactor={-3}
           polygonOffsetUnits={-3}

@@ -6,11 +6,11 @@ export function PostFX({ enabled, ao = false }: { enabled: boolean; ao?: boolean
   if (!enabled) return null;
   return (
     <EffectComposer multisampling={0} enableNormalPass={ao}>
-      <N8AO enabled={ao} aoRadius={1.5} intensity={1.15} quality="performance" halfRes />
-      <Bloom luminanceThreshold={0.9} mipmapBlur intensity={0.28} radius={0.42} />
-      <HueSaturation saturation={0.07} />
-      <BrightnessContrast brightness={0.015} contrast={0.09} />
-      <Vignette eskil={false} offset={0.26} darkness={0.36} />
+      <N8AO enabled={ao} aoRadius={1.85} intensity={1.45} quality="performance" halfRes />
+      <Bloom luminanceThreshold={0.82} mipmapBlur intensity={0.38} radius={0.48} />
+      <HueSaturation saturation={0.1} />
+      <BrightnessContrast brightness={0.01} contrast={0.12} />
+      <Vignette eskil={false} offset={0.22} darkness={0.42} />
     </EffectComposer>
   );
 }

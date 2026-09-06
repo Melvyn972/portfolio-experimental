@@ -30,7 +30,7 @@ export function resolveQuality(preset: QualityPreset, isMobile: boolean): Qualit
     shadowMapSize: isMobile ? 1024 : 2048,
     aa: !isMobile,
     postfx: true,
-    seaSegments: isMobile ? 64 : 96,
+    seaSegments: isMobile ? 72 : 110,
     treeCount: isMobile ? 40 : 70,
     dust: !isMobile,
     anisotropic: 8,

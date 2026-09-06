@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { content } from "@/lib/content";
 import { getRoadCurve } from "@/lib/road";
 import { enableShadows, groundClone } from "@/lib/gltfFit";
+import { sampleGroundHeight } from "@/lib/ground";
 
 function useShadowClone(path: string, ground = false) {
   const { scene } = useGLTF(path);
@@ -76,7 +77,6 @@ export function CoastalZones() {
   const fence = useShadowClone("/models/kenney/city/fence.glb");
   const pine = useShadowClone("/models/pine.glb");
   const hedge = useShadowClone("/models/kenney/fantasy/hedge.glb");
-  const pier = useShadowClone("/models/pier.glb");
   const stairs = useShadowClone("/models/kenney/fantasy/stairs-stone.glb");
   const lantern = useShadowClone("/models/lantern.glb");
   /** Dormin lighthouse sits on y=0 locally (≈29u tall) — do NOT double-lift. */
@@ -97,7 +97,7 @@ export function CoastalZones() {
       const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
       const pos = p.clone().addScaledVector(side, 6.8);
       return {
-        position: [pos.x, 0, pos.z] as [number, number, number],
+        position: [pos.x, sampleGroundHeight(pos.x, pos.z), pos.z] as [number, number, number],
         yaw: Math.atan2(tangent.x, tangent.z) + Math.PI / 2,
         key: i,
       };
@@ -118,8 +118,8 @@ export function CoastalZones() {
           <Placed scene={maison} position={[m.x, 0, m.z]} rotation={[0, -0.35, 0]} scale={6.2} />
           {/* Wing / atelier */}
           <Placed scene={atelier} position={[m.x + 7.5, 0, m.z + 2]} rotation={[0, 0.2, 0]} scale={5.2} />
-          <Placed scene={pine} position={[m.x - 6, 0, m.z + 4]} scale={0.5} />
-          <Placed scene={pine} position={[m.x + 10, 0, m.z - 3]} scale={0.42} />
+          <Placed scene={pine} position={[m.x - 6, sampleGroundHeight(m.x - 6, m.z + 4), m.z + 4]} scale={0.5} />
+          <Placed scene={pine} position={[m.x + 10, sampleGroundHeight(m.x + 10, m.z - 3), m.z - 3]} scale={0.42} />
           <Placed scene={hedge} position={[m.x + 3, 0, m.z + 6]} rotation={[0, 0.4, 0]} scale={2.2} />
           <Placed scene={stairs} position={[m.x - 1, 0, m.z + 5.5]} rotation={[0, Math.PI, 0]} scale={1.8} />
         </group>
@@ -129,9 +129,9 @@ export function CoastalZones() {
         <group>
           {/* Kenney City building-type-e — studio */}
           <Placed scene={studio} position={[s.x, 0, s.z]} rotation={[0, 0.4, 0]} scale={6.0} />
-          <Placed scene={pine} position={[s.x - 7.5, 0, s.z + 5]} scale={0.48} />
-          <Placed scene={hedge} position={[s.x + 4, 0, s.z + 4]} scale={2.0} />
-          <Placed scene={pine} position={[s.x + 6, 0, s.z - 4]} scale={0.4} />
+          <Placed scene={pine} position={[s.x - 7.5, sampleGroundHeight(s.x - 7.5, s.z + 5), s.z + 5]} scale={0.48} />
+          <Placed scene={hedge} position={[s.x + 4, sampleGroundHeight(s.x + 4, s.z + 4), s.z + 4]} scale={2.0} />
+          <Placed scene={pine} position={[s.x + 6, sampleGroundHeight(s.x + 6, s.z - 4), s.z - 4]} scale={0.4} />
         </group>
       )}
 
@@ -155,8 +155,8 @@ export function CoastalZones() {
             <cylinderGeometry args={[2.8, 3.2, 0.45, 10]} />
             <meshStandardMaterial color="#b9a888" roughness={0.95} />
           </mesh>
-          <Placed scene={pine} position={[p.x + 5.5, 0, p.z + 6]} scale={0.5} />
-          <Placed scene={pine} position={[p.x - 4.5, 0, p.z - 5]} scale={0.42} />
+          <Placed scene={pine} position={[p.x + 5.5, sampleGroundHeight(p.x + 5.5, p.z + 6), p.z + 6]} scale={0.5} />
+          <Placed scene={pine} position={[p.x - 4.5, sampleGroundHeight(p.x - 4.5, p.z - 5), p.z - 5]} scale={0.42} />
           <Placed scene={lantern} position={[p.x + 2.4, 0.45, p.z + 3.2]} scale={1.3} />
           <pointLight
             position={[p.x, 0.55 + 28.95 * PHARE_SCALE * 0.92, p.z]}
@@ -169,12 +169,32 @@ export function CoastalZones() {
       )}
 
       {plage && (
-        <group position={[plage.x, 0, plage.z]}>
-          <Placed scene={pier} position={[-4.2, 0.08, -1.6]} rotation={[0, 0.55, 0]} scale={0.38} />
-          <Placed scene={pine} position={[-1.2, 0, 3.6]} scale={0.4} />
-          <Placed scene={pine} position={[-2.4, 0, -3.2]} scale={0.34} />
-          <Placed scene={hedge} position={[-0.6, 0, 5.0]} scale={1.8} />
-          <Placed scene={lantern} position={[-1.8, 0, 2.0]} scale={1.2} />
+        <group>
+          <WoodenPier
+            position={[plage.x - 6.4, sampleGroundHeight(plage.x - 6.4, plage.z) + 0.02, plage.z]}
+            yaw={-Math.PI / 2 + 0.18}
+          />
+          <BeachApron cx={plage.x} cz={plage.z} />
+          <Placed
+            scene={pine}
+            position={[plage.x + 1.4, sampleGroundHeight(plage.x + 1.4, plage.z + 4.2), plage.z + 4.2]}
+            scale={0.38}
+          />
+          <Placed
+            scene={pine}
+            position={[plage.x + 0.6, sampleGroundHeight(plage.x + 0.6, plage.z - 3.4), plage.z - 3.4]}
+            scale={0.32}
+          />
+          <Placed
+            scene={hedge}
+            position={[plage.x + 2.2, sampleGroundHeight(plage.x + 2.2, plage.z + 5.2), plage.z + 5.2]}
+            scale={1.8}
+          />
+          <Placed
+            scene={lantern}
+            position={[plage.x - 1.2, sampleGroundHeight(plage.x - 1.2, plage.z + 1.6), plage.z + 1.6]}
+            scale={1.2}
+          />
         </group>
       )}
 
@@ -193,12 +213,62 @@ export function CoastalZones() {
   );
 }
 
+/** Authored jetty — the modular pier GLB is a kit with planks at y=2.6 and loose poles. */
+function WoodenPier({ position, yaw }: { position: [number, number, number]; yaw: number }) {
+  const piles = [-3.2, -1.6, 0, 1.6, 3.2];
+  return (
+    <group position={position} rotation={[0, yaw, 0]}>
+      {piles.map((z, i) =>
+        [-0.85, 0.85].map((x) => (
+          <mesh key={`p-${i}-${x}`} position={[x, -0.55, z]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.09, 0.11, 1.5, 7]} />
+            <meshStandardMaterial color={i % 2 ? "#6b4a30" : "#5c3f28"} roughness={0.88} />
+          </mesh>
+        )),
+      )}
+      <mesh position={[0, 0.22, 0]} receiveShadow castShadow>
+        <boxGeometry args={[2.15, 0.1, 7.4]} />
+        <meshStandardMaterial color="#8a5e3c" roughness={0.78} />
+      </mesh>
+      {[-0.55, 0, 0.55].map((x) => (
+        <mesh key={`plank-${x}`} position={[x, 0.28, 0]} receiveShadow>
+          <boxGeometry args={[0.48, 0.04, 7.2]} />
+          <meshStandardMaterial color="#9a6a44" roughness={0.82} />
+        </mesh>
+      ))}
+      {[-1, 1].map((side) => (
+        <group key={`rail-${side}`}>
+          <mesh position={[side * 1.02, 0.72, 0]}>
+            <boxGeometry args={[0.06, 0.06, 7.1]} />
+            <meshStandardMaterial color="#6e4a30" roughness={0.8} />
+          </mesh>
+          {piles.map((z) => (
+            <mesh key={`rp-${side}-${z}`} position={[side * 1.02, 0.5, z]}>
+              <boxGeometry args={[0.07, 0.55, 0.07]} />
+              <meshStandardMaterial color="#5c3f28" roughness={0.85} />
+            </mesh>
+          ))}
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function BeachApron({ cx, cz }: { cx: number; cz: number }) {
+  const y = sampleGroundHeight(cx - 3, cz) + 0.012;
+  return (
+    <mesh position={[cx - 3.4, y, cz]} rotation={[-Math.PI / 2, 0, 0.06]} receiveShadow>
+      <planeGeometry args={[12, 15]} />
+      <meshStandardMaterial color="#e4d4b6" roughness={0.96} />
+    </mesh>
+  );
+}
+
 useGLTF.preload("/models/maison.glb");
 useGLTF.preload("/models/studio.glb");
 useGLTF.preload("/models/kenney/city/atelier.glb");
 useGLTF.preload("/models/phare.glb");
 useGLTF.preload("/models/pine.glb");
-useGLTF.preload("/models/pier.glb");
 useGLTF.preload("/models/lantern.glb");
 useGLTF.preload("/models/kenney/city/fence.glb");
 useGLTF.preload("/models/kenney/fantasy/hedge.glb");

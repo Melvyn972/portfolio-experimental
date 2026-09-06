@@ -9,10 +9,29 @@ type Props = {
   color?: string;
 };
 
+function toPhysical(src: THREE.MeshStandardMaterial, extras: Partial<THREE.MeshPhysicalMaterialParameters> = {}) {
+  const m = new THREE.MeshPhysicalMaterial({
+    name: src.name,
+    color: src.color.clone(),
+    map: src.map,
+    roughness: src.roughness,
+    metalness: src.metalness,
+    emissive: src.emissive?.clone() ?? new THREE.Color(0),
+    emissiveIntensity: src.emissiveIntensity,
+    transparent: src.transparent,
+    opacity: src.opacity,
+    side: src.side,
+    depthWrite: src.depthWrite,
+    envMapIntensity: 1.15,
+    ...extras,
+  });
+  return m;
+}
+
 /**
- * Hero vehicle: RGS Dev CC0 Roadster (authored FBX → named GLB).
- * Wheel_* groups are hub-centered. Windows are transparent glass.
- * No procedural ExtrudeGeometry fallback on this path.
+ * Hero vehicle: RGS Dev CC0 Roadster.
+ * Physical paint / glass / chrome so it reads as a Mediterranean convertible,
+ * not a matte toy. Wheel_* groups stay hub-centered for spin/steer.
  */
 export function Convertible({ color = "#c45c3e" }: Props) {
   const { scene } = useGLTF("/models/roadster.glb");
@@ -21,15 +40,13 @@ export function Convertible({ color = "#c45c3e" }: Props) {
   const steer = useRef(0);
   const spinNodes = useRef<THREE.Object3D[]>([]);
   const steerNodes = useRef<THREE.Object3D[]>([]);
-  const bodyMats = useRef<THREE.MeshStandardMaterial[]>([]);
 
   const model = useMemo(() => {
     const clone = scene.clone(true);
     const spins: THREE.Object3D[] = [];
     const steers: THREE.Object3D[] = [];
-    const mats: THREE.MeshStandardMaterial[] = [];
-
     const hubs: THREE.Object3D[] = [];
+
     clone.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
       if (mesh.isMesh) {
@@ -39,21 +56,96 @@ export function Convertible({ color = "#c45c3e" }: Props) {
         const list = Array.isArray(raw) ? raw : raw ? [raw] : [];
         list.forEach((mat, idx) => {
           if (!(mat instanceof THREE.MeshStandardMaterial) && !(mat instanceof THREE.MeshPhysicalMaterial)) return;
-          const cloned = mat.clone();
-          const matName = `${cloned.name} ${mesh.name}`.toLowerCase();
-          if (matName.includes("window") || cloned.transparent) {
-            cloned.transparent = true;
-            cloned.opacity = Math.min(cloned.opacity || 1, 0.4);
-            cloned.depthWrite = false;
-            cloned.metalness = 0.35;
-            cloned.roughness = 0.06;
-            cloned.side = THREE.DoubleSide;
-          } else if (matName.includes("body blue") || cloned.color.getHexString() === "c45c3e") {
-            cloned.color.lerp(new THREE.Color(color), 0.2);
-            mats.push(cloned);
+          const matName = `${mat.name} ${mesh.name}`.toLowerCase();
+          let next: THREE.Material = mat;
+
+          if (matName.includes("window")) {
+            next = toPhysical(mat, {
+              color: new THREE.Color("#8ec8d4"),
+              transparent: true,
+              opacity: 0.38,
+              roughness: 0.04,
+              metalness: 0.05,
+              transmission: 0.62,
+              thickness: 0.35,
+              ior: 1.45,
+              depthWrite: false,
+              side: THREE.DoubleSide,
+              envMapIntensity: 1.4,
+              clearcoat: 1,
+              clearcoatRoughness: 0.04,
+            });
+          } else if (matName.includes("body blue") || mat.color.getHexString() === "c45c3e") {
+            next = toPhysical(mat, {
+              color: new THREE.Color(color).lerp(new THREE.Color("#a83c28"), 0.12),
+              metalness: 0.48,
+              roughness: 0.22,
+              clearcoat: 0.88,
+              clearcoatRoughness: 0.1,
+              envMapIntensity: 1.45,
+              sheen: 0.18,
+              sheenColor: new THREE.Color("#f0c4a0"),
+            });
+          } else if (matName.includes("tire")) {
+            next = toPhysical(mat, {
+              color: new THREE.Color("#141414"),
+              roughness: 0.88,
+              metalness: 0.02,
+              envMapIntensity: 0.25,
+            });
+          } else if (matName.includes("wheel")) {
+            next = toPhysical(mat, {
+              color: new THREE.Color("#e4ddd0"),
+              metalness: 0.92,
+              roughness: 0.16,
+              clearcoat: 0.55,
+              clearcoatRoughness: 0.12,
+              envMapIntensity: 1.55,
+            });
+          } else if (matName.includes("headlight")) {
+            next = toPhysical(mat, {
+              color: new THREE.Color("#fff6e4"),
+              emissive: new THREE.Color("#ffe7b0"),
+              emissiveIntensity: 0.85,
+              roughness: 0.12,
+              metalness: 0.35,
+              transmission: 0.15,
+              thickness: 0.2,
+            });
+          } else if (matName.includes("rear")) {
+            next = toPhysical(mat, {
+              color: new THREE.Color("#c02828"),
+              emissive: new THREE.Color("#8a1212"),
+              emissiveIntensity: 0.55,
+              roughness: 0.28,
+              metalness: 0.2,
+            });
+          } else if (matName.includes("body beige")) {
+            next = toPhysical(mat, {
+              color: new THREE.Color("#4a3226"),
+              roughness: 0.62,
+              metalness: 0.04,
+              sheen: 0.4,
+              sheenColor: new THREE.Color("#8a6048"),
+            });
+          } else if (matName.includes("body white")) {
+            next = toPhysical(mat, {
+              color: new THREE.Color("#f4eee4"),
+              roughness: 0.38,
+              metalness: 0.12,
+              clearcoat: 0.25,
+            });
+          } else if (matName.includes("body black")) {
+            next = toPhysical(mat, {
+              color: new THREE.Color("#161210"),
+              roughness: 0.42,
+              metalness: 0.35,
+              clearcoat: 0.4,
+            });
           }
-          if (Array.isArray(mesh.material)) mesh.material[idx] = cloned;
-          else mesh.material = cloned;
+
+          if (Array.isArray(mesh.material)) mesh.material[idx] = next;
+          else mesh.material = next;
         });
       }
 
@@ -82,7 +174,6 @@ export function Convertible({ color = "#c45c3e" }: Props) {
 
     spinNodes.current = spins;
     steerNodes.current = steers;
-    bodyMats.current = mats;
     return clone;
   }, [scene, color]);
 
@@ -119,10 +210,48 @@ export function Convertible({ color = "#c45c3e" }: Props) {
     });
   });
 
-  // RGS roadster ~4.35 m, nose +Z, tires on y=0
   return (
-    <group ref={root} scale={1.05} position={[0, 0.02, 0]}>
+    <group ref={root} scale={1.1} position={[0, 0.015, 0]}>
       <primitive object={model} />
+      {/* Windshield glass + chrome surround so the cockpit frames instead of reading as a hole */}
+      <mesh position={[0, 0.92, 0.62]} rotation={[0.38, 0, 0]} castShadow>
+        <boxGeometry args={[1.18, 0.42, 0.012]} />
+        <meshPhysicalMaterial
+          color="#8ecad6"
+          transparent
+          opacity={0.32}
+          roughness={0.03}
+          metalness={0.04}
+          transmission={0.7}
+          thickness={0.25}
+          ior={1.5}
+          envMapIntensity={1.5}
+          depthWrite={false}
+        />
+      </mesh>
+      <mesh position={[0, 1.12, 0.5]} rotation={[0.38, 0, 0]}>
+        <boxGeometry args={[1.22, 0.03, 0.03]} />
+        <meshPhysicalMaterial color="#d8d2c6" metalness={0.88} roughness={0.18} clearcoat={0.4} />
+      </mesh>
+      <mesh position={[-0.58, 0.88, 0.58]} rotation={[0.15, 0, 0.08]}>
+        <boxGeometry args={[0.035, 0.42, 0.035]} />
+        <meshPhysicalMaterial color="#d8d2c6" metalness={0.88} roughness={0.18} />
+      </mesh>
+      <mesh position={[0.58, 0.88, 0.58]} rotation={[0.15, 0, -0.08]}>
+        <boxGeometry args={[0.035, 0.42, 0.035]} />
+        <meshPhysicalMaterial color="#d8d2c6" metalness={0.88} roughness={0.18} />
+      </mesh>
+      {/* Chrome bumpers */}
+      <mesh position={[0, 0.28, 2.12]} castShadow>
+        <boxGeometry args={[1.55, 0.08, 0.1]} />
+        <meshPhysicalMaterial color="#ece6da" metalness={0.9} roughness={0.14} clearcoat={0.5} />
+      </mesh>
+      <mesh position={[0, 0.3, -2.14]} castShadow>
+        <boxGeometry args={[1.48, 0.08, 0.1]} />
+        <meshPhysicalMaterial color="#ece6da" metalness={0.9} roughness={0.14} clearcoat={0.5} />
+      </mesh>
+      <pointLight position={[0.55, 0.42, 2.05]} intensity={0.55} color="#fff1c8" distance={4} />
+      <pointLight position={[-0.55, 0.42, 2.05]} intensity={0.55} color="#fff1c8" distance={4} />
     </group>
   );
 }

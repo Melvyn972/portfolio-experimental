@@ -11,7 +11,7 @@ import { DebugColliders } from "./DebugColliders";
 import type { QualitySettings } from "@/lib/quality";
 import { useMemo } from "react";
 import * as THREE from "three";
-import { getRoadCurve } from "@/lib/road";
+import { getRoadCurve, nearestRoadSample, ROAD_WIDTH } from "@/lib/road";
 import { accessCorridors, sampleGroundHeight } from "@/lib/ground";
 
 /** Rounded coastal boulders — not dodecahedron shards, not uncentered GLBs. */
@@ -59,11 +59,13 @@ function AccessPaths() {
           const t = s / steps;
           const x = a.x + (b.x - a.x) * t;
           const z = a.z + (b.z - a.z) * t;
+          const road = nearestRoadSample(new THREE.Vector3(x, 0, z));
+          if (Math.abs(road.lateral) < ROAD_WIDTH * 0.62) continue;
           const y = sampleGroundHeight(x, z);
           items.push({
-            pos: [x, y + 0.025, z],
+            pos: [x, y + 0.02, z],
             yaw: Math.atan2(b.x - a.x, b.z - a.z),
-            size: [2.4, 0.05, 2.1],
+            size: [1.6, 0.04, 1.5],
           });
         }
       }

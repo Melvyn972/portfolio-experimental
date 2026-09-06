@@ -18,15 +18,15 @@ type AtmosphereProps = {
 export function Atmosphere({ dust = true, shadows = true, shadowMapSize = 2048 }: AtmosphereProps) {
   return (
     <>
-      <color attach="background" args={["#b5d0e2"]} />
-      <fog attach="fog" args={["#c2dae8", 55, 190]} />
-      <ambientLight intensity={0.32} color="#ffe8cc" />
-      <hemisphereLight args={["#8ec0dc", "#c4a078", 0.48]} />
+      <color attach="background" args={["#9ec4d6"]} />
+      <fog attach="fog" args={["#c5d6e4", 42, 175]} />
+      <ambientLight intensity={0.22} color="#ffd8b8" />
+      <hemisphereLight args={["#7eb4d4", "#c4a078", 0.62]} />
       <directionalLight
         castShadow={shadows}
-        position={[52, 38, 22]}
-        intensity={2.55}
-        color="#ffd4a0"
+        position={[46, 28, 18]}
+        intensity={3.05}
+        color="#ffc888"
         shadow-mapSize={[shadowMapSize, shadowMapSize]}
         shadow-camera-near={1}
         shadow-camera-far={200}
@@ -34,23 +34,24 @@ export function Atmosphere({ dust = true, shadows = true, shadowMapSize = 2048 }
         shadow-camera-right={60}
         shadow-camera-top={60}
         shadow-camera-bottom={-60}
-        shadow-bias={-0.00035}
-        shadow-normalBias={0.04}
+        shadow-bias={-0.00028}
+        shadow-normalBias={0.035}
       />
-      <directionalLight position={[-28, 16, -40]} intensity={0.38} color="#8eb8d4" />
+      <directionalLight position={[-22, 14, -36]} intensity={0.55} color="#8eb8d8" />
+      <directionalLight position={[8, 6, 30]} intensity={0.28} color="#ffb070" />
       <Sky
         distance={450000}
-        sunPosition={[52, 12, 22]}
-        inclination={0.54}
-        azimuth={0.22}
-        mieCoefficient={0.005}
-        mieDirectionalG={0.84}
-        rayleigh={0.75}
-        turbidity={6}
+        sunPosition={[46, 8, 18]}
+        inclination={0.48}
+        azimuth={0.2}
+        mieCoefficient={0.006}
+        mieDirectionalG={0.88}
+        rayleigh={0.62}
+        turbidity={8.5}
       />
-      <Environment files="/hdri/venice_sunset_1k.hdr" background={false} environmentIntensity={0.55} />
+      <Environment files="/hdri/venice_sunset_1k.hdr" background={false} environmentIntensity={0.92} />
       {shadows && (
-        <ContactShadows position={[0, 0.01, -70]} opacity={0.28} scale={140} blur={2.6} far={22} color="#3a2e22" />
+        <ContactShadows position={[0, 0.015, -70]} opacity={0.38} scale={140} blur={2.1} far={18} color="#2a2218" />
       )}
       {dust && <DustMotes />}
     </>
