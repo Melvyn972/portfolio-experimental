@@ -85,6 +85,38 @@ export function PlayerSystem() {
     };
   }, [world]);
 
+  useEffect(() => {
+    const onTeleport = () => {
+      const stop = getBelvedereStopPosition();
+      pos.current.set(stop.x, stop.y, stop.z);
+      const sample = nearestRoadSample(pos.current);
+      yaw.current = Math.atan2(sample.tangent.x, sample.tangent.z);
+      velocity.current = 0;
+      const yPos = pos.current.y + 0.08;
+      if (carBody.current) {
+        carBody.current.setNextKinematicTranslation({ x: pos.current.x, y: yPos + 0.35, z: pos.current.z });
+        const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw.current, 0, "YXZ"));
+        carBody.current.setNextKinematicRotation({ x: q.x, y: q.y, z: q.z, w: q.w });
+      }
+      if (carVisual.current) {
+        carVisual.current.position.set(pos.current.x, yPos, pos.current.z);
+        carVisual.current.rotation.set(0, yaw.current, 0);
+      }
+      setGameState({
+        phase: "playing",
+        mode: "driving",
+        carPos: { x: pos.current.x, y: pos.current.y, z: pos.current.z },
+        carYaw: yaw.current,
+        speed: 0,
+        nearStopSpot: true,
+        prompt: "Descendre",
+        interactTarget: "exit-car",
+      });
+    };
+    window.addEventListener("cote:teleport-belvedere", onTeleport);
+    return () => window.removeEventListener("cote:teleport-belvedere", onTeleport);
+  }, []);
+
   useFrame((_, rawDt) => {
     const dt = Math.min(rawDt, 0.05);
     const state = getGameState();

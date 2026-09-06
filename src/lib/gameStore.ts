@@ -155,9 +155,19 @@ export function openChapter(id: ChapterId | null) {
 
 /** Dev helper for Playwright / QA */
 if (typeof window !== "undefined") {
-  (window as unknown as { __coteMelvyn?: { getState: typeof getGameState; setState: typeof setGameState } }).__coteMelvyn = {
+  (window as unknown as {
+    __coteMelvyn?: {
+      getState: typeof getGameState;
+      setState: typeof setGameState;
+      teleportBelvedere: () => void;
+    };
+  }).__coteMelvyn = {
     getState: getGameState,
     setState: setGameState,
+    teleportBelvedere: () => {
+      // Signal PlayerSystem via custom event — position applied next frame
+      window.dispatchEvent(new CustomEvent("cote:teleport-belvedere"));
+    },
   };
 }
 
