@@ -101,16 +101,14 @@ export function Vegetation({ count = 60 }: { count?: number }) {
       });
     }
 
-    // Belvedere cluster — follows terrace anchor
-    for (let i = 0; i < 10; i++) {
+    // Belvedere cluster — kept off the deck
+    for (let i = 0; i < 6; i++) {
+      const px = terrace.x + 6.2 + (i % 3) * 1.1;
+      const pz = terrace.z - 3 + (i % 2) * 2.4;
       items.push({
-        type: i % 3 === 0 ? "bougainvillea" : i % 3 === 1 ? "cypress" : "pine",
-        position: [
-          terrace.x - 3 + i * 0.9,
-          computeTerrainHeight(terrace.x - 3 + i * 0.9, terrace.z - 2 - (i % 4) * 1.1),
-          terrace.z - 2 - (i % 4) * 1.1,
-        ],
-        scale: i % 3 === 2 ? 0.32 + (i % 3) * 0.04 : 1 + (i % 3) * 0.12,
+        type: i % 2 === 0 ? "bougainvillea" : "pine",
+        position: [px, computeTerrainHeight(px, pz), pz],
+        scale: i % 2 === 0 ? 0.95 : 0.34,
         rot: i * 0.9,
         sway: 200 + i,
       });

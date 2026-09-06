@@ -7,6 +7,7 @@ import { content } from "@/lib/content";
 import { getBelvedereWorldAnchor, getRoadCurve, ROAD_SURFACE_LIFT, ROAD_WIDTH } from "@/lib/road";
 import {
   computeTerrainHeight,
+  sampleGroundHeight,
   TERRAIN_MAX_X,
   TERRAIN_MAX_Z,
   TERRAIN_MIN_X,
@@ -154,7 +155,7 @@ function buildTerrainHeightfield() {
     for (let iz = 0; iz <= nrows; iz++) {
       const x = TERRAIN_MIN_X + (ix / ncols) * sizeX;
       const z = TERRAIN_MIN_Z + (iz / nrows) * sizeZ;
-      heights.push(computeTerrainHeight(x, z));
+      heights.push(sampleGroundHeight(x, z));
     }
   }
   return {

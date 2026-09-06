@@ -8,21 +8,21 @@ export const TERRAIN_MAX_X = 70;
 export const TERRAIN_MIN_Z = -185;
 export const TERRAIN_MAX_Z = 75;
 
-/**
- * Authoritative visual + gameplay height. Terrain mesh, camera clearance,
- * walk snap and the Rapier heightfield all call this — no more hidden hills.
- */
-export function computeTerrainHeight(x: number, z: number): number {
-  const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 60);
+/** How far from the centerline every terrain vertex must stay below the ribbon. */
+const VISUAL_TRENCH = ROAD_WIDTH * 0.5 + 3.6;
+
+function scenicHeight(x: number, z: number): { y: number; roadDist: number; roadY: number } {
+  const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 80);
   const lat = sample.lateral;
   const roadDist = Math.abs(lat);
+  const roadY = sample.position.y;
   let y = 0.02;
 
   if (roadDist < 5) {
-    y = sample.position.y;
+    y = roadY;
   } else if (roadDist < 10) {
     const t = (roadDist - 5) / 5;
-    y = THREE.MathUtils.lerp(sample.position.y, 0.15, t);
+    y = THREE.MathUtils.lerp(roadY, 0.15, t);
   } else {
     y = 0.2 + Math.sin(x * 0.04 + z * 0.02) * 0.15 + Math.cos(z * 0.03) * 0.08;
   }
@@ -73,28 +73,30 @@ export function computeTerrainHeight(x: number, z: number): number {
     }
   }
 
-  // LAST: excavate a corridor under the asphalt. Plateaus / hills must never
-  // poke through the road (iPhone QA: beige z-fighting on every shot).
-  const half = ROAD_WIDTH * 0.52;
-  const apron = 2.4;
-  if (roadDist < half) {
-    y = Math.min(y, sample.position.y - 0.32);
-  } else if (roadDist < half + apron) {
-    const k = (roadDist - half) / apron;
-    const trench = sample.position.y - 0.32;
-    y = Math.min(y, THREE.MathUtils.lerp(trench, y, k));
-  }
+  return { y, roadDist, roadY };
+}
 
+/**
+ * Visual terrain — always carved under the asphalt so interpolated faces
+ * cannot slice through the ribbon (iPhone z-fight).
+ */
+export function computeTerrainHeight(x: number, z: number): number {
+  const { y, roadDist, roadY } = scenicHeight(x, z);
+  if (roadDist < VISUAL_TRENCH) {
+    return Math.min(y, roadY - 0.5);
+  }
   return y;
 }
 
 /**
- * Approximate ground height for walk / camera — identical to the Terrain mesh.
+ * Walk / camera / heightfield — stand on the road, never in the visual trench.
  */
 export function sampleGroundHeight(x: number, z: number): number {
-  return computeTerrainHeight(x, z);
+  const { y, roadDist, roadY } = scenicHeight(x, z);
+  if (roadDist < ROAD_WIDTH * 0.55) return roadY;
+  return y;
 }
 
-export const MAX_SLOPE = 0.55; // ~29°
+export const MAX_SLOPE = 0.55;
 export const PLAYER_RADIUS = 0.35;
 export const PLAYER_HEIGHT = 1.7;
