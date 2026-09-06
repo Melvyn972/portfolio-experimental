@@ -81,8 +81,8 @@ export function Terrain() {
           metalness={0}
           flatShading={false}
           polygonOffset
-          polygonOffsetFactor={3}
-          polygonOffsetUnits={3}
+          polygonOffsetFactor={1}
+          polygonOffsetUnits={1}
         />
       </mesh>
       {/* Vertical lip so the paper-thin sand edge never reads as a floating slab. */}

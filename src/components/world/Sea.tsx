@@ -37,9 +37,9 @@ varying float vDeep;
 #include <fog_pars_fragment>
 
 void main() {
-  vec3 deep = vec3(0.12, 0.30, 0.34);
-  vec3 mid = vec3(0.20, 0.42, 0.44);
-  vec3 shore = vec3(0.30, 0.48, 0.46);
+  vec3 deep = vec3(0.14, 0.32, 0.36);
+  vec3 mid = vec3(0.24, 0.42, 0.42);
+  vec3 shore = vec3(0.40, 0.48, 0.42);
   vec3 col = mix(deep, mid, smoothstep(0.0, 0.68, vUv.x));
   col = mix(col, shore, smoothstep(0.78, 1.0, vUv.x));
   float sparkle = pow(max(0.0, sin(vUv.y * 28.0) * cos(vUv.x * 18.0)), 18.0);

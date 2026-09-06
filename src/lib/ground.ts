@@ -63,8 +63,11 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
   const terrace = getBelvedereWorldAnchor().terrace;
   const dx = x - terrace.x;
   const dz = z - terrace.z;
-  if (dx * dx + dz * dz < 120) {
-    y = Math.max(y, 0.95);
+  const terraceR2 = dx * dx + dz * dz;
+  // Soft mound under the deck only — a hard 11 m disc was a floating sand slab over the beach.
+  if (terraceR2 < 40) {
+    const fall = 1 - Math.sqrt(terraceR2) / 6.4;
+    y = Math.max(y, 0.14 + fall * fall * 0.8);
   }
 
   if (x > 12 && z < -30 && z > -55) y = Math.max(y, 1.6);
@@ -84,11 +87,17 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
   for (const zone of content.zones.zones) {
     const ddx = x - zone.marker.x;
     const ddz = z - zone.marker.z;
-    const r = zone.id === "phare" ? 14 : zone.id === "plage" ? 18 : 12;
-    if (ddx * ddx + ddz * ddz < r * r) {
-      const base = zone.id === "plage" ? 0.15 : zone.marker.y;
-      y = Math.max(y, base);
+    const r = zone.id === "phare" ? 14 : zone.id === "plage" ? 16 : 12;
+    if (ddx * ddx + ddz * ddz >= r * r) continue;
+    // Belvedere marker.y = 1.2 over a 12 m disc lifted the beach into a floating mesa.
+    if (zone.id === "belvedere") continue;
+    if (zone.id === "plage") {
+      if (x < -14.6) continue;
+      y = Math.max(y, 0.1);
+      continue;
     }
+    if (lat < -1.2 && zone.id !== "phare") continue;
+    y = Math.max(y, zone.marker.y);
   }
 
   const access = walkAccessHeight(x, z);
