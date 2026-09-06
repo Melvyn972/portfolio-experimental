@@ -7,6 +7,7 @@ import {
   setQuality,
   openChapter,
   travelToChapterZone,
+  tryOpenCurrentInteractable,
   CHAPTERS,
   discoveryProgress,
   type ChapterId,
@@ -163,7 +164,7 @@ function InteractPrompt() {
         type="button"
         className="rounded-sm border border-[#b08d57]/70 bg-[#f6efe2] px-5 py-2 font-display text-sm tracking-wide text-[#2c241c] shadow-[0_8px_24px_rgba(80,50,20,0.16)] backdrop-blur-md md:px-6 md:py-2.5 md:text-base"
         onClick={() => {
-          inputRef.interactPulse = 1;
+          if (!tryOpenCurrentInteractable()) inputRef.interactPulse = 1;
         }}
       >
         {!isMobile && <span className="mr-2 font-mono text-[11px] text-[#8a6a3e]">E</span>}

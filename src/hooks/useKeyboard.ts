@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { tryOpenCurrentInteractable } from "@/lib/gameStore";
 
 export interface InputState {
   forward: boolean;
@@ -70,6 +71,7 @@ export function useKeyboard() {
         inputRef.current.interact = true;
         inputRef.interactPulse = 1;
         inputRef.current.exit = true;
+        tryOpenCurrentInteractable();
       }
       if (k === "escape" && document.pointerLockElement) {
         document.exitPointerLock();

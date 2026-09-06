@@ -124,6 +124,11 @@ export function interactableForChapter(chapter: ChapterId): Interactable | null 
   return getInteractables().find((it) => it.chapter === chapter) ?? null;
 }
 
+export function chapterForInteractableId(id: string | null | undefined): ChapterId | null {
+  if (!id) return null;
+  return getInteractables().find((it) => it.id === id)?.chapter ?? null;
+}
+
 export function findNearestInteractable(
   pos: THREE.Vector3,
   mode: "driving" | "walking",

@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { computeTerrainHeight, sampleGroundHeight } from "@/lib/ground";
 import { getBelvedereWorldAnchor, nearestRoadSample, ROAD_SURFACE_LIFT } from "@/lib/road";
 import { isFinitePos, sanitizeWalkSpawn, zoneWalkSpawns } from "@/lib/spawn";
-import { interactableForChapter } from "@/lib/interaction";
+import { chapterForInteractableId, interactableForChapter } from "@/lib/interaction";
 import { inputRef } from "@/hooks/useKeyboard";
 
 export type GamePhase = "boot" | "intro" | "playing";
@@ -165,6 +165,17 @@ export function markDiscovered(id: ChapterId) {
 export function openChapter(id: ChapterId | null) {
   if (id) markDiscovered(id);
   setGameState({ openChapter: id, rescueOpen: false, prompt: null });
+}
+
+/** Open the in-range chapter now — do not wait for the physics frame (1 fps / SwiftShader). */
+export function tryOpenCurrentInteractable() {
+  const s = state;
+  if (s.phase !== "playing" || s.openChapter || s.rescueOpen) return false;
+  if (s.interactTarget === "enter-car" || s.interactTarget === "exit-car") return false;
+  const chapter = s.focusChapter ?? chapterForInteractableId(s.interactTarget);
+  if (!chapter) return false;
+  openChapter(chapter);
+  return true;
 }
 
 /** Chapter → walk spawn. Menu must drop the player in the world zone, not only open a card. */
