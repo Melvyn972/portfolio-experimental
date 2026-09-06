@@ -200,12 +200,12 @@ function buildWalkPaths() {
     const mid = a.clone().lerp(b, 0.5);
     const tangent = b.clone().sub(a);
     const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-    const inland = mid.clone().addScaledVector(side, 9.5);
+    const inland = mid.clone().addScaledVector(side, 8.2);
     const gy = sampleGroundHeight(inland.x, inland.z);
     boxes.push({
-      pos: [inland.x, gy + 0.03, inland.z],
+      pos: [inland.x, gy + 0.02, inland.z],
       yaw: Math.atan2(tangent.x, tangent.z),
-      half: [8.2, 0.12, Math.max(0.5, tangent.length() * 0.55)],
+      half: [6.4, 0.08, Math.max(0.5, tangent.length() * 0.55)],
     });
   }
   const bel = getBelvedereWorldAnchor();
@@ -218,12 +218,11 @@ function buildWalkPaths() {
 
   // Beach access near plage marker (−11, −95)
   boxes.push({ pos: [-12, sampleGroundHeight(-12, -95) + 0.06, -95], yaw: 0.15, half: [8.5, 0.1, 7] });
-  // Maison plaza + porch (in front of the building, +Z)
-  boxes.push({ pos: [16, sampleGroundHeight(16, -37) + 0.06, -37], yaw: 0, half: [8, 0.12, 7] });
-  boxes.push({ pos: [10, sampleGroundHeight(10, -37) + 0.06, -37], yaw: 0, half: [6, 0.12, 5] });
-  // Studio plaza + approach
-  boxes.push({ pos: [18, sampleGroundHeight(18, -113) + 0.06, -113], yaw: 0, half: [7, 0.12, 6] });
-  boxes.push({ pos: [11, sampleGroundHeight(11, -114) + 0.06, -114], yaw: 0, half: [6, 0.12, 5] });
+  // Thin local pads — follow shelf height, do not float a 1.6 m deck over the road.
+  boxes.push({ pos: [16, sampleGroundHeight(16, -37) + 0.05, -37], yaw: 0, half: [4.2, 0.08, 4] });
+  boxes.push({ pos: [10.5, sampleGroundHeight(10.5, -37) + 0.05, -37], yaw: 0, half: [3.2, 0.08, 3] });
+  boxes.push({ pos: [18, sampleGroundHeight(18, -113) + 0.05, -113], yaw: 0, half: [4, 0.08, 3.6] });
+  boxes.push({ pos: [11.5, sampleGroundHeight(11.5, -114) + 0.05, -114], yaw: 0, half: [3.2, 0.08, 3] });
 
   for (const c of accessCorridors()) {
     for (let i = 0; i < c.pts.length - 1; i++) {

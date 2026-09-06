@@ -73,14 +73,13 @@ function AccessPaths() {
 
   const plazas = useMemo(() => {
     return [
-      { x: 16, z: -37 },
-      { x: 16, z: -42 },
-      { x: 18, z: -113 },
-      { x: 9, z: -37 },
-      { x: 10, z: -114 },
+      { x: 16, z: -37, s: [5.2, 0.05, 4.6] as [number, number, number] },
+      { x: 18, z: -113, s: [5.0, 0.05, 4.4] as [number, number, number] },
+      { x: 10.5, z: -37, s: [3.6, 0.04, 3.2] as [number, number, number] },
+      { x: 11.5, z: -114, s: [3.6, 0.04, 3.2] as [number, number, number] },
     ].map((p) => ({
       pos: [p.x, sampleGroundHeight(p.x, p.z) + 0.02, p.z] as [number, number, number],
-      size: [7.2, 0.06, 6.4] as [number, number, number],
+      size: p.s,
     }));
   }, []);
 
