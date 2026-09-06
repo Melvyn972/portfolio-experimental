@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { computeTerrainHeight, sampleGroundHeight } from "@/lib/ground";
 import { getBelvedereWorldAnchor, nearestRoadSample, ROAD_SURFACE_LIFT } from "@/lib/road";
+import { isFinitePos, sanitizeWalkSpawn, zoneWalkSpawns } from "@/lib/spawn";
 
 export type GamePhase = "boot" | "intro" | "playing";
 export type ControlMode = "driving" | "walking";
@@ -115,8 +116,9 @@ export function setGameState(partial: Partial<GameState>) {
     if (key === "playerPos" || key === "carPos") {
       const cur = state[key];
       const val = value as { x: number; y: number; z: number };
+      if (!isFinitePos(val)) continue;
       if (!shallowEqualPos(cur, val)) {
-        next[key] = val;
+        next[key] = { x: val.x, y: val.y, z: val.z };
         changed = true;
       }
       continue;
@@ -167,7 +169,12 @@ if (typeof window !== "undefined") {
       getState: typeof getGameState;
       setState: typeof setGameState;
       teleportBelvedere: () => void;
-      teleportWalk: (x: number, y: number, z: number, yaw?: number) => void;
+      teleportWalk: (x?: number, y?: number, z?: number, yaw?: number) => void;
+      teleportMaison: () => void;
+      teleportStudio: () => void;
+      teleportPlage: () => void;
+      teleportPhare: () => void;
+      teleportBelvedereWalk: () => void;
       sampleHeights: (x: number, z: number) => {
         visual: number;
         walk: number;
@@ -184,7 +191,29 @@ if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("cote:teleport-belvedere"));
     },
     teleportWalk: (x, y, z, yaw) => {
-      window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: { x, y, z, yaw } }));
+      const pose = sanitizeWalkSpawn({ x, y, z, yaw });
+      if (!pose) return;
+      window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: pose }));
+    },
+    teleportMaison: () => {
+      const p = zoneWalkSpawns().maison;
+      window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: p }));
+    },
+    teleportStudio: () => {
+      const p = zoneWalkSpawns().studio;
+      window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: p }));
+    },
+    teleportPlage: () => {
+      const p = zoneWalkSpawns().plage;
+      window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: p }));
+    },
+    teleportPhare: () => {
+      const p = zoneWalkSpawns().phare;
+      window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: p }));
+    },
+    teleportBelvedereWalk: () => {
+      const p = zoneWalkSpawns().belvedere;
+      window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: p }));
     },
     belvedereAnchor: () => {
       const a = getBelvedereWorldAnchor();

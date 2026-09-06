@@ -77,6 +77,9 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
     }
   }
 
+  const access = walkAccessHeight(x, z);
+  if (access != null) y = access;
+
   return { y, roadDist, roadY };
 }
 
@@ -116,3 +119,88 @@ export function sampleGroundHeight(x: number, z: number): number {
 export const MAX_SLOPE = 0.55;
 export const PLAYER_RADIUS = 0.35;
 export const PLAYER_HEIGHT = 1.7;
+
+/** Inland ramps so hills never wall off Maison / Studio / Plage / Phare. */
+export function accessCorridors(): { width: number; pts: { x: number; z: number; y: number }[] }[] {
+  const bel = getBelvedereWorldAnchor();
+  return [
+    {
+      width: 4.4,
+      pts: [
+        { x: 0.2, z: -38, y: 0.16 },
+        { x: 7.2, z: -38, y: 0.88 },
+        { x: 16, z: -37, y: 1.62 },
+      ],
+    },
+    {
+      width: 4.2,
+      pts: [
+        { x: 1.2, z: -118, y: 0.3 },
+        { x: 9, z: -115, y: 1.05 },
+        { x: 18, z: -113, y: 1.82 },
+      ],
+    },
+    {
+      width: 5.6,
+      pts: [
+        { x: -4.2, z: -95, y: 0.22 },
+        { x: -11, z: -95, y: 0.18 },
+      ],
+    },
+    {
+      width: 4.2,
+      pts: [
+        { x: -5.8, z: -165, y: 0.36 },
+        { x: -11.5, z: -170, y: 0.32 },
+        { x: -16, z: -172, y: 0.36 },
+      ],
+    },
+    {
+      width: 3.4,
+      pts: [
+        { x: bel.stop.x, z: bel.stop.z, y: bel.position.y + 0.04 },
+        {
+          x: bel.terrace.x + bel.side.x * 3.6,
+          z: bel.terrace.z + bel.side.z * 3.6,
+          y: 0.55,
+        },
+        { x: bel.terrace.x, z: bel.terrace.z, y: 1.0 },
+      ],
+    },
+  ];
+}
+
+export function walkAccessHeight(x: number, z: number): number | null {
+  let bestY: number | null = null;
+  let bestD = Infinity;
+  for (const c of accessCorridors()) {
+    const hit = projectOnPolyline(x, z, c.pts);
+    if (hit.dist < c.width && hit.dist < bestD) {
+      bestD = hit.dist;
+      bestY = hit.y;
+    }
+  }
+  return bestY;
+}
+
+function projectOnPolyline(x: number, z: number, pts: { x: number; z: number; y: number }[]) {
+  let dist = Infinity;
+  let y = pts[0]?.y ?? 0;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i];
+    const b = pts[i + 1];
+    const abx = b.x - a.x;
+    const abz = b.z - a.z;
+    const len2 = abx * abx + abz * abz || 1;
+    let t = ((x - a.x) * abx + (z - a.z) * abz) / len2;
+    t = Math.max(0, Math.min(1, t));
+    const px = a.x + abx * t;
+    const pz = a.z + abz * t;
+    const d = Math.hypot(x - px, z - pz);
+    if (d < dist) {
+      dist = d;
+      y = a.y + (b.y - a.y) * t;
+    }
+  }
+  return { dist, y };
+}

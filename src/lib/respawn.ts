@@ -6,6 +6,7 @@ const SAFE = new THREE.Vector3();
 
 /** True if player is in void / sea / under terrain — must respawn. */
 export function isUnsafePosition(pos: THREE.Vector3): boolean {
+  if (!Number.isFinite(pos.x) || !Number.isFinite(pos.y) || !Number.isFinite(pos.z)) return true;
   if (pos.y < -1.2) return true;
   if (pos.x < -29 && pos.y < 0.35) return true;
   if (pos.x > 36 || pos.x < -36) return true;

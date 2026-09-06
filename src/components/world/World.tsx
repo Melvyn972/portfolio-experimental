@@ -12,7 +12,7 @@ import type { QualitySettings } from "@/lib/quality";
 import { useMemo } from "react";
 import * as THREE from "three";
 import { getRoadCurve } from "@/lib/road";
-import { sampleGroundHeight } from "@/lib/ground";
+import { accessCorridors, sampleGroundHeight } from "@/lib/ground";
 
 /** Rounded coastal boulders — not dodecahedron shards, not uncentered GLBs. */
 function ShoreRocks({ count }: { count: number }) {
@@ -47,6 +47,42 @@ function ShoreRocks({ count }: { count: number }) {
   );
 }
 
+function AccessPaths() {
+  const slabs = useMemo(() => {
+    const items: { pos: [number, number, number]; yaw: number; size: [number, number, number] }[] = [];
+    for (const c of accessCorridors()) {
+      for (let i = 0; i < c.pts.length - 1; i++) {
+        const a = c.pts[i];
+        const b = c.pts[i + 1];
+        const steps = 4;
+        for (let s = 0; s <= steps; s++) {
+          const t = s / steps;
+          const x = a.x + (b.x - a.x) * t;
+          const z = a.z + (b.z - a.z) * t;
+          const y = sampleGroundHeight(x, z);
+          items.push({
+            pos: [x, y + 0.03, z],
+            yaw: Math.atan2(b.x - a.x, b.z - a.z),
+            size: [1.15, 0.05, 1.35],
+          });
+        }
+      }
+    }
+    return items;
+  }, []);
+
+  return (
+    <group>
+      {slabs.map((s, i) => (
+        <mesh key={i} position={s.pos} rotation={[0, s.yaw, 0]} receiveShadow>
+          <boxGeometry args={s.size} />
+          <meshStandardMaterial color={i % 2 ? "#c4b49a" : "#b7a888"} roughness={0.92} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
 export function World({ quality }: { quality: QualitySettings }) {
   return (
     <group>
@@ -57,6 +93,7 @@ export function World({ quality }: { quality: QualitySettings }) {
       <RoadAccentProps />
       <ShoreRocks count={quality.shadows ? 7 : 5} />
       <Vegetation count={quality.treeCount} />
+      <AccessPaths />
       <Belvedere />
       <CoastalZones />
       <DebugColliders />

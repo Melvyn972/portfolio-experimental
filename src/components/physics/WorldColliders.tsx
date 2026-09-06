@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { content } from "@/lib/content";
 import { getBelvedereWorldAnchor, getRoadCurve, ROAD_SURFACE_LIFT, ROAD_WIDTH } from "@/lib/road";
 import {
+  accessCorridors,
   sampleGroundHeight,
   TERRAIN_MAX_X,
   TERRAIN_MAX_Z,
@@ -220,6 +221,24 @@ function buildWalkPaths() {
   boxes.push({ pos: [16, sampleGroundHeight(16, -37) + 0.06, -37], yaw: 0, half: [6, 0.1, 5] });
   // Studio plaza
   boxes.push({ pos: [18, sampleGroundHeight(18, -113) + 0.06, -113], yaw: 0, half: [5, 0.1, 5] });
+
+  for (const c of accessCorridors()) {
+    for (let i = 0; i < c.pts.length - 1; i++) {
+      const a = c.pts[i];
+      const b = c.pts[i + 1];
+      const midX = (a.x + b.x) * 0.5;
+      const midZ = (a.z + b.z) * 0.5;
+      const midY = (a.y + b.y) * 0.5;
+      const dx = b.x - a.x;
+      const dz = b.z - a.z;
+      const len = Math.max(0.6, Math.hypot(dx, dz) * 0.55);
+      boxes.push({
+        pos: [midX, midY + 0.04, midZ],
+        yaw: Math.atan2(dx, dz),
+        half: [c.width * 0.42, 0.12, len],
+      });
+    }
+  }
   return boxes;
 }
 

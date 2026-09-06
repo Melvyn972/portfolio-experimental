@@ -22,6 +22,7 @@ import { sampleGroundHeight, PLAYER_RADIUS, PLAYER_HEIGHT } from "@/lib/ground";
 import { findNearestInteractable } from "@/lib/interaction";
 import { getBelvedereInteractPosition, getBelvedereStopPosition } from "@/components/world/Belvedere";
 import { isUnsafePosition, safeRespawnPosition } from "@/lib/respawn";
+import { isFinitePos, sanitizeWalkSpawn } from "@/lib/spawn";
 
 const MAX_SPEED = 20;
 const ACCEL = 12;
@@ -63,6 +64,7 @@ export function PlayerSystem() {
   const sideTmp = useRef(new THREE.Vector3());
   const desired = useRef(new THREE.Vector3());
   const initialized = useRef(false);
+  const skipController = useRef(0);
   const exitCooldown = useRef(0);
   const suspension = useRef(0);
   const prevGround = useRef(0);
@@ -78,7 +80,7 @@ export function PlayerSystem() {
     c.setApplyImpulsesToDynamicBodies(false);
     c.setMaxSlopeClimbAngle((48 * Math.PI) / 180);
     c.setMinSlopeSlideAngle((55 * Math.PI) / 180);
-    c.enableAutostep(0.45, 0.28, true);
+    c.enableAutostep(0.62, 0.32, true);
     c.enableSnapToGround(0.55);
     c.setCharacterMass(70);
     controller.current = c;
@@ -119,13 +121,15 @@ export function PlayerSystem() {
 
     const onTeleportWalk = (ev: Event) => {
       const detail = (ev as CustomEvent<{ x: number; y: number; z: number; yaw?: number }>).detail;
-      if (!detail) return;
-      const feetY = sampleGroundHeight(detail.x, detail.z);
-      playerPos.current.set(detail.x, feetY, detail.z);
-      walkYaw.current = detail.yaw ?? walkYaw.current;
-      lookYaw.current = walkYaw.current;
+      const pose = sanitizeWalkSpawn(detail ?? {});
+      if (!pose) return;
+      playerPos.current.set(pose.x, pose.y, pose.z);
+      walkYaw.current = pose.yaw;
+      lookYaw.current = pose.yaw;
       lookPitch.current = 0.12;
       playerVel.current.set(0, 0, 0);
+      transition.current.kind = null;
+      skipController.current = 12;
       setPlayerKinematic(playerPos.current, walkYaw.current, true);
       if (playerVisual.current) {
         playerVisual.current.visible = true;
@@ -134,9 +138,10 @@ export function PlayerSystem() {
       setGameState({
         phase: "playing",
         mode: "walking",
-        playerPos: { x: detail.x, y: feetY, z: detail.z },
+        playerPos: { x: pose.x, y: pose.y, z: pose.z },
         walkYaw: walkYaw.current,
         lookYaw: lookYaw.current,
+        lookPitch: lookPitch.current,
         nearStopSpot: false,
         prompt: null,
         interactTarget: null,
@@ -393,7 +398,10 @@ export function PlayerSystem() {
 
     const body = playerBody.current;
     const ctrl = controller.current;
-    if (body && ctrl) {
+    if (skipController.current > 0) {
+      skipController.current -= 1;
+      setPlayerKinematic(playerPos.current, walkYaw.current, true);
+    } else if (body && ctrl) {
       const colliders = body.numColliders();
       if (colliders > 0) {
         const collider = body.collider(0);
@@ -401,8 +409,15 @@ export function PlayerSystem() {
         const mv = ctrl.computedMovement();
         const t = body.translation();
         const next = { x: t.x + mv.x, y: t.y + mv.y, z: t.z + mv.z };
-        body.setNextKinematicTranslation(next);
-        playerPos.current.set(next.x, next.y - CAPSULE_Y, next.z);
+        if (!isFinitePos(next)) {
+          const safe = safeRespawnPosition(playerPos.current);
+          playerPos.current.copy(safe);
+          playerVel.current.set(0, 0, 0);
+          setPlayerKinematic(playerPos.current, walkYaw.current, true);
+        } else {
+          body.setNextKinematicTranslation(next);
+          playerPos.current.set(next.x, next.y - CAPSULE_Y, next.z);
+        }
       }
     } else {
       playerPos.current.x += desired.current.x;
@@ -470,6 +485,12 @@ export function PlayerSystem() {
       }
     }
 
+    if (!isFinitePos(playerPos.current)) {
+      const safe = safeRespawnPosition(new THREE.Vector3(0, 0.2, -38));
+      playerPos.current.copy(safe);
+      setPlayerKinematic(playerPos.current, walkYaw.current, true);
+    }
+
     setGameState({
       speed: 0,
       nearCar,
@@ -510,13 +531,13 @@ export function PlayerSystem() {
   }
 
   function setPlayerKinematic(feet: THREE.Vector3, facing: number, visible: boolean) {
+    if (!isFinitePos(feet)) return;
     if (playerBody.current) {
-      playerBody.current.setNextKinematicTranslation({
-        x: feet.x,
-        y: feet.y + CAPSULE_Y,
-        z: feet.z,
-      });
+      const t = { x: feet.x, y: feet.y + CAPSULE_Y, z: feet.z };
+      playerBody.current.setTranslation(t, true);
+      playerBody.current.setNextKinematicTranslation(t);
       const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, facing, 0));
+      playerBody.current.setRotation({ x: q.x, y: q.y, z: q.z, w: q.w }, true);
       playerBody.current.setNextKinematicRotation({ x: q.x, y: q.y, z: q.z, w: q.w });
     }
     if (playerVisual.current) {

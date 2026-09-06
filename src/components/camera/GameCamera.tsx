@@ -102,8 +102,12 @@ export function GameCamera() {
     }
 
     const walking = state.mode === "walking";
-    if (walking) _subject.set(state.playerPos.x, state.playerPos.y + 1.35, state.playerPos.z);
-    else _subject.set(state.carPos.x, state.carPos.y + 0.9, state.carPos.z);
+    const subject = walking ? state.playerPos : state.carPos;
+    if (!Number.isFinite(subject.x) || !Number.isFinite(subject.y) || !Number.isFinite(subject.z)) {
+      return;
+    }
+    if (walking) _subject.set(subject.x, subject.y + 1.35, subject.z);
+    else _subject.set(subject.x, subject.y + 0.9, subject.z);
 
     const yaw = walking ? state.lookYaw : state.carYaw;
     const pitch = walking ? state.lookPitch : 0.08;
