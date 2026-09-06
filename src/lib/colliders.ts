@@ -35,18 +35,11 @@ export function buildWorldColliders(): Collider[] {
   const along = bel.tangent;
   const t = bel.terrace;
 
-  // Parapet wall
   {
-    const p = t.clone().addScaledVector(side, -4.95);
-    list.push(box("bel-parapet", p.x, 1.3, p.z, 1.2, 1.6, 7.5));
+    const p = t.clone().addScaledVector(side, -3.5);
+    list.push(box("bel-parapet", p.x, 1.35, p.z, 0.55, 1.1, 6.2));
   }
-  // Side rails
-  {
-    const p1 = t.clone().addScaledVector(along, -3.75);
-    const p2 = t.clone().addScaledVector(along, 3.75);
-    list.push(box("bel-rail-n", p1.x, 1.2, p1.z, 9, 1.2, 0.6));
-    list.push(box("bel-rail-s", p2.x, 1.15, p2.z, 9, 1.0, 0.6));
-  }
+  void along;
 
   for (const zone of content.zones.zones) {
     const { x, z } = zone.marker;
@@ -59,8 +52,8 @@ export function buildWorldColliders(): Collider[] {
     }
     if (zone.id === "phare") {
       // Daniel Dormin lighthouse @ ×0.34 — mesh already grounded at local y=0
-      list.push(box("phare", x, 5.5, z, 3.8, 9.9, 3.8));
-      list.push(box("phare-base", x, 0.55, z, 8.4, 1.1, 8.0));
+      list.push(box("phare", x, 5.2, z, 2.4, 9.4, 2.4));
+      list.push(box("phare-base", x, 0.4, z, 4.2, 0.8, 4.0));
     }
   }
 

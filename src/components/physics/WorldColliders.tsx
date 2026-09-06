@@ -1,16 +1,10 @@
 "use client";
 
-import { CuboidCollider, HeightfieldCollider, RigidBody } from "@react-three/rapier";
+import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import { useMemo } from "react";
 import { content } from "@/lib/content";
 import { getBelvedereWorldAnchor } from "@/lib/road";
-import {
-  sampleGroundHeight,
-  TERRAIN_MAX_X,
-  TERRAIN_MAX_Z,
-  TERRAIN_MIN_X,
-  TERRAIN_MIN_Z,
-} from "@/lib/ground";
+import { sampleGroundHeight } from "@/lib/ground";
 
 /**
  * Physics = heightfield that matches the visible ground, plus tight building
@@ -21,20 +15,11 @@ export function WorldColliders() {
   const maison = content.zones.zones.find((z) => z.id === "maison-atelier")?.marker;
   const studio = content.zones.zones.find((z) => z.id === "studio")?.marker;
   const phare = content.zones.zones.find((z) => z.id === "phare")?.marker;
-  const heightfield = useMemo(() => buildTerrainHeightfield(), []);
   const maisonY = maison ? sampleGroundHeight(maison.x, maison.z) : 1.6;
   const studioY = studio ? sampleGroundHeight(studio.x, studio.z) : 1.8;
 
   return (
     <group>
-      <RigidBody type="fixed" colliders={false} position={heightfield.pos}>
-        <HeightfieldCollider
-          args={[heightfield.ncols, heightfield.nrows, heightfield.heights, heightfield.scale]}
-          friction={1.2}
-          restitution={0}
-        />
-      </RigidBody>
-
       {/* Catch-all far below the mesh — never intersects walking */}
       <RigidBody type="fixed" colliders={false} position={[0, -2.2, -70]}>
         <CuboidCollider args={[90, 0.4, 150]} friction={1.1} restitution={0} />
@@ -110,26 +95,4 @@ export function WorldColliders() {
       )}
     </group>
   );
-}
-
-function buildTerrainHeightfield() {
-  const ncols = 72;
-  const nrows = 120;
-  const sizeX = TERRAIN_MAX_X - TERRAIN_MIN_X;
-  const sizeZ = TERRAIN_MAX_Z - TERRAIN_MIN_Z;
-  const heights: number[] = [];
-  for (let ix = 0; ix <= ncols; ix++) {
-    for (let iz = 0; iz <= nrows; iz++) {
-      const x = TERRAIN_MIN_X + (ix / ncols) * sizeX;
-      const z = TERRAIN_MIN_Z + (iz / nrows) * sizeZ;
-      heights.push(sampleGroundHeight(x, z));
-    }
-  }
-  return {
-    ncols,
-    nrows,
-    heights,
-    scale: { x: sizeX, y: 1, z: sizeZ },
-    pos: [(TERRAIN_MIN_X + TERRAIN_MAX_X) / 2, 0, (TERRAIN_MIN_Z + TERRAIN_MAX_Z) / 2] as [number, number, number],
-  };
 }

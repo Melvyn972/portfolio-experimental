@@ -23,6 +23,7 @@ import { findNearestInteractable } from "@/lib/interaction";
 import { getBelvedereInteractPosition, getBelvedereStopPosition } from "@/components/world/Belvedere";
 import { isUnsafePosition, safeRespawnPosition } from "@/lib/respawn";
 import { isFinitePos, sanitizeWalkSpawn } from "@/lib/spawn";
+import { resolveCollisions } from "@/lib/colliders";
 
 const MAX_SPEED = 20;
 const ACCEL = 12;
@@ -371,8 +372,6 @@ export function PlayerSystem() {
     let moving = false;
     const speed = run ? RUN_SPEED : WALK_SPEED;
 
-    desired.current.set(0, -14 * dt, 0); // gravity step for controller
-
     if (Math.abs(moveX) > 0.01 || Math.abs(moveZ) > 0.01) {
       const basis = lookYaw.current;
       tmp.current.set(Math.sin(basis), 0, Math.cos(basis));
@@ -395,55 +394,16 @@ export function PlayerSystem() {
       playerVel.current.multiplyScalar(Math.exp(-10 * dt));
     }
 
-    desired.current.x += playerVel.current.x * dt;
-    desired.current.z += playerVel.current.z * dt;
-
-    const body = playerBody.current;
-    const ctrl = controller.current;
-    if (performance.now() < skipUntil.current) {
-      setPlayerKinematic(playerPos.current, walkYaw.current, true);
-    } else if (body && ctrl) {
-      const colliders = body.numColliders();
-      if (colliders > 0) {
-        const collider = body.collider(0);
-        ctrl.computeColliderMovement(collider, desired.current);
-        const mv = ctrl.computedMovement();
-        const t = body.translation();
-        const next = { x: t.x + mv.x, y: t.y + mv.y, z: t.z + mv.z };
-        if (!isFinitePos(next)) {
-          const safe = safeRespawnPosition(playerPos.current);
-          playerPos.current.copy(safe);
-          playerVel.current.set(0, 0, 0);
-          setPlayerKinematic(playerPos.current, walkYaw.current, true);
-        } else {
-          const want = Math.hypot(desired.current.x, desired.current.z);
-          const got = Math.hypot(mv.x, mv.z);
-          if (want > 0.008 && got < 0.0002) {
-            // Slide along the block instead of tunneling through invisible walls.
-            ctrl.computeColliderMovement(collider, { x: desired.current.x, y: desired.current.y, z: 0 });
-            const mx = ctrl.computedMovement();
-            ctrl.computeColliderMovement(collider, { x: 0, y: desired.current.y, z: desired.current.z });
-            const mz = ctrl.computedMovement();
-            const pick = Math.hypot(mx.x, mx.z) >= Math.hypot(mz.x, mz.z) ? mx : mz;
-            const nextSlide = { x: t.x + pick.x, y: t.y + pick.y, z: t.z + pick.z };
-            if (isFinitePos(nextSlide) && Math.hypot(pick.x, pick.z) > 0.00015) {
-              body.setNextKinematicTranslation(nextSlide);
-              playerPos.current.set(nextSlide.x, nextSlide.y - CAPSULE_Y, nextSlide.z);
-            } else {
-              playerPos.current.y = sampleGroundHeight(playerPos.current.x, playerPos.current.z);
-              setPlayerKinematic(playerPos.current, walkYaw.current, true);
-            }
-          } else {
-            body.setNextKinematicTranslation(next);
-            playerPos.current.set(next.x, next.y - CAPSULE_Y, next.z);
-          }
-        }
-      }
-    } else {
-      playerPos.current.x += desired.current.x;
-      playerPos.current.z += desired.current.z;
-      playerPos.current.y = sampleGroundHeight(playerPos.current.x, playerPos.current.z);
+    // Authoritative ground follow — Rapier heightfield + CC treated gentle
+    // ramps as walls. Horizontal move + snap Y + tight building AABBs.
+    if (performance.now() >= skipUntil.current) {
+      playerPos.current.x += playerVel.current.x * dt;
+      playerPos.current.z += playerVel.current.z * dt;
     }
+    playerPos.current.y = sampleGroundHeight(playerPos.current.x, playerPos.current.z);
+    resolveCollisions(playerPos.current, PLAYER_RADIUS, PLAYER_HEIGHT);
+    playerPos.current.y = sampleGroundHeight(playerPos.current.x, playerPos.current.z);
+    setPlayerKinematic(playerPos.current, walkYaw.current, true);
 
     // Soft world bounds — leave the beach (x ≈ −22) walkable
     if (playerPos.current.x < -28) playerPos.current.x = -28;
