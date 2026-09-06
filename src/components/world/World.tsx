@@ -24,8 +24,8 @@ function ShoreRocks({ count }: { count: number }) {
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-      const pos = p.clone().addScaledVector(side, -11.4 - (i % 2) * 0.45);
-      pos.x = Math.max(pos.x, -9.2);
+      const pos = p.clone().addScaledVector(side, -13.6 - (i % 2) * 0.5);
+      pos.x = Math.min(pos.x, -13.2);
       return {
         position: [pos.x, sampleGroundHeight(pos.x, pos.z) + 0.32, pos.z] as [number, number, number],
         scale: [1.1 + (i % 3) * 0.15, 0.55 + (i % 2) * 0.08, 0.95 + (i % 3) * 0.12] as [number, number, number],

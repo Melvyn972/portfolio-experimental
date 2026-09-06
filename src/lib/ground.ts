@@ -2,17 +2,21 @@ import * as THREE from "three";
 import { nearestRoadSample, getBelvedereWorldAnchor, ROAD_WIDTH, ROAD_SURFACE_LIFT } from "@/lib/road";
 import { content } from "@/lib/content";
 
-/** Same bounds as the Terrain plane (x remapped −12…70, z shifted −55). */
-export const TERRAIN_MIN_X = -12;
+/** Visual + heightfield bounds. Extends past the beach so sand meets the sea. */
+export const TERRAIN_MIN_X = -24;
 export const TERRAIN_MAX_X = 70;
 export const TERRAIN_MIN_Z = -185;
 export const TERRAIN_MAX_Z = 75;
 
-/** Legacy name — used for soil tint near the ribbon, not a wide cut. */
-export const ROAD_CUT_MARGIN = ROAD_WIDTH * 0.5 + 0.2;
+/** Flat sand under the asphalt and past the lip — no trench, no vertical cut. */
+export const ROAD_SAND_APRON = ROAD_WIDTH * 0.5 + 1.85;
 /** Inland ramp from road edge up to the maison / studio plazas. */
 export const INLAND_SHELF_WIDTH = 14;
 export const PLAZA_HEIGHT = 1.64;
+
+function sandBedY(roadY: number) {
+  return roadY + ROAD_SURFACE_LIFT - 0.05;
+}
 
 function scenicHeight(x: number, z: number): { y: number; roadDist: number; roadY: number; onAccess: boolean } {
   const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 160);
@@ -30,14 +34,19 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
     y = 0.2 + Math.sin(x * 0.04 + z * 0.02) * 0.15 + Math.cos(z * 0.03) * 0.08;
   }
 
-  if (x < -6) {
-    const lip = THREE.MathUtils.smoothstep(-6, -12, -x);
-    y = THREE.MathUtils.lerp(y, -0.15, lip);
+  // Continuous sand bed under the ribbon + a wide apron past both lips.
+  // Asphalt is a thin overlay a few cm above this bed — never a hole.
+  if (roadDist < ROAD_SAND_APRON) {
+    y = sandBedY(roadY);
   }
 
   const seaRamp = seaShoulderY(lat, roadY);
-  if (seaRamp != null) {
-    y = seaRamp;
+  if (seaRamp != null) y = seaRamp;
+
+  // Beach drop only well past the apron — never at the driving lip.
+  if (x < -12 && roadDist > ROAD_SAND_APRON + 2.2) {
+    const lip = THREE.MathUtils.smoothstep(-12, -20, -x);
+    y = THREE.MathUtils.lerp(y, -0.14, lip);
   }
 
   const shelf = inlandShelfY(lat, roadY);
@@ -83,8 +92,16 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
   }
 
   const access = walkAccessHeight(x, z);
-  // Never lift the driving ribbon — that pushed sand onto asphalt.
-  if (access != null && roadDist >= ROAD_WIDTH * 0.62) y = access;
+  // Inland ramps may rise. Never lower the sea-side apron (that opened the cyan trench).
+  if (access != null && roadDist >= ROAD_WIDTH * 0.62) {
+    y = lat < 0 ? Math.max(y, access) : access;
+  }
+
+  // Final lock under the asphalt — terrace / zone lifts must not poke through,
+  // and no later sculpt can open a trench at the driving lip.
+  if (roadDist < ROAD_WIDTH * 0.5 + 0.28) {
+    y = sandBedY(roadY);
+  }
 
   return { y, roadDist, roadY, onAccess: access != null && roadDist >= ROAD_WIDTH * 0.62 };
 }
@@ -94,28 +111,21 @@ export function roadClearance(x: number, z: number) {
   return { y, roadDist, roadY };
 }
 
-/**
- * Visual terrain. Sand is dropped only under the prism on the sea side so
- * interpolated faces cannot climb onto asphalt. Inland is a filled shelf.
- */
+/** Visual = scenic. No trench, no hole. */
 export function computeTerrainHeight(x: number, z: number): number {
-  const { y, roadDist, roadY } = scenicHeight(x, z);
-  // Drop only verts strictly under the ribbon. Shoulders stay meshed
-  // so the driving camera never sees sky through a cut hole.
-  if (roadDist < ROAD_WIDTH * 0.4) {
-    return Math.min(y, roadY - 0.32);
-  }
-  return y;
+  return scenicHeight(x, z).y;
 }
 
-/** Sea-side sand ramp: asphalt lip → beach. Fills the old blue slit. */
+/** Sea-side sand: flat apron past the lip, then a long slope to the beach. */
 export function seaShoulderY(lat: number, roadY: number): number | null {
-  const lip = ROAD_WIDTH * 0.5 + 0.12;
-  if (lat >= -lip * 0.15) return null;
-  if (lat < -lip - 7.4) return null;
-  const t = THREE.MathUtils.clamp((-lat - lip) / 6.6, 0, 1);
+  const lip = ROAD_WIDTH * 0.5;
+  if (lat > -lip) return null;
+  const bed = sandBedY(roadY);
+  if (lat >= -ROAD_SAND_APRON) return bed;
+  if (lat < -ROAD_SAND_APRON - 10) return null;
+  const t = THREE.MathUtils.clamp((-lat - ROAD_SAND_APRON) / 8.5, 0, 1);
   const e = t * t * (3 - 2 * t);
-  return THREE.MathUtils.lerp(roadY + ROAD_SURFACE_LIFT - 0.02, -0.13, e);
+  return THREE.MathUtils.lerp(bed, -0.12, e);
 }
 
 /** Smooth inland shelf: road shoulder → plaza height over INLAND_SHELF_WIDTH. */
@@ -125,19 +135,11 @@ export function inlandShelfY(lat: number, roadY: number): number | null {
   if (lat > edge + INLAND_SHELF_WIDTH + 10) return null;
   const t = THREE.MathUtils.clamp((lat - edge) / INLAND_SHELF_WIDTH, 0, 1);
   const e = t * t * (3 - 2 * t);
-  return THREE.MathUtils.lerp(roadY + 0.045, PLAZA_HEIGHT, e);
-}
-
-/** True when a probe sits on / across the driving ribbon (used to cut triangles). */
-export function isRoadCutProbe(x: number, z: number): boolean {
-  const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 160);
-  const roadDist = Math.min(Math.abs(sample.lateral), sample.dist);
-  // Cut only the ribbon interior. Shoulders stay — that was the blue edge slit.
-  return roadDist < ROAD_WIDTH * 0.38;
+  return THREE.MathUtils.lerp(sandBedY(roadY), PLAZA_HEIGHT, e);
 }
 
 /**
- * Walk / camera / heightfield — stand on the road, never in the visual trench.
+ * Walk / camera / heightfield — stand on the road, never in a visual trench.
  */
 export function sampleGroundHeight(x: number, z: number): number {
   const { y, roadDist, roadY, onAccess } = scenicHeight(x, z);

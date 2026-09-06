@@ -20,7 +20,7 @@ const ROAD_POINTS: [number, number, number][] = [
 
 export const ROAD_WIDTH = 7.2;
 export const ROAD_LENGTH_HINT = 220;
-/** Visual asphalt sits this far above the curve so the terrain trench never z-fights. */
+/** Thin asphalt overlay above the continuous sand bed. */
 export const ROAD_SURFACE_LIFT = 0.2;
 
 const curve = new THREE.CatmullRomCurve3(

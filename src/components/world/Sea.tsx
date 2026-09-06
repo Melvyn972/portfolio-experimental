@@ -75,13 +75,13 @@ export function Sea({ segments = 80 }: { segments?: number }) {
 
   return (
     <group>
-      {/* Deep water plane — always reads as sea even before shader settles */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-40, -0.62, -60]} receiveShadow>
-        <planeGeometry args={[78, 288]} />
+      {/* Inland edge ≈ x −16.5 — well past the road lip so cyan cannot show under asphalt. */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-52.5, -0.62, -60]} receiveShadow>
+        <planeGeometry args={[72, 288]} />
         <meshPhysicalMaterial color="#0a5c64" roughness={0.22} metalness={0.42} envMapIntensity={1.15} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-30, -0.26, -60]} renderOrder={1}>
-        <planeGeometry args={[48, 248, segsX, segsZ]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-46.5, -0.28, -60]} renderOrder={1}>
+        <planeGeometry args={[60, 248, segsX, segsZ]} />
         <shaderMaterial
           ref={mat}
           uniforms={uniforms}
