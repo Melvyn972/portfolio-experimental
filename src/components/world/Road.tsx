@@ -79,12 +79,43 @@ export function Road() {
   return (
     <group>
       <mesh geometry={geo} receiveShadow castShadow>
-        <meshStandardMaterial color="#4a4a48" roughness={0.88} metalness={0.05} />
+        <meshStandardMaterial color="#3f3f3d" roughness={0.92} metalness={0.04} />
       </mesh>
-      {/* Center dashed line as thin mesh strip */}
       <RoadMarkings />
+      <RoadEdgeLines />
       <Shoulder side={1} />
       <Shoulder side={-1} />
+    </group>
+  );
+}
+
+function RoadEdgeLines() {
+  const edges = useMemo(() => {
+    const curve = getRoadCurve();
+    const half = ROAD_WIDTH / 2 - 0.25;
+    return [1, -1].flatMap((side) =>
+      Array.from({ length: 50 }, (_, i) => {
+        const t = (i + 0.5) / 50;
+        const p = curve.getPointAt(t);
+        const tangent = curve.getTangentAt(t);
+        const lateral = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+        const pos = p.clone().addScaledVector(lateral, side * half);
+        return {
+          position: [pos.x, p.y + 0.032, pos.z] as [number, number, number],
+          yaw: Math.atan2(tangent.x, tangent.z),
+        };
+      }),
+    );
+  }, []);
+
+  return (
+    <group>
+      {edges.map((m, i) => (
+        <mesh key={i} position={m.position} rotation={[0, m.yaw, 0]} receiveShadow>
+          <boxGeometry args={[0.1, 0.008, 3.2]} />
+          <meshStandardMaterial color="#d8d0bc" roughness={0.75} />
+        </mesh>
+      ))}
     </group>
   );
 }

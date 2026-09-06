@@ -86,31 +86,77 @@ function mesh(geo, mat, pos, rot, scale) {
 function buildWheel() {
   const g = new THREE.Group();
   g.name = "wheel";
-  g.add(mesh(new THREE.CylinderGeometry(0.33, 0.33, 0.26, 18), MAT.rubber(), null, [0, 0, Math.PI / 2]));
-  g.add(mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.28, 14), MAT.chrome(), null, [0, 0, Math.PI / 2]));
+  // Tire
+  g.add(mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.28, 20), MAT.rubber(), null, [0, 0, Math.PI / 2]));
+  // Sidewall lip
+  g.add(
+    mesh(
+      new THREE.TorusGeometry(0.28, 0.035, 8, 20),
+      new THREE.MeshStandardMaterial({ color: "#2a2a2a", roughness: 0.7 }),
+      null,
+      [0, 0, Math.PI / 2],
+    ),
+  );
+  // Hub
+  g.add(mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.3, 14), MAT.chrome(), null, [0, 0, Math.PI / 2]));
+  g.add(
+    mesh(
+      new THREE.CylinderGeometry(0.06, 0.06, 0.32, 10),
+      new THREE.MeshStandardMaterial({ color: "#1a1512", roughness: 0.5 }),
+      null,
+      [0, 0, Math.PI / 2],
+    ),
+  );
   for (let i = 0; i < 5; i++) {
-    const spoke = mesh(new THREE.BoxGeometry(0.04, 0.22, 0.05), MAT.chrome());
+    const spoke = mesh(new THREE.BoxGeometry(0.045, 0.24, 0.055), MAT.chrome());
     spoke.rotation.set(0, (i * Math.PI) / 5, Math.PI / 2);
     g.add(spoke);
   }
-  // High-contrast tire stripe — readable spin from oblique camera
-  const stripe = mesh(
-    new THREE.BoxGeometry(0.04, 0.28, 0.12),
-    new THREE.MeshStandardMaterial({ color: "#e8e0d0", roughness: 0.55 }),
-    [0, 0, 0],
-    [0, 0, Math.PI / 2],
-  );
-  stripe.position.set(0.12, 0, 0);
+  // High-contrast stripe — readable from oblique cam
+  const stripeMat = new THREE.MeshStandardMaterial({ color: "#f0ebe0", roughness: 0.45, emissive: "#3a3020", emissiveIntensity: 0.08 });
+  const stripe = mesh(new THREE.BoxGeometry(0.06, 0.3, 0.16), stripeMat, null, [0, 0, Math.PI / 2]);
+  stripe.position.set(0.14, 0, 0);
   g.add(stripe);
   const stripe2 = mesh(
-    new THREE.BoxGeometry(0.04, 0.28, 0.12),
-    new THREE.MeshStandardMaterial({ color: "#c45c3e", roughness: 0.5 }),
+    new THREE.BoxGeometry(0.06, 0.3, 0.16),
+    new THREE.MeshStandardMaterial({ color: "#c45c3e", roughness: 0.4 }),
     null,
     [0, 0, Math.PI / 2],
   );
-  stripe2.position.set(-0.12, 0, 0);
+  stripe2.position.set(-0.14, 0, 0);
   g.add(stripe2);
   return g;
+}
+
+/** Side-profile extruded hull — elegant Mediterranean roadster silhouette. */
+function buildHullExtrusion() {
+  const shape = new THREE.Shape();
+  // X = length (rear − → front +), Y = height
+  shape.moveTo(-2.15, 0.12);
+  shape.lineTo(-2.18, 0.48);
+  shape.quadraticCurveTo(-1.95, 0.92, -1.55, 0.88); // folded soft-top mass
+  shape.quadraticCurveTo(-1.1, 0.78, -0.55, 0.7);
+  shape.lineTo(0.15, 0.68);
+  shape.lineTo(0.55, 1.05); // windshield rake
+  shape.lineTo(0.72, 1.12);
+  shape.lineTo(0.88, 0.62);
+  shape.quadraticCurveTo(1.35, 0.52, 1.85, 0.48); // hood
+  shape.quadraticCurveTo(2.2, 0.42, 2.28, 0.28); // nose
+  shape.quadraticCurveTo(2.32, 0.18, 2.2, 0.12);
+  shape.lineTo(-2.15, 0.12);
+
+  const geo = new THREE.ExtrudeGeometry(shape, {
+    depth: 1.72,
+    bevelEnabled: true,
+    bevelThickness: 0.07,
+    bevelSize: 0.05,
+    bevelSegments: 2,
+    curveSegments: 16,
+  });
+  // Shape XY extruded +Z → rotate so length runs along world Z, width along X
+  geo.rotateY(-Math.PI / 2);
+  geo.translate(0.86, 0, 0);
+  return geo;
 }
 
 function buildConvertible() {
@@ -119,61 +165,82 @@ function buildConvertible() {
 
   const body = new THREE.Group();
   body.name = "body";
-  body.add(mesh(new THREE.BoxGeometry(1.9, 0.32, 4.35), MAT.terracotta(), [0, 0.38, 0.05]));
-  body.add(mesh(new THREE.BoxGeometry(1.78, 0.16, 3.9), MAT.terracotta(), [0, 0.52, 0.15]));
-  body.add(mesh(new THREE.BoxGeometry(1.65, 0.26, 0.65), MAT.terracotta(), [0, 0.46, 1.95]));
-  body.add(mesh(new THREE.BoxGeometry(1.35, 0.18, 0.28), MAT.terracotta(), [0, 0.42, 2.28]));
-  body.add(mesh(new THREE.BoxGeometry(0.06, 0.14, 3.8), MAT.terracottaDark(), [0.96, 0.34, 0]));
-  body.add(mesh(new THREE.BoxGeometry(0.06, 0.14, 3.8), MAT.terracottaDark(), [-0.96, 0.34, 0]));
-  body.add(mesh(new THREE.BoxGeometry(1.68, 0.28, 1.65), MAT.cabin(), [0, 0.58, -0.25]));
-  body.add(mesh(new THREE.BoxGeometry(0.1, 0.28, 1.9), MAT.terracotta(), [0.9, 0.62, -0.1]));
-  body.add(mesh(new THREE.BoxGeometry(0.1, 0.28, 1.9), MAT.terracotta(), [-0.9, 0.62, -0.1]));
-  body.add(mesh(new THREE.BoxGeometry(1.72, 0.2, 1.0), MAT.terracotta(), [0, 0.56, -1.7]));
-  body.add(mesh(new THREE.BoxGeometry(1.4, 0.24, 0.58), MAT.softTop(), [0, 0.78, -1.5]));
-  body.add(mesh(new THREE.BoxGeometry(1.28, 0.1, 0.4), MAT.softTop(), [0, 0.92, -1.42]));
+
+  // Main sculpted hull
+  body.add(mesh(buildHullExtrusion(), MAT.terracotta()));
+
+  // Cabin tub (dark interior volume)
+  body.add(mesh(new THREE.BoxGeometry(1.55, 0.22, 1.55), MAT.cabin(), [0, 0.58, -0.15]));
+
+  // Character line / rocker
+  body.add(mesh(new THREE.BoxGeometry(0.05, 0.12, 3.6), MAT.terracottaDark(), [0.9, 0.32, 0.05]));
+  body.add(mesh(new THREE.BoxGeometry(0.05, 0.12, 3.6), MAT.terracottaDark(), [-0.9, 0.32, 0.05]));
+
+  // Wheel arches (half-cylinders)
+  for (const [x, z] of [
+    [0.92, 1.28],
+    [-0.92, 1.28],
+    [0.92, -1.38],
+    [-0.92, -1.38],
+  ]) {
+    const arch = mesh(
+      new THREE.TorusGeometry(0.42, 0.06, 8, 16, Math.PI),
+      MAT.terracottaDark(),
+      [x, 0.32, z],
+      [0, x > 0 ? Math.PI / 2 : -Math.PI / 2, 0],
+    );
+    body.add(arch);
+  }
+
+  // Soft top stack (more rounded)
+  body.add(mesh(new THREE.CapsuleGeometry(0.28, 0.9, 4, 10), MAT.softTop(), [0, 0.82, -1.45], [0, 0, Math.PI / 2]));
+  body.add(mesh(new THREE.BoxGeometry(1.25, 0.08, 0.45), MAT.softTop(), [0, 0.98, -1.4]));
 
   // Windshield
-  body.add(mesh(new THREE.BoxGeometry(1.52, 0.58, 0.05), MAT.glass(), [0, 0.98, 0.58], [-0.38, 0, 0]));
-  body.add(mesh(new THREE.BoxGeometry(0.04, 0.58, 0.04), MAT.chrome(), [0.74, 0.9, 0.58], [-0.38, 0, 0]));
-  body.add(mesh(new THREE.BoxGeometry(0.04, 0.58, 0.04), MAT.chrome(), [-0.74, 0.9, 0.58], [-0.38, 0, 0]));
-  body.add(mesh(new THREE.BoxGeometry(1.52, 0.04, 0.04), MAT.chrome(), [0, 1.2, 0.42], [-0.38, 0, 0]));
+  body.add(mesh(new THREE.BoxGeometry(1.48, 0.55, 0.04), MAT.glass(), [0, 1.0, 0.55], [-0.42, 0, 0]));
+  body.add(mesh(new THREE.BoxGeometry(0.035, 0.55, 0.035), MAT.chrome(), [0.72, 0.92, 0.55], [-0.42, 0, 0]));
+  body.add(mesh(new THREE.BoxGeometry(0.035, 0.55, 0.035), MAT.chrome(), [-0.72, 0.92, 0.55], [-0.42, 0, 0]));
+  body.add(mesh(new THREE.BoxGeometry(1.48, 0.035, 0.035), MAT.chrome(), [0, 1.22, 0.4], [-0.42, 0, 0]));
 
-  // Seats
-  body.add(mesh(new THREE.BoxGeometry(0.52, 0.16, 0.52), MAT.leather(), [0.36, 0.7, -0.1]));
-  body.add(mesh(new THREE.BoxGeometry(0.52, 0.16, 0.52), MAT.leather(), [-0.36, 0.7, -0.1]));
-  body.add(mesh(new THREE.BoxGeometry(0.52, 0.42, 0.1), MAT.leather(), [0.36, 0.92, -0.32]));
-  body.add(mesh(new THREE.BoxGeometry(0.52, 0.42, 0.1), MAT.leather(), [-0.36, 0.92, -0.32]));
+  // Seats (sculpted)
+  for (const sx of [0.34, -0.34]) {
+    body.add(mesh(new THREE.BoxGeometry(0.48, 0.14, 0.48), MAT.leather(), [sx, 0.7, -0.08]));
+    body.add(mesh(new THREE.BoxGeometry(0.48, 0.4, 0.1), MAT.leather(), [sx, 0.9, -0.28]));
+    body.add(mesh(new THREE.SphereGeometry(0.12, 8, 8), MAT.leather(), [sx, 1.05, -0.28]));
+  }
 
-  // Wheel + dash
-  const steering = mesh(new THREE.TorusGeometry(0.13, 0.018, 8, 18), MAT.cabin(), [0.36, 0.92, 0.28], [1.15, 0, 0]);
+  const steering = mesh(new THREE.TorusGeometry(0.14, 0.02, 8, 20), MAT.cabin(), [0.34, 0.92, 0.28], [1.15, 0, 0]);
   steering.name = "steering";
   body.add(steering);
-  body.add(mesh(new THREE.BoxGeometry(1.4, 0.08, 0.28), MAT.cabin(), [0, 0.78, 0.45]));
+  body.add(mesh(new THREE.BoxGeometry(1.35, 0.07, 0.26), MAT.cabin(), [0, 0.78, 0.42]));
 
-  // Lights
-  body.add(mesh(new THREE.CircleGeometry(0.13, 14), MAT.light(), [0.52, 0.5, 2.38], [Math.PI / 2, 0, 0]));
-  body.add(mesh(new THREE.CircleGeometry(0.13, 14), MAT.light(), [-0.52, 0.5, 2.38], [Math.PI / 2, 0, 0]));
-  body.add(mesh(new THREE.BoxGeometry(0.38, 0.1, 0.05), MAT.tail(), [0.58, 0.52, -2.18]));
-  body.add(mesh(new THREE.BoxGeometry(0.38, 0.1, 0.05), MAT.tail(), [-0.58, 0.52, -2.18]));
+  // Headlights (recessed rings)
+  for (const hx of [0.48, -0.48]) {
+    body.add(mesh(new THREE.TorusGeometry(0.12, 0.02, 8, 16), MAT.chrome(), [hx, 0.48, 2.2], [Math.PI / 2, 0, 0]));
+    body.add(mesh(new THREE.CircleGeometry(0.11, 16), MAT.light(), [hx, 0.48, 2.22], [Math.PI / 2, 0, 0]));
+  }
+  body.add(mesh(new THREE.BoxGeometry(0.36, 0.09, 0.04), MAT.tail(), [0.55, 0.5, -2.12]));
+  body.add(mesh(new THREE.BoxGeometry(0.36, 0.09, 0.04), MAT.tail(), [-0.55, 0.5, -2.12]));
 
   // Grille
-  body.add(mesh(new THREE.BoxGeometry(0.65, 0.14, 0.04), MAT.cabin(), [0, 0.4, 2.38]));
-  for (const x of [-0.18, -0.06, 0.06, 0.18]) {
-    body.add(mesh(new THREE.BoxGeometry(0.03, 0.12, 0.02), MAT.chrome(), [x, 0.4, 2.4]));
+  body.add(mesh(new THREE.BoxGeometry(0.7, 0.16, 0.04), MAT.cabin(), [0, 0.38, 2.22]));
+  for (const x of [-0.2, -0.07, 0.07, 0.2]) {
+    body.add(mesh(new THREE.BoxGeometry(0.03, 0.14, 0.02), MAT.chrome(), [x, 0.38, 2.24]));
   }
 
   // Mirrors
-  body.add(mesh(new THREE.BoxGeometry(0.18, 0.08, 0.1), MAT.chrome(), [0.95, 0.78, 0.55]));
-  body.add(mesh(new THREE.BoxGeometry(0.18, 0.08, 0.1), MAT.chrome(), [-0.95, 0.78, 0.55]));
+  body.add(mesh(new THREE.SphereGeometry(0.07, 8, 8), MAT.chrome(), [0.95, 0.78, 0.5]));
+  body.add(mesh(new THREE.SphereGeometry(0.07, 8, 8), MAT.chrome(), [-0.95, 0.78, 0.5]));
+  body.add(mesh(new THREE.BoxGeometry(0.04, 0.04, 0.12), MAT.chrome(), [0.88, 0.76, 0.48]));
+  body.add(mesh(new THREE.BoxGeometry(0.04, 0.04, 0.12), MAT.chrome(), [-0.88, 0.76, 0.48]));
 
   root.add(body);
 
-  // Nested steer → spin hierarchy for front wheels
   const wheelOffsets = [
-    { name: "wheel_FL", pos: [0.82, 0.32, 1.28], steer: true },
-    { name: "wheel_FR", pos: [-0.82, 0.32, 1.28], steer: true },
-    { name: "wheel_RL", pos: [0.82, 0.32, -1.38], steer: false },
-    { name: "wheel_RR", pos: [-0.82, 0.32, -1.38], steer: false },
+    { name: "wheel_FL", pos: [0.88, 0.34, 1.28], steer: true },
+    { name: "wheel_FR", pos: [-0.88, 0.34, 1.28], steer: true },
+    { name: "wheel_RL", pos: [0.88, 0.34, -1.38], steer: false },
+    { name: "wheel_RR", pos: [-0.88, 0.34, -1.38], steer: false },
   ];
   for (const w of wheelOffsets) {
     const steerG = new THREE.Group();
@@ -186,10 +253,9 @@ function buildConvertible() {
     root.add(steerG);
   }
 
-  // Ground shadow disc (optional helper)
   const shadow = mesh(
-    new THREE.CircleGeometry(1.35, 24),
-    new THREE.MeshBasicMaterial({ color: "#1a1510", transparent: true, opacity: 0.22 }),
+    new THREE.CircleGeometry(1.4, 28),
+    new THREE.MeshBasicMaterial({ color: "#1a1510", transparent: true, opacity: 0.2 }),
     [0, 0.02, 0],
     [-Math.PI / 2, 0, 0],
   );
@@ -202,29 +268,67 @@ function buildConvertible() {
 function buildStonePine() {
   const g = new THREE.Group();
   g.name = "StonePine";
-  g.add(mesh(new THREE.CylinderGeometry(0.1, 0.22, 2.2, 8), MAT.bark(), [0, 1.1, 0]));
-  g.add(mesh(new THREE.CylinderGeometry(0.05, 0.08, 1.0, 6), MAT.bark(), [0.15, 1.6, 0], [0, 0, 0.25]));
-  g.add(mesh(new THREE.SphereGeometry(1.15, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), MAT.pine(), [0, 2.55, 0]));
-  g.add(mesh(new THREE.SphereGeometry(0.7, 8, 6, 0, Math.PI * 2, 0, Math.PI * 0.55), MAT.pineLit(), [0.35, 2.45, 0.2]));
-  g.add(mesh(new THREE.SphereGeometry(0.65, 8, 6, 0, Math.PI * 2, 0, Math.PI * 0.55), MAT.pineDark(), [-0.4, 2.4, -0.15]));
+  g.add(mesh(new THREE.CylinderGeometry(0.12, 0.28, 2.4, 8), MAT.bark(), [0, 1.2, 0]));
+  g.add(mesh(new THREE.CylinderGeometry(0.06, 0.1, 1.1, 6), MAT.bark(), [0.2, 1.7, 0.05], [0, 0, 0.35]));
+  g.add(mesh(new THREE.CylinderGeometry(0.05, 0.08, 0.9, 6), MAT.bark(), [-0.18, 1.65, -0.1], [0, 0, -0.3]));
+  // Umbrella canopy — flattened icosahedrons
+  for (const [pos, s, mat] of [
+    [[0, 2.7, 0], 1.25, MAT.pine()],
+    [[0.45, 2.55, 0.25], 0.75, MAT.pineLit()],
+    [[-0.5, 2.5, -0.2], 0.7, MAT.pineDark()],
+    [[0.1, 2.85, -0.35], 0.55, MAT.pine()],
+  ]) {
+    const geo = new THREE.IcosahedronGeometry(s, 1);
+    const posAttr = geo.attributes.position;
+    for (let i = 0; i < posAttr.count; i++) {
+      const y = posAttr.getY(i);
+      posAttr.setY(i, y * 0.45 + (y > 0 ? 0.15 : 0));
+      const n = 0.92 + ((Math.sin(i * 7.1) * 0.5 + 0.5) * 0.16);
+      posAttr.setX(i, posAttr.getX(i) * n);
+      posAttr.setZ(i, posAttr.getZ(i) * n);
+    }
+    geo.computeVertexNormals();
+    g.add(mesh(geo, mat, pos));
+  }
   return g;
 }
 
 function buildCypress() {
   const g = new THREE.Group();
   g.name = "Cypress";
-  g.add(mesh(new THREE.CylinderGeometry(0.08, 0.14, 0.5, 6), MAT.bark(), [0, 1.6, 0]));
-  g.add(mesh(new THREE.ConeGeometry(0.55, 4.2, 9), MAT.cypress(), [0, 3.2, 0]));
+  g.add(mesh(new THREE.CylinderGeometry(0.08, 0.14, 0.45, 6), MAT.bark(), [0, 1.55, 0]));
+  const layers = [
+    [0.62, 1.1, 2.0],
+    [0.48, 1.0, 2.9],
+    [0.32, 0.9, 3.7],
+    [0.18, 0.7, 4.35],
+  ];
+  for (const [r, h, y] of layers) {
+    g.add(mesh(new THREE.ConeGeometry(r, h, 9), MAT.cypress(), [0, y, 0]));
+  }
   return g;
 }
 
 function buildOlive() {
   const g = new THREE.Group();
   g.name = "Olive";
-  g.add(mesh(new THREE.CylinderGeometry(0.12, 0.2, 1.4, 7), MAT.bark(), [0, 0.7, 0]));
-  g.add(mesh(new THREE.SphereGeometry(0.95, 10, 10), MAT.olive(), [0, 1.85, 0]));
-  g.add(mesh(new THREE.SphereGeometry(0.5, 8, 8), MAT.oliveLit(), [0.4, 2.0, 0.25]));
-  g.add(mesh(new THREE.SphereGeometry(0.45, 8, 8), MAT.olive(), [-0.35, 1.95, -0.2]));
+  g.add(mesh(new THREE.CylinderGeometry(0.14, 0.22, 1.5, 7), MAT.bark(), [0, 0.75, 0]));
+  g.add(mesh(new THREE.CylinderGeometry(0.05, 0.08, 0.8, 5), MAT.bark(), [0.25, 1.4, 0.1], [0, 0, 0.5]));
+  for (const [pos, s, mat] of [
+    [[0, 1.95, 0], 1.0, MAT.olive()],
+    [[0.45, 2.05, 0.3], 0.55, MAT.oliveLit()],
+    [[-0.4, 2.0, -0.25], 0.5, MAT.olive()],
+    [[0.15, 2.25, -0.3], 0.4, MAT.oliveLit()],
+  ]) {
+    const geo = new THREE.IcosahedronGeometry(s, 1);
+    const a = geo.attributes.position;
+    for (let i = 0; i < a.count; i++) {
+      const n = 0.9 + (Math.sin(i * 5.3) * 0.5 + 0.5) * 0.2;
+      a.setXYZ(i, a.getX(i) * n, a.getY(i) * n, a.getZ(i) * n);
+    }
+    geo.computeVertexNormals();
+    g.add(mesh(geo, mat, pos));
+  }
   return g;
 }
 

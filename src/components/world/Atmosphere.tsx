@@ -2,7 +2,7 @@
 
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Sky, Cloud, ContactShadows, useGLTF } from "@react-three/drei";
+import { Sky, ContactShadows, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { getRoadCurve } from "@/lib/road";
 import { content } from "@/lib/content";
@@ -45,12 +45,6 @@ export function Atmosphere({ dust = true, shadows = true, shadowMapSize = 2048 }
         rayleigh={0.8}
         turbidity={5.2}
       />
-      {dust && (
-        <>
-          <Cloud position={[-30, 28, -40]} opacity={0.35} speed={0.15} segments={12} bounds={[28, 4, 8]} />
-          <Cloud position={[20, 32, -120]} opacity={0.28} speed={0.1} segments={10} bounds={[36, 5, 10]} />
-        </>
-      )}
       {shadows && (
         <ContactShadows position={[0, 0.01, -60]} opacity={0.32} scale={120} blur={2.5} far={20} color="#3a2e22" />
       )}

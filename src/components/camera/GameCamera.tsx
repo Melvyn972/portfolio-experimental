@@ -112,9 +112,9 @@ export function GameCamera() {
 }
 
 function carCameraPos(out: THREE.Vector3, subject: THREE.Vector3, yaw: number, speed: number) {
-  const back = 11 + Math.min(4, speed * 0.12);
-  const height = 9.5 + Math.min(2.2, speed * 0.06);
-  const side = 7.5;
+  const back = 9.5 + Math.min(3.5, speed * 0.1);
+  const height = 6.8 + Math.min(1.8, speed * 0.05);
+  const side = 5.8;
   return out.set(
     subject.x - Math.sin(yaw) * back + Math.cos(yaw) * side,
     subject.y + height,

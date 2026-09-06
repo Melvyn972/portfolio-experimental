@@ -13,89 +13,97 @@ export function Belvedere() {
 
   return (
     <group position={[terrace.x, 0.02, terrace.z]} rotation={[0, yaw, 0]}>
-      {/* Pale stone terrace — multi-volume architecture */}
-      <mesh position={[0, 0.45, 0]} castShadow receiveShadow>
-        <boxGeometry args={[11, 0.9, 8.5]} />
-        <meshStandardMaterial color="#e4d9c6" roughness={0.88} />
-      </mesh>
-      <mesh position={[0, 0.92, 0]} receiveShadow>
-        <boxGeometry args={[10.4, 0.08, 7.9]} />
-        <meshStandardMaterial color="#f0e8d8" roughness={0.7} />
-      </mesh>
-      {/* Subtle tile seams */}
-      {[-2.5, 0, 2.5].map((z) => (
-        <mesh key={`seam-z-${z}`} position={[0, 0.97, z]} receiveShadow>
-          <boxGeometry args={[10, 0.01, 0.04]} />
-          <meshStandardMaterial color="#d8ccb8" roughness={0.85} />
-        </mesh>
-      ))}
-      {[-3, 0, 3].map((x) => (
-        <mesh key={`seam-x-${x}`} position={[x, 0.97, 0]} receiveShadow>
-          <boxGeometry args={[0.04, 0.01, 7.5]} />
-          <meshStandardMaterial color="#d8ccb8" roughness={0.85} />
-        </mesh>
-      ))}
-
-      {/* Steps toward road */}
-      <mesh position={[4.8, 0.28, 1.5]} castShadow receiveShadow>
-        <boxGeometry args={[2.2, 0.55, 2.4]} />
+      {/* Stone plinth */}
+      <mesh position={[0, 0.42, 0]} castShadow receiveShadow>
+        <boxGeometry args={[11.2, 0.84, 8.7]} />
         <meshStandardMaterial color="#ddd1bd" roughness={0.9} />
       </mesh>
-      <mesh position={[6.6, 0.12, 1.5]} castShadow receiveShadow>
-        <boxGeometry args={[1.6, 0.28, 2.0]} />
-        <meshStandardMaterial color="#d5c8b4" roughness={0.9} />
+      {/* Deck with warm stone */}
+      <mesh position={[0, 0.9, 0]} receiveShadow>
+        <boxGeometry args={[10.6, 0.1, 8.1]} />
+        <meshStandardMaterial color="#f2eadc" roughness={0.65} />
       </mesh>
-      <mesh position={[7.5, 0.04, 1.5]} castShadow receiveShadow>
-        <boxGeometry args={[0.9, 0.12, 1.8]} />
-        <meshStandardMaterial color="#cfc0a8" roughness={0.92} />
-      </mesh>
-
-      {/* Sea-facing parapet with posts */}
-      <mesh position={[-4.9, 1.35, 0]} castShadow>
-        <boxGeometry args={[0.4, 0.85, 7.6]} />
-        <meshStandardMaterial color="#d8ccb8" roughness={0.9} />
-      </mesh>
-      {[-3.2, -1.1, 1.1, 3.2].map((z) => (
-        <mesh key={`post-${z}`} position={[-4.9, 1.95, z]} castShadow>
-          <boxGeometry args={[0.22, 0.35, 0.22]} />
-          <meshStandardMaterial color="#cfc6b6" metalness={0.15} roughness={0.55} />
+      {/* Tile grid */}
+      {[-3, -1, 1, 3].map((z) => (
+        <mesh key={`sz-${z}`} position={[0, 0.96, z]} receiveShadow>
+          <boxGeometry args={[10.2, 0.012, 0.035]} />
+          <meshStandardMaterial color="#d4c6b0" roughness={0.8} />
         </mesh>
       ))}
-      <mesh position={[0, 1.25, -3.7]} castShadow>
-        <boxGeometry args={[9.5, 0.6, 0.35]} />
-        <meshStandardMaterial color="#d8ccb8" roughness={0.9} />
+      {[-3.5, -1.2, 1.2, 3.5].map((x) => (
+        <mesh key={`sx-${x}`} position={[x, 0.96, 0]} receiveShadow>
+          <boxGeometry args={[0.035, 0.012, 7.7]} />
+          <meshStandardMaterial color="#d4c6b0" roughness={0.8} />
+        </mesh>
+      ))}
+
+      {/* Cascading steps */}
+      {[
+        [4.6, 0.32, 1.5, 2.4, 0.5, 2.5],
+        [6.3, 0.16, 1.5, 1.7, 0.28, 2.1],
+        [7.4, 0.05, 1.5, 1.0, 0.12, 1.85],
+      ].map(([x, y, z, w, h, d], i) => (
+        <mesh key={`step-${i}`} position={[x, y, z]} castShadow receiveShadow>
+          <boxGeometry args={[w, h, d]} />
+          <meshStandardMaterial color={i === 0 ? "#ddd1bd" : i === 1 ? "#d5c8b4" : "#cfc0a8"} roughness={0.9} />
+        </mesh>
+      ))}
+
+      {/* Sea parapet + brass-capped posts + glass */}
+      <mesh position={[-4.95, 1.3, 0]} castShadow>
+        <boxGeometry args={[0.38, 0.75, 7.8]} />
+        <meshStandardMaterial color="#d8ccb8" roughness={0.88} />
       </mesh>
-      <mesh position={[0, 1.25, 3.7]} castShadow>
-        <boxGeometry args={[9.5, 0.45, 0.3]} />
-        <meshStandardMaterial color="#d8ccb8" roughness={0.9} />
+      {[-3.4, -1.15, 1.15, 3.4].map((z) => (
+        <group key={`post-${z}`} position={[-4.95, 1.75, z]}>
+          <mesh castShadow>
+            <cylinderGeometry args={[0.09, 0.1, 0.55, 8]} />
+            <meshStandardMaterial color="#cfc6b6" metalness={0.2} roughness={0.5} />
+          </mesh>
+          <mesh position={[0, 0.32, 0]} castShadow>
+            <cylinderGeometry args={[0.11, 0.11, 0.06, 8]} />
+            <meshStandardMaterial color="#b08d57" metalness={0.7} roughness={0.3} />
+          </mesh>
+        </group>
+      ))}
+      <mesh position={[-4.78, 1.5, 0]}>
+        <boxGeometry args={[0.05, 0.42, 6.4]} />
+        <meshStandardMaterial color="#c5e0e8" metalness={0.35} roughness={0.08} transparent opacity={0.4} />
       </mesh>
-      {/* Glass insert in sea parapet */}
-      <mesh position={[-4.72, 1.55, 0]} castShadow>
-        <boxGeometry args={[0.06, 0.45, 6.2]} />
-        <meshStandardMaterial color="#c5e0e8" metalness={0.3} roughness={0.1} transparent opacity={0.35} />
+      {/* Side rails */}
+      <mesh position={[0, 1.2, -3.75]} castShadow>
+        <boxGeometry args={[9.6, 0.55, 0.28]} />
+        <meshStandardMaterial color="#d8ccb8" roughness={0.88} />
+      </mesh>
+      <mesh position={[0, 1.15, 3.75]} castShadow>
+        <boxGeometry args={[9.6, 0.4, 0.26]} />
+        <meshStandardMaterial color="#d8ccb8" roughness={0.88} />
+      </mesh>
+      {/* Handrail */}
+      <mesh position={[-4.95, 1.85, 0]} castShadow>
+        <boxGeometry args={[0.08, 0.06, 7.4]} />
+        <meshStandardMaterial color="#b08d57" metalness={0.65} roughness={0.35} />
       </mesh>
 
-      {/* Contemporary canopy */}
-      <mesh position={[3.2, 2.2, -1.8]} castShadow>
-        <boxGeometry args={[0.12, 2.4, 0.12]} />
-        <meshStandardMaterial color="#cfc6b6" metalness={0.25} roughness={0.45} />
+      {/* Canopy — steel + timber */}
+      {[3.15, 0.45].map((x) => (
+        <mesh key={`col-${x}`} position={[x, 2.15, -1.75]} castShadow>
+          <cylinderGeometry args={[0.07, 0.08, 2.5, 8]} />
+          <meshStandardMaterial color="#c8c0b0" metalness={0.35} roughness={0.4} />
+        </mesh>
+      ))}
+      <mesh position={[1.8, 3.42, -1.75]} castShadow>
+        <boxGeometry args={[5.0, 0.12, 2.5]} />
+        <meshStandardMaterial color="#a67c52" roughness={0.55} />
       </mesh>
-      <mesh position={[0.4, 2.2, -1.8]} castShadow>
-        <boxGeometry args={[0.12, 2.4, 0.12]} />
-        <meshStandardMaterial color="#cfc6b6" metalness={0.25} roughness={0.45} />
-      </mesh>
-      <mesh position={[1.8, 3.45, -1.8]} castShadow>
-        <boxGeometry args={[5.2, 0.1, 2.6]} />
-        <meshStandardMaterial color="#a67c52" roughness={0.6} />
-      </mesh>
-      <mesh position={[1.8, 3.35, -1.8]} castShadow>
-        <boxGeometry args={[4.8, 0.06, 2.2]} />
-        <meshStandardMaterial color="#8a6540" roughness={0.7} />
+      <mesh position={[1.8, 3.3, -1.75]}>
+        <boxGeometry args={[4.6, 0.05, 2.15]} />
+        <meshStandardMaterial color="#8a6540" roughness={0.65} />
       </mesh>
 
       <BelvedereBench position={[2.2, 0.96, 2.0]} />
       <BougainvilleaCluster />
-      <IdentityCarnetModel position={[0, 0.96, -0.6]} />
+      <IdentityCarnetModel position={[0, 0.96, -0.55]} />
       <StopMarker position={[7.8, 0.02, 1.6]} />
     </group>
   );
