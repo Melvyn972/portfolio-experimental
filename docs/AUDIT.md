@@ -52,5 +52,18 @@ Cabriolet, avatar, belvédère (pierre/bois/verre), carnet, arbres, rochers, lam
 ## Contenu
 Identity + contact + 3 expériences dans le jeu ; formations/compétences/projets sur `/cv` seulement ; passions/activité importés mais non rendus ; `zones.json` non lu au runtime.
 
-## Build
-`npm run build` OK · TS strict · 1 warning lint (`stopPos`).
+## Corrections appliquées (finition 2026-09-06)
+
+- C1 belvédère unifié (`t=0.58`) · C2 scroll `/cv` · C3 GLB maison
+- M1 store dirty-check · M2 stop distance · M3 walkYaw · M4 menus/Escape
+- M5 qualité ombres · M6 content map menu
+- Strict Mode : boot→intro + keyboard listeners (garde `started`/`ready` retirées)
+- Marche arrière : plus de flip yaw chaque frame
+- Boucle playtestée : drive → stop → exit → carnet → identity → re-enter
+
+## Limites restantes
+- Terrasse/falaises/route encore partiellement procédurales (boîtes de soutènement)
+- Maison/Studio/Phare/Plage/WOW = scaffolds, pas AAA
+- Pas de LOD mesh / Draco runtime (GLB déjà légers)
+- Auto quality = snapshot mobile/desktop, pas downgrade FPS dynamique
+- Cabriolet stylisé low-poly (cohérent) — pas photoréaliste

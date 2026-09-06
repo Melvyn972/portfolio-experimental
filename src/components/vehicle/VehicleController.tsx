@@ -23,10 +23,10 @@ const BRAKE = 28;
 const DRAG = 3.2;
 const TURN_RATE = 1.55;
 const WALK_SPEED = 4.2;
-const EXIT_DIST = 5.2;
-const STOP_RADIUS = 3.4;
-const REENTER_RADIUS = 2.8;
-const CARNET_RADIUS = 3.6;
+const EXIT_DIST = 5.5;
+const STOP_RADIUS = 3.6;
+const REENTER_RADIUS = 3.4;
+const CARNET_RADIUS = 4.5;
 
 export function VehicleController() {
   const car = useRef<THREE.Group>(null);
@@ -207,22 +207,28 @@ export function VehicleController() {
       return;
     }
 
-    // Walking
+    // Walking — movement relative to current facing; don't flip yaw when only reversing
     const moveX = (right ? 1 : 0) - (left ? 1 : 0) + (!blocked && Math.abs(touch.x) > 0.15 ? touch.x : 0);
     const moveZ = (forward ? 1 : 0) - (back ? 1 : 0) + (!blocked && Math.abs(touch.y) > 0.15 ? touch.y : 0);
     let moving = false;
 
     if (Math.abs(moveX) > 0.01 || Math.abs(moveZ) > 0.01) {
-      const camBasis = yaw.current;
-      const forwardDir = tmp.current.set(Math.sin(camBasis), 0, Math.cos(camBasis));
-      sideTmp.current.set(forwardDir.z, 0, -forwardDir.x);
+      const basis = walkYaw.current;
+      tmp.current.set(Math.sin(basis), 0, Math.cos(basis));
+      sideTmp.current.set(tmp.current.z, 0, -tmp.current.x);
       const move = new THREE.Vector3()
-        .addScaledVector(forwardDir, moveZ)
+        .addScaledVector(tmp.current, moveZ)
         .addScaledVector(sideTmp.current, moveX);
       if (move.lengthSq() > 0.001) {
         move.normalize();
         playerPos.current.addScaledVector(move, WALK_SPEED * dt);
-        walkYaw.current = Math.atan2(move.x, move.z);
+        // Update facing when advancing or strafing — never when purely reversing
+        // (pure reverse would flip yaw each frame and cancel movement).
+        if (moveZ >= -0.01 || Math.abs(moveX) > 0.2) {
+          if (moveZ > 0.05 || Math.abs(moveX) >= Math.abs(moveZ)) {
+            walkYaw.current = Math.atan2(move.x, move.z);
+          }
+        }
         moving = true;
       }
     }

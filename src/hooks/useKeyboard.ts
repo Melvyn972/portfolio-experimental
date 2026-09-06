@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 export interface InputState {
   forward: boolean;
@@ -30,12 +30,7 @@ export const inputRef: { current: InputState; touch: { x: number; y: number }; i
 };
 
 export function useKeyboard() {
-  const ready = useRef(false);
-
   useEffect(() => {
-    if (ready.current) return;
-    ready.current = true;
-
     const down = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase();
       if (["arrowup", "arrowdown", "arrowleft", "arrowright", " ", "w", "a", "s", "d", "z", "q"].includes(k)) {
@@ -71,6 +66,7 @@ export function useKeyboard() {
     return () => {
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
+      inputRef.current = { ...empty };
     };
   }, []);
 }

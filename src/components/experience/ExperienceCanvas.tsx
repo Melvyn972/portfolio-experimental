@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Suspense } from "react";
 import { World } from "@/components/world/World";
@@ -9,7 +9,7 @@ import { GameCamera } from "@/components/camera/GameCamera";
 import { PostFX } from "@/components/experience/PostFX";
 import { useGameStore } from "@/hooks/useGameStore";
 import { resolveQuality } from "@/lib/quality";
-import { setGameState } from "@/lib/gameStore";
+import { getGameState, setGameState } from "@/lib/gameStore";
 import { useKeyboard } from "@/hooks/useKeyboard";
 
 function Scene({ isMobile }: { isMobile: boolean }) {
@@ -31,7 +31,6 @@ export function ExperienceCanvas() {
   const { quality: preset } = useGameStore();
   const [isMobile, setIsMobile] = useState(false);
   const quality = useMemo(() => resolveQuality(preset, isMobile), [preset, isMobile]);
-  const started = useRef(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 768px), (pointer: coarse)");
@@ -41,10 +40,12 @@ export function ExperienceCanvas() {
     return () => mq.removeEventListener("change", apply);
   }, []);
 
+  // Boot → intro. No "started" ref guard: React Strict Mode cleanup would cancel the
+  // first timeout and the second effect would no-op, freezing the boot splash forever.
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
-    const t = window.setTimeout(() => setGameState({ phase: "intro" }), 500);
+    const t = window.setTimeout(() => {
+      if (getGameState().phase === "boot") setGameState({ phase: "intro" });
+    }, 500);
     return () => clearTimeout(t);
   }, []);
 
