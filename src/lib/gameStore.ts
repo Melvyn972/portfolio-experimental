@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { computeTerrainHeight, sampleGroundHeight } from "@/lib/ground";
 import { getBelvedereWorldAnchor, nearestRoadSample, ROAD_SURFACE_LIFT } from "@/lib/road";
 import { isFinitePos, sanitizeWalkSpawn, zoneWalkSpawns } from "@/lib/spawn";
+import { interactableForChapter } from "@/lib/interaction";
 import { inputRef } from "@/hooks/useKeyboard";
 
 export type GamePhase = "boot" | "intro" | "playing";
@@ -56,6 +57,8 @@ export interface GameState {
   prompt: string | null;
   /** Interactive target id when in range */
   interactTarget: string | null;
+  /** Menu travel — keep this chapter's prompt while the player stays in its radius. */
+  focusChapter: ChapterId | null;
   discovered: Partial<Record<ChapterId, boolean>>;
   loadStage: number;
   debugColliders: boolean;
@@ -87,6 +90,7 @@ let state: GameState = {
   lookPitch: 0.12,
   prompt: null,
   interactTarget: null,
+  focusChapter: null,
   discovered: {},
   loadStage: 0,
   debugColliders: false,
@@ -189,9 +193,22 @@ export function chapterWalkSpawn(id: ChapterId) {
 /** Close menus and place the player in the chapter's world zone. */
 export function travelToChapterZone(id: ChapterId) {
   const pose = chapterWalkSpawn(id);
-  setGameState({ rescueOpen: false, openChapter: null, showExplorerHint: false });
+  const target = interactableForChapter(id);
+  setGameState({
+    phase: "playing",
+    mode: "walking",
+    rescueOpen: false,
+    openChapter: null,
+    showExplorerHint: false,
+    focusChapter: id,
+    prompt: target?.label ?? null,
+    interactTarget: target?.id ?? null,
+    playerPos: { x: pose.x, y: pose.y, z: pose.z },
+    walkYaw: pose.yaw,
+    lookYaw: pose.yaw,
+  });
   if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: pose }));
+  window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: { ...pose, focusChapter: id } }));
 }
 
 /** Dev helper for Playwright / QA */

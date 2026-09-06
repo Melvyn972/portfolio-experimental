@@ -83,7 +83,7 @@ export function ExperienceCanvas() {
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = 1.05;
-        gl.setClearColor("#87aeb8");
+        gl.setClearColor("#8aafb0");
       }}
       onPointerDown={(e) => {
         const t = e.target as HTMLElement | undefined;

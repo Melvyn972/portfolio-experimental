@@ -28,6 +28,9 @@ export function sanitizeWalkSpawn(raw: { x?: unknown; y?: unknown; z?: unknown; 
   return { x, y, z, yaw };
 }
 
+/** Porch in front of the maison — Menu → Parcours must land inside the interact radius. */
+export const MAISON_PORCH = { x: 16.15, z: -36.2 };
+
 export function zoneWalkSpawns(): Record<"belvedere" | "maison" | "studio" | "plage" | "phare", WalkSpawn> {
   const bel = getBelvedereWorldAnchor();
   const snap = (x: number, z: number, yaw: number): WalkSpawn => {
@@ -36,7 +39,7 @@ export function zoneWalkSpawns(): Record<"belvedere" | "maison" | "studio" | "pl
   };
   return {
     belvedere: snap(bel.terrace.x, bel.terrace.z, bel.yaw),
-    maison: snap(16.15, -36.2, Math.PI),
+    maison: snap(MAISON_PORCH.x, MAISON_PORCH.z, Math.PI),
     studio: snap(18.1, -112.4, Math.PI),
     plage: snap(-8, -95, -Math.PI / 2),
     phare: snap(-14, -170, -2.4),

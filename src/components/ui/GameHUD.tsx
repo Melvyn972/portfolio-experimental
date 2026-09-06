@@ -152,7 +152,7 @@ function InteractPrompt() {
 
   return (
     <div
-      className="pointer-events-auto absolute left-1/2 -translate-x-1/2"
+      className="pointer-events-auto absolute left-1/2 z-40 -translate-x-1/2"
       style={{
         bottom: isMobile
           ? "calc(10.5rem + env(safe-area-inset-bottom, 0px))"
@@ -161,11 +161,12 @@ function InteractPrompt() {
     >
       <button
         type="button"
-        className="rounded-sm border border-[#c4a574]/55 bg-[#f3ead8]/85 px-3.5 py-1.5 font-display text-xs tracking-wide text-[#3d3226] shadow-[0_6px_20px_rgba(80,50,20,0.1)] backdrop-blur-md md:px-5 md:py-2 md:text-sm"
+        className="rounded-sm border border-[#b08d57]/70 bg-[#f6efe2] px-5 py-2 font-display text-sm tracking-wide text-[#2c241c] shadow-[0_8px_24px_rgba(80,50,20,0.16)] backdrop-blur-md md:px-6 md:py-2.5 md:text-base"
         onClick={() => {
           inputRef.interactPulse = 1;
         }}
       >
+        {!isMobile && <span className="mr-2 font-mono text-[11px] text-[#8a6a3e]">E</span>}
         {prompt}
       </button>
     </div>

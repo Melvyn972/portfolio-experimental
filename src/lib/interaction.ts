@@ -2,6 +2,7 @@ import * as THREE from "three";
 import type { ChapterId } from "@/lib/gameStore";
 import { getBelvedereWorldAnchor } from "@/lib/road";
 import { content } from "@/lib/content";
+import { MAISON_PORCH } from "@/lib/spawn";
 
 export type Interactable = {
   id: string;
@@ -35,8 +36,8 @@ export function getInteractables(): Interactable[] {
         id: "maison-parcours",
         chapter: "parcours",
         label: "Parcours",
-        position: new THREE.Vector3(16.15, maison.y + 0.2, -36.2),
-        radius: 5.4,
+        position: new THREE.Vector3(MAISON_PORCH.x, maison.y + 0.15, MAISON_PORCH.z),
+        radius: 7.2,
         walkingOnly: true,
       },
       {
@@ -115,15 +116,30 @@ export function getInteractables(): Interactable[] {
   return list;
 }
 
+function xzDistance(pos: THREE.Vector3, target: THREE.Vector3) {
+  return Math.hypot(pos.x - target.x, pos.z - target.z);
+}
+
+export function interactableForChapter(chapter: ChapterId): Interactable | null {
+  return getInteractables().find((it) => it.chapter === chapter) ?? null;
+}
+
 export function findNearestInteractable(
   pos: THREE.Vector3,
   mode: "driving" | "walking",
+  preferChapter?: ChapterId | null,
 ): Interactable | null {
+  if (preferChapter) {
+    const preferred = interactableForChapter(preferChapter);
+    if (preferred && (!preferred.walkingOnly || mode === "walking")) {
+      if (xzDistance(pos, preferred.position) <= preferred.radius) return preferred;
+    }
+  }
   let best: Interactable | null = null;
   let bestD = Infinity;
   for (const it of getInteractables()) {
     if (it.walkingOnly && mode !== "walking") continue;
-    const d = pos.distanceTo(it.position);
+    const d = xzDistance(pos, it.position);
     if (d <= it.radius && d < bestD) {
       best = it;
       bestD = d;

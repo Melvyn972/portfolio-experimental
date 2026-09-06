@@ -19,8 +19,8 @@ type AtmosphereProps = {
 export function Atmosphere({ dust = true, shadows = true, shadowMapSize = 2048 }: AtmosphereProps) {
   return (
     <>
-      <color attach="background" args={["#87aeb8"]} />
-      <fog attach="fog" args={["#9bb8bc", 55, 190]} />
+      <color attach="background" args={["#8aafb0"]} />
+      <fog attach="fog" args={["#a3b6b0", 62, 205]} />
       <ambientLight intensity={0.28} color="#ffd8b8" />
       <hemisphereLight args={["#7eb4d4", "#c4a078", 0.7]} />
       <directionalLight

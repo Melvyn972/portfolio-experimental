@@ -8,7 +8,7 @@ import * as THREE from "three";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import { Convertible } from "@/components/vehicle/Convertible";
 import { inputRef, consumeInteractPulse } from "@/hooks/useKeyboard";
-import { getGameState, setGameState, openChapter, menusBlockInput } from "@/lib/gameStore";
+import { getGameState, setGameState, openChapter, menusBlockInput, type ChapterId } from "@/lib/gameStore";
 import {
   nearestRoadSample,
   roadCorrectionForce,
@@ -120,7 +120,7 @@ export function PlayerSystem() {
     };
 
     const onTeleportWalk = (ev: Event) => {
-      const detail = (ev as CustomEvent<{ x: number; y: number; z: number; yaw?: number }>).detail;
+      const detail = (ev as CustomEvent<{ x: number; y: number; z: number; yaw?: number; focusChapter?: ChapterId | null }>).detail;
       const pose = sanitizeWalkSpawn(detail ?? {});
       if (!pose) return;
       playerPos.current.set(pose.x, pose.y, pose.z);
@@ -135,6 +135,8 @@ export function PlayerSystem() {
         playerVisual.current.visible = true;
         playerVisual.current.rotation.y = walkYaw.current;
       }
+      const focus = detail?.focusChapter ?? getGameState().focusChapter;
+      const landed = findNearestInteractable(playerPos.current, "walking", focus);
       setGameState({
         phase: "playing",
         mode: "walking",
@@ -145,8 +147,9 @@ export function PlayerSystem() {
         lookYaw: lookYaw.current,
         lookPitch: lookPitch.current,
         nearStopSpot: false,
-        prompt: null,
-        interactTarget: null,
+        focusChapter: focus,
+        prompt: landed?.label ?? getGameState().prompt,
+        interactTarget: landed?.id ?? getGameState().interactTarget,
         showExplorerHint: false,
       });
     };
@@ -437,7 +440,11 @@ export function PlayerSystem() {
     syncCar(pos.current, yaw.current, 0, 0);
 
     const nearCar = playerPos.current.distanceTo(pos.current) < REENTER_RADIUS;
-    const interactable = findNearestInteractable(playerPos.current, "walking");
+    const focus = getGameState().focusChapter;
+    const interactable = findNearestInteractable(playerPos.current, "walking", focus);
+    if (focus && interactable?.chapter !== focus) {
+      setGameState({ focusChapter: null });
+    }
 
     let prompt: string | null = null;
     let interactTarget: string | null = null;
