@@ -158,7 +158,7 @@ export function GameCamera() {
       const fwdZ = Math.cos(yaw);
       const toCamX = _desired.x - _subject.x;
       const toCamZ = _desired.z - _subject.z;
-      if (toCamX * fwdX + toCamZ * fwdZ > 0.35) {
+      if (toCamX * fwdX + toCamZ * fwdZ > 0.05) {
         offsetPos(_desired, _subject, yaw, pitch, dist.current, height, side);
       }
     }
@@ -169,7 +169,11 @@ export function GameCamera() {
     _desired.y = Math.max(_desired.y, 1.4);
 
     if (walking) {
-      _lookTarget.copy(_subject).add(_a.set(0, 0.15 + pitch * 0.4, 0));
+      _lookTarget.set(
+        _subject.x + Math.sin(yaw) * 5.2,
+        _subject.y + 0.08 + pitch * 0.7,
+        _subject.z + Math.cos(yaw) * 5.2,
+      );
     } else {
       _lookTarget.set(
         _subject.x + Math.sin(yaw) * 6,

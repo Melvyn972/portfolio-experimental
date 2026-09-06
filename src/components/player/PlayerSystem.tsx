@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { CapsuleCollider, CuboidCollider, RigidBody, useRapier, type RapierRigidBody } from "@react-three/rapier";
 import { useGLTF } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import { Convertible } from "@/components/vehicle/Convertible";
@@ -46,6 +46,7 @@ const CAPSULE_Y = PLAYER_RADIUS + CAPSULE_HALF;
  * vehicle kinematic + character controller capsule.
  */
 export function PlayerSystem() {
+  const { camera } = useThree();
   const carBody = useRef<RapierRigidBody>(null);
   const carVisual = useRef<THREE.Group>(null);
   const playerBody = useRef<RapierRigidBody>(null);
@@ -195,17 +196,17 @@ export function PlayerSystem() {
     const touch = inputRef.touch;
     const look = inputRef.look;
     const blocked = state.rescueOpen || state.openChapter !== null;
-    const forward = !blocked && (input.forward || touch.y > 0.2);
-    const back = !blocked && (input.back || touch.y < -0.2);
-    const left = !blocked && (input.left || touch.x < -0.2);
-    const right = !blocked && (input.right || touch.x > 0.2);
+    const forward = !blocked && input.forward;
+    const back = !blocked && input.back;
+    const left = !blocked && input.left;
+    const right = !blocked && input.right;
     const brake = !blocked && input.brake;
     const run = !blocked && (input.run || Math.hypot(touch.x, touch.y) > 0.85);
 
     const stopPos = getBelvedereStopPosition();
     const interactPos = getBelvedereInteractPosition();
 
-    if (state.showExplorerHint && (forward || back || left || right || Math.abs(touch.x) > 0.15)) {
+    if (state.showExplorerHint && (forward || back || left || right || Math.hypot(touch.x, touch.y) > 0.15)) {
       setGameState({ showExplorerHint: false });
     }
 
@@ -232,23 +233,35 @@ export function PlayerSystem() {
     }
 
     if (state.mode === "driving") {
+      const analogSteer = !blocked && Math.abs(touch.x) > 0.12;
+      const analogThrottle = !blocked && Math.abs(touch.y) > 0.12 && !input.forward && !input.back;
       if (forward) velocity.current = Math.min(MAX_SPEED, velocity.current + ACCEL * dt);
       if (back) {
         if (velocity.current > 0.4) velocity.current = Math.max(0, velocity.current - BRAKE * 0.7 * dt);
         else velocity.current = Math.max(-MAX_SPEED * 0.4, velocity.current - ACCEL * 0.55 * dt);
       }
+      if (analogThrottle) {
+        if (touch.y > 0) velocity.current = Math.min(MAX_SPEED, velocity.current + ACCEL * touch.y * dt);
+        else if (velocity.current > 0.4) velocity.current = Math.max(0, velocity.current + BRAKE * 0.7 * touch.y * dt);
+        else velocity.current = Math.max(-MAX_SPEED * 0.4, velocity.current + ACCEL * 0.55 * touch.y * dt);
+      }
       if (brake) {
         if (velocity.current > 0) velocity.current = Math.max(0, velocity.current - BRAKE * dt);
         else velocity.current = Math.min(0, velocity.current + BRAKE * dt);
       }
-      const drag = DRAG + (forward || back ? 0 : 5.5);
+      const drag = DRAG + (forward || back || analogThrottle ? 0 : 5.5);
       if (velocity.current > 0) velocity.current = Math.max(0, velocity.current - drag * dt);
       if (velocity.current < 0) velocity.current = Math.min(0, velocity.current + drag * dt);
 
       const speedFactor = THREE.MathUtils.clamp(Math.abs(velocity.current) / MAX_SPEED, 0.12, 1);
-      if (left) yaw.current += TURN_RATE * speedFactor * Math.sign(velocity.current || 1) * dt;
-      if (right) yaw.current -= TURN_RATE * speedFactor * Math.sign(velocity.current || 1) * dt;
-
+      const turnSign = Math.sign(velocity.current || 1);
+      if (analogSteer) {
+        // Stick right (+x) = yaw right (decrease yaw, same as keyboard D).
+        yaw.current -= touch.x * TURN_RATE * speedFactor * turnSign * dt;
+      } else {
+        if (left) yaw.current += TURN_RATE * speedFactor * turnSign * dt;
+        if (right) yaw.current -= TURN_RATE * speedFactor * turnSign * dt;
+      }
       tmp.current.set(Math.sin(yaw.current), 0, Math.cos(yaw.current));
       pos.current.addScaledVector(tmp.current, velocity.current * dt);
       pos.current.addScaledVector(roadCorrectionForce(pos.current, ROAD_WIDTH * 0.42), dt);
@@ -285,7 +298,8 @@ export function PlayerSystem() {
       syncCar(pos.current, yaw.current, suspension.current, pitch, roll);
       if (carVisual.current) {
         carVisual.current.userData.setWheelSpin?.(velocity.current * dt * 3.15);
-        carVisual.current.userData.setSteer?.(((right ? 1 : 0) - (left ? 1 : 0)) * 0.42);
+        const steerAmt = analogSteer ? -touch.x * 0.42 : ((left ? 1 : 0) - (right ? 1 : 0)) * 0.42;
+        carVisual.current.userData.setSteer?.(steerAmt);
       }
 
       const distStop = Math.hypot(pos.current.x - stopPos.x, pos.current.z - stopPos.z);
@@ -375,8 +389,18 @@ export function PlayerSystem() {
     const speed = run ? RUN_SPEED : WALK_SPEED;
 
     if (Math.abs(moveX) > 0.01 || Math.abs(moveZ) > 0.01) {
-      const basis = lookYaw.current;
-      tmp.current.set(Math.sin(basis), 0, Math.cos(basis));
+      // Prefer camera XZ look so stick-up matches the screen. If the chase cam
+      // is still lerping or has flipped in front, fall back to lookYaw (never invert).
+      const lx = Math.sin(lookYaw.current);
+      const lz = Math.cos(lookYaw.current);
+      camera.getWorldDirection(tmp.current);
+      tmp.current.y = 0;
+      if (tmp.current.lengthSq() < 1e-6) {
+        tmp.current.set(lx, 0, lz);
+      } else {
+        tmp.current.normalize();
+        if (tmp.current.x * lx + tmp.current.z * lz < 0.2) tmp.current.set(lx, 0, lz);
+      }
       sideTmp.current.set(tmp.current.z, 0, -tmp.current.x);
       const move = new THREE.Vector3()
         .addScaledVector(tmp.current, moveZ)

@@ -27,7 +27,7 @@ function ShoreRocks({ count }: { count: number }) {
       const pos = p.clone().addScaledVector(side, -13.6 - (i % 2) * 0.5);
       pos.x = Math.min(pos.x, -13.2);
       return {
-        position: [pos.x, sampleGroundHeight(pos.x, pos.z) + 0.32, pos.z] as [number, number, number],
+        position: [pos.x, sampleGroundHeight(pos.x, pos.z) + 0.18, pos.z] as [number, number, number],
         scale: [1.1 + (i % 3) * 0.15, 0.55 + (i % 2) * 0.08, 0.95 + (i % 3) * 0.12] as [number, number, number],
         rot: i * 0.7,
         color: i % 2 === 0 ? "#c2b49a" : "#b4a488",

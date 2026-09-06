@@ -58,10 +58,10 @@ export function WorldColliders() {
           <RigidBody
             type="fixed"
             colliders={false}
-            position={[maison.x, maisonY + 2.4, maison.z - 0.9]}
+            position={[maison.x, maisonY + 2.4, maison.z - 1.4]}
             rotation={[0, -0.35, 0]}
           >
-            <CuboidCollider args={[2.6, 2.4, 1.7]} />
+            <CuboidCollider args={[2.2, 2.4, 1.3]} />
           </RigidBody>
           <RigidBody
             type="fixed"
@@ -77,10 +77,10 @@ export function WorldColliders() {
         <RigidBody
           type="fixed"
           colliders={false}
-          position={[studio.x, studioY + 2.3, studio.z - 0.7]}
+          position={[studio.x, studioY + 2.3, studio.z - 1.0]}
           rotation={[0, 0.4, 0]}
         >
-          <CuboidCollider args={[2.15, 2.3, 1.55]} />
+          <CuboidCollider args={[1.8, 2.3, 1.25]} />
         </RigidBody>
       )}
       {phare && (
