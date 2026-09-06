@@ -47,10 +47,10 @@ function Shoulder({ side }: { side: 1 | -1 }) {
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const lateral = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-      const inner = p.clone().addScaledVector(lateral, side * half);
-      const outer = p.clone().addScaledVector(lateral, side * (half + 2.6));
-      inner.y = p.y + ROAD_SURFACE_LIFT - 0.04;
-      outer.y = p.y - 0.16;
+      const inner = p.clone().addScaledVector(lateral, side * (half + 0.12));
+      const outer = p.clone().addScaledVector(lateral, side * (half + 3.2));
+      inner.y = p.y + ROAD_SURFACE_LIFT - 0.06;
+      outer.y = p.y - 0.22;
       positions.push(inner.x, inner.y, inner.z, outer.x, outer.y, outer.z);
       if (i < 80) {
         const a = i * 2;
@@ -67,7 +67,7 @@ function Shoulder({ side }: { side: 1 | -1 }) {
 
   return (
     <mesh geometry={geo} receiveShadow>
-      <meshStandardMaterial color="#b7a888" roughness={0.96} />
+      <meshStandardMaterial color="#6e685c" roughness={0.96} />
     </mesh>
   );
 }

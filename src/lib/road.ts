@@ -45,11 +45,21 @@ export function sampleRoad(t: number) {
   return { position, tangent, t: clamped };
 }
 
-export function nearestRoadSample(world: THREE.Vector3, samples = 140) {
+export function nearestRoadSample(world: THREE.Vector3, samples = 160) {
   let bestT = 0;
   let bestDist = Infinity;
   for (let i = 0; i <= samples; i++) {
     const t = i / samples;
+    curve.getPointAt(t, _tmp);
+    const d = _tmp.distanceToSquared(world);
+    if (d < bestDist) {
+      bestDist = d;
+      bestT = t;
+    }
+  }
+  const span = 1 / samples;
+  for (let i = 0; i <= 12; i++) {
+    const t = THREE.MathUtils.clamp(bestT + (i / 12 - 0.5) * span * 2, 0, 1);
     curve.getPointAt(t, _tmp);
     const d = _tmp.distanceToSquared(world);
     if (d < bestDist) {

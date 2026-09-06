@@ -12,9 +12,9 @@ export const TERRAIN_MAX_Z = 75;
 const VISUAL_TRENCH = ROAD_WIDTH * 0.5 + 3.6;
 
 function scenicHeight(x: number, z: number): { y: number; roadDist: number; roadY: number } {
-  const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 80);
+  const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 160);
   const lat = sample.lateral;
-  const roadDist = Math.abs(lat);
+  const roadDist = Math.min(Math.abs(lat), sample.dist);
   const roadY = sample.position.y;
   let y = 0.02;
 
