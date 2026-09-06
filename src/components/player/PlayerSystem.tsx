@@ -64,6 +64,7 @@ export function PlayerSystem() {
   const playerVel = useRef(new THREE.Vector3());
   const tmp = useRef(new THREE.Vector3());
   const sideTmp = useRef(new THREE.Vector3());
+  const moveTmp = useRef(new THREE.Vector3());
   const initialized = useRef(false);
   const skipUntil = useRef(0);
   const exitCooldown = useRef(0);
@@ -255,12 +256,13 @@ export function PlayerSystem() {
 
       const speedFactor = THREE.MathUtils.clamp(Math.abs(velocity.current) / MAX_SPEED, 0.12, 1);
       const turnSign = Math.sign(velocity.current || 1);
+      // Same yaw convention as look: +yaw = right (toward +X when facing +Z).
+      // A / stick left decreases yaw. D / stick right increases yaw.
       if (analogSteer) {
-        // Stick right (+x) = yaw right (decrease yaw, same as keyboard D).
-        yaw.current -= touch.x * TURN_RATE * speedFactor * turnSign * dt;
+        yaw.current += touch.x * TURN_RATE * speedFactor * turnSign * dt;
       } else {
-        if (left) yaw.current += TURN_RATE * speedFactor * turnSign * dt;
-        if (right) yaw.current -= TURN_RATE * speedFactor * turnSign * dt;
+        if (left) yaw.current -= TURN_RATE * speedFactor * turnSign * dt;
+        if (right) yaw.current += TURN_RATE * speedFactor * turnSign * dt;
       }
       tmp.current.set(Math.sin(yaw.current), 0, Math.cos(yaw.current));
       pos.current.addScaledVector(tmp.current, velocity.current * dt);
@@ -356,15 +358,14 @@ export function PlayerSystem() {
       if (typeof window !== "undefined") {
         (window as unknown as { __roadT?: number }).__roadT = sample.t;
       }
+      writeAxesDebug("driving");
       return;
     }
 
-    // ——— Walking (Rapier CharacterController) ———
-    // BEFORE (QA fail): look and move both wrote walkYaw. Strafe rotated the
-    // camera basis, next frame the same stick was re-projected → yaw spin.
-    // Look used `walkYaw -= look.x` which inverted right-stick X.
-    // AFTER: lookYaw/lookPitch = camera only. Movement is lookYaw-relative.
-    // walkYaw = visual facing, never fed back into the camera.
+    // ——— Walking ———
+    // lookYaw / lookPitch = camera only (look right = +yaw).
+    // Movement is lookYaw-relative so a chasing camera cannot invert axes
+    // while it lerps. walkYaw = avatar facing only — never fed back into look.
     const mouseX = inputRef.lookDelta.x;
     const mouseY = inputRef.lookDelta.y;
     inputRef.lookDelta.x = 0;
@@ -389,23 +390,18 @@ export function PlayerSystem() {
     const speed = run ? RUN_SPEED : WALK_SPEED;
 
     if (Math.abs(moveX) > 0.01 || Math.abs(moveZ) > 0.01) {
-      // Stick / ZQSD forward = what is on screen (camera XZ). Never lookYaw-only:
-      // during chase-cam lerp lookYaw disagrees with the picture and reads inverted.
-      camera.getWorldDirection(tmp.current);
-      tmp.current.y = 0;
-      if (tmp.current.lengthSq() < 1e-6) {
-        tmp.current.set(Math.sin(lookYaw.current), 0, Math.cos(lookYaw.current));
-      } else {
-        tmp.current.normalize();
-      }
+      // Authoritative basis = lookYaw (same as the chase rig). Camera world
+      // direction is NOT used: a mid-lerp / in-front camera would invert W/stick.
+      tmp.current.set(Math.sin(lookYaw.current), 0, Math.cos(lookYaw.current));
       sideTmp.current.set(tmp.current.z, 0, -tmp.current.x);
-      const move = new THREE.Vector3()
+      moveTmp.current
+        .set(0, 0, 0)
         .addScaledVector(tmp.current, moveZ)
         .addScaledVector(sideTmp.current, moveX);
-      if (move.lengthSq() > 0.001) {
-        move.normalize();
+      if (moveTmp.current.lengthSq() > 0.001) {
+        moveTmp.current.normalize();
         const mag = Math.min(1, Math.hypot(moveX, moveZ));
-        playerVel.current.lerp(move.multiplyScalar(speed * mag), 1 - Math.exp(-12 * dt));
+        playerVel.current.lerp(moveTmp.current.multiplyScalar(speed * mag), 1 - Math.exp(-12 * dt));
         const targetYaw = Math.atan2(playerVel.current.x, playerVel.current.z);
         let dy = targetYaw - walkYaw.current;
         while (dy > Math.PI) dy -= Math.PI * 2;
@@ -514,8 +510,34 @@ export function PlayerSystem() {
       carPos: { x: pos.current.x, y: pos.current.y, z: pos.current.z },
     });
 
+    writeAxesDebug(state.mode === "driving" ? "driving" : "walking");
+
     void rapier;
   });
+
+  function writeAxesDebug(mode: "walking" | "driving") {
+    if (typeof window === "undefined") return;
+    const api = (window as unknown as { __coteMelvyn?: Record<string, unknown> }).__coteMelvyn;
+    if (!api) return;
+    camera.getWorldDirection(tmp.current);
+    tmp.current.y = 0;
+    if (tmp.current.lengthSq() > 1e-8) tmp.current.normalize();
+    const basisYaw = mode === "driving" ? yaw.current : lookYaw.current;
+    const lookFx = Math.sin(basisYaw);
+    const lookFz = Math.cos(basisYaw);
+    api.live = {
+      mode,
+      playerPos: { x: playerPos.current.x, y: playerPos.current.y, z: playerPos.current.z },
+      carPos: { x: pos.current.x, y: pos.current.y, z: pos.current.z },
+      carYaw: yaw.current,
+      lookYaw: lookYaw.current,
+      walkYaw: walkYaw.current,
+      driveSpeed: velocity.current,
+      camFwd: { x: tmp.current.x, z: tmp.current.z },
+      lookFwd: { x: lookFx, z: lookFz },
+      camDotLook: tmp.current.x * lookFx + tmp.current.z * lookFz,
+    };
+  }
 
   function syncCar(
     p: THREE.Vector3,

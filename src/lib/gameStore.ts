@@ -237,6 +237,19 @@ if (typeof window !== "undefined") {
       teleportBelvedereWalk: () => void;
       travelToChapterZone: (id: ChapterId) => void;
       setWalkStick: (x: number, y: number) => void;
+      setLookStick: (x: number, y: number) => void;
+      live?: {
+        mode: string;
+        playerPos: { x: number; y: number; z: number };
+        carPos: { x: number; y: number; z: number };
+        carYaw: number;
+        lookYaw: number;
+        walkYaw: number;
+        driveSpeed: number;
+        camFwd: { x: number; z: number };
+        lookFwd: { x: number; z: number };
+        camDotLook: number;
+      };
       sampleHeights: (x: number, z: number) => {
         visual: number;
         walk: number;
@@ -282,6 +295,10 @@ if (typeof window !== "undefined") {
     setWalkStick: (x, y) => {
       inputRef.touch.x = Number.isFinite(x) ? Math.max(-1, Math.min(1, x)) : 0;
       inputRef.touch.y = Number.isFinite(y) ? Math.max(-1, Math.min(1, y)) : 0;
+    },
+    setLookStick: (x, y) => {
+      inputRef.look.x = Number.isFinite(x) ? Math.max(-1, Math.min(1, x)) : 0;
+      inputRef.look.y = Number.isFinite(y) ? Math.max(-1, Math.min(1, y)) : 0;
     },
     belvedereAnchor: () => {
       const a = getBelvedereWorldAnchor();

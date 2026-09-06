@@ -77,13 +77,13 @@ export function ExperienceCanvas() {
         antialias: quality.aa,
         powerPreference: "high-performance",
         toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 1.05,
+        toneMappingExposure: 1.12,
       }}
       camera={{ fov: 42, near: 0.1, far: 280, position: [32, 24, 58] }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
-        gl.toneMappingExposure = 1.05;
-        gl.setClearColor("#8aafb0");
+        gl.toneMappingExposure = 1.12;
+        gl.setClearColor("#8fb4b4");
       }}
       onPointerDown={(e) => {
         const t = e.target as HTMLElement | undefined;

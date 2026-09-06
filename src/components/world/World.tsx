@@ -27,10 +27,10 @@ function ShoreRocks({ count }: { count: number }) {
       const pos = p.clone().addScaledVector(side, -13.6 - (i % 2) * 0.5);
       pos.x = Math.min(pos.x, -13.2);
       return {
-        position: [pos.x, sampleGroundHeight(pos.x, pos.z) + 0.18, pos.z] as [number, number, number],
-        scale: [1.1 + (i % 3) * 0.15, 0.55 + (i % 2) * 0.08, 0.95 + (i % 3) * 0.12] as [number, number, number],
+        position: [pos.x, sampleGroundHeight(pos.x, pos.z) + 0.05, pos.z] as [number, number, number],
+        scale: [1.15 + (i % 3) * 0.12, 0.48 + (i % 2) * 0.06, 0.98 + (i % 3) * 0.1] as [number, number, number],
         rot: i * 0.7,
-        color: i % 2 === 0 ? "#c2b49a" : "#b4a488",
+        color: i % 2 === 0 ? "#c6b89e" : "#b8a88c",
       };
     });
   }, [count]);
@@ -91,7 +91,7 @@ function AccessPaths() {
       {plazas.map((p, i) => (
         <mesh key={`plaza-${i}`} position={p.pos} receiveShadow>
           <boxGeometry args={p.size} />
-          <meshStandardMaterial color="#b7a27c" roughness={0.9} metalness={0.04} />
+          <meshStandardMaterial color="#c2ae88" roughness={0.86} metalness={0.06} />
         </mesh>
       ))}
       {slabs.map((s, i) => (

@@ -46,11 +46,22 @@ export const inputRef: {
 
 export function useKeyboard() {
   useEffect(() => {
-    const api = (window as unknown as { __coteMelvyn?: { setWalkStick?: (x: number, y: number) => void } }).__coteMelvyn;
+    const api = (
+      window as unknown as {
+        __coteMelvyn?: {
+          setWalkStick?: (x: number, y: number) => void;
+          setLookStick?: (x: number, y: number) => void;
+        };
+      }
+    ).__coteMelvyn;
     if (api) {
       api.setWalkStick = (x, y) => {
         inputRef.touch.x = Number.isFinite(x) ? Math.max(-1, Math.min(1, x)) : 0;
         inputRef.touch.y = Number.isFinite(y) ? Math.max(-1, Math.min(1, y)) : 0;
+      };
+      api.setLookStick = (x, y) => {
+        inputRef.look.x = Number.isFinite(x) ? Math.max(-1, Math.min(1, x)) : 0;
+        inputRef.look.y = Number.isFinite(y) ? Math.max(-1, Math.min(1, y)) : 0;
       };
     }
   }, []);

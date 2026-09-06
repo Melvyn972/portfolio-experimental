@@ -181,7 +181,11 @@ export function CoastalZones() {
           </mesh>
           <Placed scene={pine} position={[p.x + 5.5, sampleGroundHeight(p.x + 5.5, p.z + 6), p.z + 6]} scale={0.5} />
           <Placed scene={pine} position={[p.x - 4.5, sampleGroundHeight(p.x - 4.5, p.z - 5), p.z - 5]} scale={0.42} />
-          <Placed scene={lantern} position={[p.x + 2.4, 0.45, p.z + 3.2]} scale={1.3} />
+          <Placed
+            scene={lantern}
+            position={[p.x + 2.4, sampleGroundHeight(p.x + 2.4, p.z + 3.2), p.z + 3.2]}
+            scale={1.3}
+          />
           <pointLight
             position={[p.x, 0.55 + 28.95 * PHARE_SCALE * 0.92, p.z]}
             intensity={2.4}
@@ -195,15 +199,31 @@ export function CoastalZones() {
       {plage && (
         <group>
           <WoodenPier position={[plage.x - 2.6, 0.12, plage.z]} yaw={-Math.PI / 2 + 0.08} />
-          <Placed scene={pine} position={[plage.x + 0.8, 0.16, plage.z + 5.4]} scale={0.36} />
-          <Placed scene={pine} position={[plage.x - 0.4, 0.16, plage.z - 5.8]} scale={0.3} />
-          <Placed scene={hedge} position={[plage.x + 2.8, 0.16, plage.z + 6.2]} scale={1.7} />
-          <Placed scene={lantern} position={[plage.x - 0.8, 0.16, plage.z + 2.2]} scale={1.15} />
+          <Placed
+            scene={pine}
+            position={[plage.x + 0.8, sampleGroundHeight(plage.x + 0.8, plage.z + 5.4), plage.z + 5.4]}
+            scale={0.36}
+          />
+          <Placed
+            scene={pine}
+            position={[plage.x - 0.4, sampleGroundHeight(plage.x - 0.4, plage.z - 5.8), plage.z - 5.8]}
+            scale={0.3}
+          />
+          <Placed
+            scene={hedge}
+            position={[plage.x + 2.8, sampleGroundHeight(plage.x + 2.8, plage.z + 6.2), plage.z + 6.2]}
+            scale={1.7}
+          />
+          <Placed
+            scene={lantern}
+            position={[plage.x - 0.8, sampleGroundHeight(plage.x - 0.8, plage.z + 2.2), plage.z + 2.2]}
+            scale={1.15}
+          />
         </group>
       )}
 
       {wow && (
-        <group position={[wow.x, Math.max(0, wow.y - 2), wow.z]}>
+        <group position={[wow.x, sampleGroundHeight(wow.x, wow.z), wow.z]}>
           <Placed scene={stairs} position={[0, 0, 0]} scale={2.4} />
           <Placed scene={fence} position={[0, 0, 2]} scale={3.5} />
           <Placed scene={pine} position={[3, 0, -2]} scale={0.48} />

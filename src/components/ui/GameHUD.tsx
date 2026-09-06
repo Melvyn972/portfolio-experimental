@@ -619,14 +619,14 @@ function VirtualStick({
       setKnob({ x: 0, y: 0 });
     };
 
-    const apply = (pageX: number, pageY: number) => {
+    const apply = (screenX: number, screenY: number) => {
       const g = gesture.current;
       if (!g) return;
-      // Origin = finger-down in document space (pageX/Y).
-      // clientX/Y jump when iOS Safari chrome hides — that flipped axes mid-gesture.
+      // Origin = finger-down in SCREEN space. pageX/clientY jump when iOS
+      // Safari chrome hides (even pageY === clientY on an unscrolled page).
       const radius = 52;
-      let x = (pageX - g.ox) / radius;
-      let y = (g.oy - pageY) / radius;
+      let x = (screenX - g.ox) / radius;
+      let y = (g.oy - screenY) / radius;
       const mag = Math.hypot(x, y);
       if (mag > 1) {
         x /= mag;
@@ -642,15 +642,13 @@ function VirtualStick({
       if (el.dataset.inactive === "1") return;
       if (gesture.current) return;
       e.preventDefault();
-      // Origin = this pointerdown. Never re-read getBoundingClientRect.
-      // No setPointerCapture — iOS Safari drops capture when chrome hides.
-      gesture.current = { id: e.pointerId, ox: e.pageX, oy: e.pageY };
-      apply(e.pageX, e.pageY);
+      gesture.current = { id: e.pointerId, ox: e.screenX, oy: e.screenY };
+      apply(e.screenX, e.screenY);
     };
     const move = (e: PointerEvent) => {
       if (!gesture.current || e.pointerId !== gesture.current.id) return;
       e.preventDefault();
-      apply(e.pageX, e.pageY);
+      apply(e.screenX, e.screenY);
     };
     const up = (e: PointerEvent) => {
       if (!gesture.current || e.pointerId !== gesture.current.id) return;
@@ -663,7 +661,6 @@ function VirtualStick({
     window.addEventListener("pointermove", move, { passive: false });
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", up);
-    window.addEventListener("lostpointercapture", up);
     window.addEventListener("blur", reset);
     window.addEventListener("visibilitychange", () => {
       if (document.hidden) reset();
@@ -673,7 +670,6 @@ function VirtualStick({
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
-      window.removeEventListener("lostpointercapture", up);
       window.removeEventListener("blur", reset);
       reset();
     };

@@ -113,7 +113,8 @@ export function GameCamera() {
     const pitch = walking ? state.lookPitch : 0.08;
     const targetDist = walking ? distWalk : distDrive + Math.min(2.2, state.speed * 0.07);
     const height = walking ? hWalk : hDrive + Math.min(1.0, state.speed * 0.035);
-    const side = walking ? 0.28 : 0.4;
+    // Tiny side offset so camera-forward ≈ look/car yaw (large offset felt inverted).
+    const side = walking ? 0.08 : 0.16;
 
     dist.current = THREE.MathUtils.lerp(dist.current, targetDist, 1 - Math.exp(-3.2 * dt));
     offsetPos(_desired, _subject, yaw, pitch, dist.current, height, side);
@@ -182,13 +183,21 @@ export function GameCamera() {
       );
     }
 
-    const follow = walking ? 6.2 : 5.4;
-    if (current.current.distanceTo(_desired) > 8) {
+    const follow = walking ? 16 : 8.5;
+    const fwdX = Math.sin(yaw);
+    const fwdZ = Math.cos(yaw);
+    const toCurX = current.current.x - _subject.x;
+    const toCurZ = current.current.z - _subject.z;
+    const inFront = toCurX * fwdX + toCurZ * fwdZ > 0.02;
+    camera.getWorldDirection(_dir);
+    _dir.y = 0;
+    const camDot = _dir.lengthSq() < 1e-8 ? 1 : _dir.normalize().dot(_a.set(fwdX, 0, fwdZ));
+    if (inFront || camDot < 0.25 || current.current.distanceTo(_desired) > 3.2) {
       current.current.copy(_desired);
       look.current.copy(_lookTarget);
     } else {
       current.current.lerp(_desired, 1 - Math.exp(-follow * dt));
-      look.current.lerp(_lookTarget, 1 - Math.exp(-7 * dt));
+      look.current.lerp(_lookTarget, 1 - Math.exp(-11 * dt));
     }
     const cg = sampleGroundHeight(current.current.x, current.current.z);
     current.current.y = Math.max(current.current.y, cg + (walking ? 1.15 : 1.55), 1.5);
