@@ -7,6 +7,16 @@
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
       ]
+    },
+    {
+      "source": "/cv-melvyn-thierry-bellefond.pdf",
+      "headers": [
+        {
+          "key": "Content-Disposition",
+          "value": "attachment; filename=\"cv-melvyn-thierry-bellefond.pdf\""
+        },
+        { "key": "Content-Type", "value": "application/pdf" }
+      ]
     }
   ]
 }

@@ -36,17 +36,16 @@ export function ReducedMotionFallback() {
           <p className="mt-2 text-sm text-[var(--fog)]">{PROFILE.credo}</p>
           <div className="mt-5 flex flex-wrap gap-2">
             <a
-              href="/cv-melvyn-thierry-bellefond.pdf"
-              download
+              href="/cv"
               className="inline-flex min-h-11 items-center rounded-full bg-[var(--brass)] px-4 py-2 font-mono text-[10px] tracking-wider text-[#07080c] uppercase"
             >
-              Télécharger le CV
+              Voir le CV
             </a>
             <a
-              href="/cv"
+              href="/api/cv-pdf"
               className="inline-flex min-h-11 items-center rounded-full border border-[var(--panel-border)] px-4 py-2 font-mono text-[10px] tracking-wider uppercase"
             >
-              Voir le CV
+              Télécharger PDF
             </a>
             <a
               href="#contact-2d"

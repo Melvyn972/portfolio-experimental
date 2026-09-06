@@ -15,46 +15,48 @@ export const metadata: Metadata = {
 
 export default function CvPage() {
   return (
-    <div className="min-h-screen bg-[#f7f5f0] text-[#12141a]">
+    <div className="min-h-screen overflow-x-hidden bg-[#f7f5f0] text-[#12141a]">
       <CvToolbar />
 
-      <article className="mx-auto max-w-3xl px-6 py-10 print:max-w-none print:px-0 print:py-0">
+      <article className="mx-auto w-full max-w-3xl px-4 py-8 break-words sm:px-6 sm:py-10 print:max-w-none print:px-0 print:py-0">
         <header className="border-b-2 border-[#c9a227] pb-6">
-          <h1 className="font-display text-4xl font-bold tracking-tight">{PROFILE.name}</h1>
-          <p className="mt-2 text-lg text-[#3a4558]">{PROFILE.title}</p>
-          <p className="mt-3 text-sm text-[#5a6478]">{PROFILE.tagline}</p>
-          <dl className="mt-4 grid gap-1 text-sm text-[#3a4558] sm:grid-cols-2">
-            <div>
-              <dt className="inline font-semibold">Localisation : </dt>
-              <dd className="inline">{PROFILE.location}</dd>
+          <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+            {PROFILE.name}
+          </h1>
+          <p className="mt-2 text-base text-[#3a4558] sm:text-lg">{PROFILE.title}</p>
+          <p className="mt-3 text-sm leading-relaxed text-[#5a6478]">{PROFILE.tagline}</p>
+          <dl className="mt-4 grid gap-2 text-sm text-[#3a4558]">
+            <div className="min-w-0">
+              <dt className="font-semibold">Localisation</dt>
+              <dd>{PROFILE.location}</dd>
             </div>
-            <div>
-              <dt className="inline font-semibold">E-mail : </dt>
-              <dd className="inline">
+            <div className="min-w-0">
+              <dt className="font-semibold">E-mail</dt>
+              <dd className="break-all">
                 <a href={`mailto:${PROFILE.email}`} className="underline">
                   {PROFILE.email}
                 </a>
               </dd>
             </div>
-            <div>
-              <dt className="inline font-semibold">GitHub : </dt>
-              <dd className="inline">
+            <div className="min-w-0">
+              <dt className="font-semibold">GitHub</dt>
+              <dd>
                 <a href={PROFILE.links.github} className="underline">
                   Melvyn972
                 </a>
               </dd>
             </div>
-            <div>
-              <dt className="inline font-semibold">LinkedIn : </dt>
-              <dd className="inline">
+            <div className="min-w-0">
+              <dt className="font-semibold">LinkedIn</dt>
+              <dd>
                 <a href={PROFILE.links.linkedin} className="underline">
                   Profil
                 </a>
               </dd>
             </div>
-            <div>
-              <dt className="inline font-semibold">Infos : </dt>
-              <dd className="inline">
+            <div className="min-w-0">
+              <dt className="font-semibold">Infos</dt>
+              <dd>
                 {PROFILE.age} · {PROFILE.permits}
               </dd>
             </div>
@@ -71,12 +73,13 @@ export default function CvPage() {
           <h2 className="font-display text-xl font-bold text-[#6b5a2a]">Expériences</h2>
           <ul className="mt-4 space-y-5">
             {EXPERIENCES.map((exp) => (
-              <li key={exp.company}>
+              <li key={exp.company} className="min-w-0">
                 <p className="font-mono text-xs uppercase tracking-wider text-[#8a7350]">
                   {exp.period}
                 </p>
-                <p className="font-semibold">
-                  {exp.role} — {exp.company}
+                <p className="font-semibold leading-snug">
+                  {exp.role}
+                  <span className="font-normal text-[#5a6478]"> — {exp.company}</span>
                 </p>
                 <p className="text-sm text-[#5a6478]">{exp.detail}</p>
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[#3a4558]">
@@ -93,9 +96,11 @@ export default function CvPage() {
           <h2 className="font-display text-xl font-bold text-[#6b5a2a]">Projets clés</h2>
           <ul className="mt-4 space-y-3">
             {PROJECTS.map((p) => (
-              <li key={p.id} className="text-sm">
+              <li key={p.id} className="min-w-0 text-sm">
                 <span className="font-semibold">{p.name}</span>
-                <span className="text-[#8a7350]"> — {p.stack}</span>
+                <span className="block text-[#8a7350] sm:inline sm:before:content-['_—_']">
+                  {p.stack}
+                </span>
                 <p className="text-[#3a4558]">{p.blurb}</p>
               </li>
             ))}
@@ -106,9 +111,9 @@ export default function CvPage() {
           <h2 className="font-display text-xl font-bold text-[#6b5a2a]">Compétences</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {SKILL_CLUSTERS.map((c) => (
-              <div key={c.id}>
-                <p className="font-semibold text-sm">{c.title}</p>
-                <p className="text-sm text-[#3a4558]">{c.items.join(", ")}</p>
+              <div key={c.id} className="min-w-0">
+                <p className="text-sm font-semibold">{c.title}</p>
+                <p className="text-sm leading-relaxed text-[#3a4558]">{c.items.join(", ")}</p>
               </div>
             ))}
           </div>
@@ -118,7 +123,7 @@ export default function CvPage() {
           <h2 className="font-display text-xl font-bold text-[#6b5a2a]">Formation</h2>
           <ul className="mt-3 space-y-3">
             {FORMATION.map((f) => (
-              <li key={f.title} className="text-sm">
+              <li key={f.title} className="min-w-0 text-sm">
                 <span className="font-mono text-xs text-[#8a7350]">{f.period}</span>
                 <p className="font-semibold">{f.title}</p>
                 {(f.school || f.detail) && (
@@ -129,7 +134,7 @@ export default function CvPage() {
           </ul>
         </section>
 
-        <footer className="mt-10 border-t border-black/10 pt-4 text-xs text-[#5a6478]">
+        <footer className="mt-10 border-t border-black/10 pt-4 text-xs leading-relaxed text-[#5a6478]">
           Document généré pour le portfolio Atelier Mécanique Digitale — auto-entreprise · missions
           freelance. Contact : {PROFILE.email}
         </footer>

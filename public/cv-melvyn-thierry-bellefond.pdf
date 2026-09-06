@@ -2,53 +2,62 @@
 1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj
 2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj
 3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>endobj
-4 0 obj<< /Length 2877 >>stream
-BT /F1 11 Tf 50 800.0 Td
-/F1 16 Tf (Melvyn Thierry-Bellefond) Tj
-0 -13 Td /F1 10 Tf (Developpeur Full-Stack & Expert IT) Tj
-0 -13 Td /F1 10 Tf (Gennevilliers / Ile-de-France  |  ~22 ans  |  Permis A et B, vehicule) Tj
+4 0 obj<< /Length 2846 >>stream
+BT
+/F1 16 Tf 48 800 Td (Melvyn Thierry-Bellefond) Tj
+0 -13 Td /F1 11 Tf (Developpeur Full-Stack & Expert IT) Tj
+0 -13 Td /F1 10 Tf () Tj
+0 -13 Td /F1 10 Tf (Gennevilliers / Ile-de-France) Tj
+0 -13 Td /F1 10 Tf (~22 ans  |  Permis A et B, vehicule) Tj
 0 -13 Td /F1 10 Tf (melvyn.thierrybellefond@gmail.com) Tj
-0 -13 Td /F1 10 Tf (GitHub: Melvyn972  |  LinkedIn: melvyn-thierry-bellefond) Tj
+0 -13 Td /F1 10 Tf (GitHub: Melvyn972) Tj
+0 -13 Td /F1 10 Tf (LinkedIn: melvyn-thierry-bellefond) Tj
 0 -13 Td /F1 10 Tf () Tj
-0 -18 Td /F1 12 Tf (PROFIL) Tj
-0 -13 Td /F1 10 Tf (Concepteur, deployeur et pilote de solutions numeriques sur-mesure) Tj
-0 -13 Td /F1 10 Tf (pour PME, commerces et equipes multisites.) Tj
-0 -13 Td /F1 10 Tf (Double culture tech + mecanique: demonter, diagnostiquer, optimiser,) Tj
-0 -13 Td /F1 10 Tf (remonter plus propre. Ambition: couteau suisse IT des PME.) Tj
+0 -16 Td /F1 12 Tf (PROFIL) Tj
+0 -13 Td /F1 10 Tf (Concepteur, deployeur et pilote de solutions) Tj
+0 -13 Td /F1 10 Tf (numeriques sur-mesure pour PME, commerces) Tj
+0 -13 Td /F1 10 Tf (et equipes multisites.) Tj
+0 -13 Td /F1 10 Tf (Double culture tech + mecanique: demonter,) Tj
+0 -13 Td /F1 10 Tf (diagnostiquer, optimiser, remonter plus propre.) Tj
+0 -13 Td /F1 10 Tf (Ambition: couteau suisse IT des PME.) Tj
 0 -13 Td /F1 10 Tf () Tj
-0 -18 Td /F1 12 Tf (EXPERIENCES) Tj
-0 -13 Td /F1 10 Tf (2024-2027  Alternance ? Developpeur Web & Charge de Missions IT) Tj
-0 -13 Td /F1 10 Tf (  Passion Beaute \(~100 magasins, Fontenay-sous-Bois\)) Tj
-0 -13 Td /F1 10 Tf (  E-ResaPB & VDAPB \(Symfony/API Platform/React/MySQL/Redis\)) Tj
-0 -13 Td /F1 10 Tf (  Support TeamViewer multisite, budget IT) Tj
-0 -13 Td /F1 10 Tf (  Migration Free Pro B2B 12 PDV \(-66%, ~19 000 EUR/an\)) Tj
+0 -16 Td /F1 12 Tf (EXPERIENCES) Tj
+0 -13 Td /F1 10 Tf (2024-2027  Alternance) Tj
+0 -13 Td /F1 10 Tf (Developpeur Web & Charge de Missions IT) Tj
+0 -13 Td /F1 10 Tf (Passion Beaute \(~100 magasins\)) Tj
+0 -13 Td /F1 10 Tf (- E-ResaPB & VDAPB \(Symfony/React/MySQL/Redis\)) Tj
+0 -13 Td /F1 10 Tf (- Support TeamViewer multisite, budget IT) Tj
+0 -13 Td /F1 10 Tf (- Migration Free Pro B2B 12 PDV \(-66%\)) Tj
 0 -13 Td /F1 10 Tf () Tj
-0 -13 Td /F1 10 Tf (2023-2024  Alternance ? Developpeur PHP ? Prisma Media) Tj
+0 -13 Td /F1 10 Tf (2023-2024  Alternance - Developpeur PHP) Tj
+0 -13 Td /F1 10 Tf (Prisma Media) Tj
 0 -13 Td /F1 10 Tf () Tj
-0 -13 Td /F1 10 Tf (2022-2023  Alternance ? Webmaster ? Search Artisan) Tj
-0 -13 Td /F1 10 Tf (  WP/Webflow/Wix/Duda, SEO Ads / Search Console) Tj
+0 -13 Td /F1 10 Tf (2022-2023  Alternance - Webmaster) Tj
+0 -13 Td /F1 10 Tf (Search Artisan \(WP/Webflow/SEO Ads\)) Tj
 0 -13 Td /F1 10 Tf () Tj
-0 -18 Td /F1 12 Tf (PROJETS CLES) Tj
-0 -13 Td /F1 10 Tf (VDAPB ? Symfony 7 + React 18 \(BDC, DN, factures\) ? go-live sept 2026) Tj
-0 -13 Td /F1 10 Tf (E-ResaPB ? Click & Collect interne \(93 magasins, ~11k refs\)) Tj
-0 -13 Td /F1 10 Tf (Migration Free Pro / Planning RH + Intranet / HubAnimal \(TS\)) Tj
-0 -13 Td /F1 10 Tf (ArtWise \(Twig\) / CynaStoreWeb \(Next.js 14, Prisma, Stripe\)) Tj
+0 -16 Td /F1 12 Tf (PROJETS CLES) Tj
+0 -13 Td /F1 10 Tf (VDAPB - Symfony 7 + React 18 \(BDC, DN, factures\)) Tj
+0 -13 Td /F1 10 Tf (E-ResaPB - Click & Collect \(93 magasins\)) Tj
+0 -13 Td /F1 10 Tf (Migration Free Pro / Planning RH + Intranet) Tj
+0 -13 Td /F1 10 Tf (HubAnimal \(TS\) / ArtWise \(Twig\)) Tj
+0 -13 Td /F1 10 Tf (CynaStoreWeb \(Next.js 14, Prisma, Stripe\)) Tj
 0 -13 Td /F1 10 Tf (Cold Call Agency \(freelance\)) Tj
 0 -13 Td /F1 10 Tf () Tj
-0 -18 Td /F1 12 Tf (COMPETENCES) Tj
-0 -13 Td /F1 10 Tf (Front: HTML/CSS/JS/TS/React/Vue/Vite/Tailwind/TanStack/Twig) Tj
-0 -13 Td /F1 10 Tf (Back: PHP/Symfony/Express/Nest/API Platform/Doctrine/JWT/REST) Tj
+0 -16 Td /F1 12 Tf (COMPETENCES) Tj
+0 -13 Td /F1 10 Tf (Front: HTML/CSS/JS/TS/React/Vue/Vite/Tailwind) Tj
+0 -13 Td /F1 10 Tf (Back: PHP/Symfony/Express/Nest/API Platform) Tj
 0 -13 Td /F1 10 Tf (Data: MySQL/SQLite/Redis/Supabase/Neon) Tj
 0 -13 Td /F1 10 Tf (Outils: Figma/DataGrip/Power BI/GitHub/Docker) Tj
-0 -13 Td /F1 10 Tf (Infra: O2switch/cPanel, CORS, VLAN, fibre/4G/5G, TPE/caisses) Tj
-0 -13 Td /F1 10 Tf (Pilotage IT, SEO/CMS \(Ads, Search Console, Webflow, WordPress\)) Tj
+0 -13 Td /F1 10 Tf (Infra: O2switch/cPanel, VLAN, fibre/4G/5G) Tj
+0 -13 Td /F1 10 Tf (Pilotage IT, SEO/CMS, Ads, Search Console) Tj
 0 -13 Td /F1 10 Tf () Tj
-0 -18 Td /F1 12 Tf (FORMATION) Tj
-0 -13 Td /F1 10 Tf (2025-2027  Mastere Lead Developpeur Full-Stack ? IIM \(RNCP 38590\)) Tj
+0 -16 Td /F1 12 Tf (FORMATION) Tj
+0 -13 Td /F1 10 Tf (2025-2027  Mastere Lead Dev Full-Stack - IIM) Tj
 0 -13 Td /F1 10 Tf (Bachelor Coordinateur de Projets Informatiques) Tj
 0 -13 Td /F1 10 Tf (BTS SIO SLAM) Tj
 0 -13 Td /F1 10 Tf () Tj
-0 -13 Td /F1 10 Tf (Contact freelance \(auto-entreprise\): melvyn.thierrybellefond@gmail.com) Tj
+0 -13 Td /F1 10 Tf (Freelance \(auto-entreprise\):) Tj
+0 -13 Td /F1 10 Tf (melvyn.thierrybellefond@gmail.com) Tj
 ET
 endstream
 endobj
@@ -60,8 +69,8 @@ xref
 0000000056 00000 n 
 0000000111 00000 n 
 0000000235 00000 n 
-0000003162 00000 n 
+0000003131 00000 n 
 trailer<< /Size 6 /Root 1 0 R >>
 startxref
-3230
+3199
 %%EOF

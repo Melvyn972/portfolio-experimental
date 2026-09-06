@@ -1,12 +1,22 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { PROFILE } from "@/data/content";
 import { useExperience } from "@/hooks/useExperience";
 
 export function LoaderGate() {
   const { entered, setEntered, sceneReady, reducedMotion } = useExperience();
+  const [timedOut, setTimedOut] = useState(false);
+
+  useEffect(() => {
+    if (entered || sceneReady || reducedMotion) return;
+    const t = window.setTimeout(() => setTimedOut(true), 8000);
+    return () => window.clearTimeout(t);
+  }, [entered, sceneReady, reducedMotion]);
 
   if (entered) return null;
+
+  const canEnter = sceneReady || reducedMotion || timedOut;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center atelier-gradient">
@@ -49,10 +59,10 @@ export function LoaderGate() {
           <button
             type="button"
             onClick={() => setEntered(true)}
-            disabled={!sceneReady && !reducedMotion}
+            disabled={!canEnter}
             className="min-h-12 min-w-[14rem] rounded-full bg-[var(--brass)] px-8 py-3 font-display text-sm font-semibold text-[#07080c] transition hover:bg-[var(--amber)] disabled:cursor-wait disabled:opacity-60"
           >
-            {sceneReady || reducedMotion ? "Entrer dans l'atelier" : "Initialisation 3D…"}
+            {canEnter ? "Entrer dans l'atelier" : "Initialisation 3D…"}
           </button>
           <a
             href="/cv"

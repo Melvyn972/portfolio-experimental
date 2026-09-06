@@ -228,17 +228,16 @@ export function SectionOverlays() {
         </ul>
         <div className="mt-3 flex flex-wrap gap-2">
           <a
-            href="/cv-melvyn-thierry-bellefond.pdf"
-            download
+            href="/cv"
             className="inline-flex min-h-12 items-center rounded-full bg-[var(--brass)] px-5 py-2.5 font-mono text-xs tracking-wider text-[#07080c] uppercase transition hover:bg-[var(--amber)]"
           >
-            Télécharger le PDF
+            Voir le CV
           </a>
           <a
-            href="/cv"
+            href="/api/cv-pdf"
             className="inline-flex min-h-12 items-center rounded-full border border-[var(--panel-border)] px-5 py-2.5 font-mono text-xs tracking-wider uppercase transition hover:border-[var(--cyan)] hover:text-[var(--cyan)]"
           >
-            Voir / imprimer
+            Télécharger PDF
           </a>
         </div>
       </Panel>

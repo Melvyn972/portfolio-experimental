@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PROFILE, SECTIONS } from "@/data/content";
 import { useExperience } from "@/hooks/useExperience";
 
@@ -33,7 +34,9 @@ export function SectionRail() {
             />
             <span
               className={`font-mono text-[10px] tracking-[0.2em] uppercase transition-opacity ${
-                active ? "opacity-100 text-[var(--brass)]" : "opacity-0 group-hover:opacity-70 group-focus-visible:opacity-70"
+                active
+                  ? "opacity-100 text-[var(--brass)]"
+                  : "opacity-0 group-hover:opacity-70 group-focus-visible:opacity-70"
               }`}
             >
               {s.label}
@@ -47,37 +50,125 @@ export function SectionRail() {
 
 export function MobileRail() {
   const { activeSection, goToSection, entered } = useExperience();
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(false);
+
+  const updateOverflow = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    setCanLeft(el.scrollLeft > 4);
+    setCanRight(max - el.scrollLeft > 4);
+  }, []);
+
+  useEffect(() => {
+    if (!entered) return;
+    const el = scrollerRef.current;
+    if (!el) return;
+    updateOverflow();
+    el.addEventListener("scroll", updateOverflow, { passive: true });
+    window.addEventListener("resize", updateOverflow);
+    return () => {
+      el.removeEventListener("scroll", updateOverflow);
+      window.removeEventListener("resize", updateOverflow);
+    };
+  }, [entered, updateOverflow]);
+
+  // Keep active section in view + reveal overflow cue
+  useEffect(() => {
+    if (!entered) return;
+    const el = scrollerRef.current;
+    if (!el) return;
+    const activeBtn = el.querySelector<HTMLElement>('[aria-current="true"]');
+    activeBtn?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+    const t = window.setTimeout(updateOverflow, 350);
+    return () => window.clearTimeout(t);
+  }, [activeSection, entered, updateOverflow]);
 
   if (!entered) return null;
+
+  const scrollByDir = (dir: -1 | 1) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * Math.max(120, el.clientWidth * 0.55), behavior: "smooth" });
+  };
 
   return (
     <nav
       aria-label="Sections"
-      className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--panel-border)] bg-[rgba(7,8,12,0.92)] px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--panel-border)] bg-[rgba(7,8,12,0.92)] pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-xl md:hidden"
     >
-      <div className="mx-auto flex w-full max-w-lg gap-1 overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {SECTIONS.map((s) => {
-          const active = s.id === activeSection;
-          return (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => goToSection(s.id)}
-              className={`min-h-12 min-w-[4.25rem] shrink-0 rounded-xl px-2 py-2 text-center font-mono text-[10px] tracking-wider uppercase transition ${
-                active
-                  ? "bg-[rgba(201,162,39,0.22)] text-[var(--brass)]"
-                  : "text-[var(--muted)]"
-              }`}
-              aria-current={active ? "true" : undefined}
-              aria-label={`Aller à ${s.label}`}
-            >
-              {s.short}
-              <span className="mt-0.5 block text-[9px] normal-case tracking-normal opacity-80">
-                {s.label}
-              </span>
-            </button>
-          );
-        })}
+      <p className="px-3 pb-1 text-center font-mono text-[9px] tracking-wider text-[var(--muted)] uppercase">
+        Glisser le rail · 08 sections
+        {canRight ? " →" : canLeft ? " ←" : ""}
+      </p>
+      <div className="relative mx-auto max-w-lg">
+        {/* Edge fades */}
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-[rgba(7,8,12,0.95)] to-transparent transition-opacity ${
+            canLeft ? "opacity-100" : "opacity-0"
+          }`}
+        />
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-[rgba(7,8,12,0.95)] to-transparent transition-opacity ${
+            canRight ? "opacity-100" : "opacity-0"
+          }`}
+        />
+
+        {canLeft && (
+          <button
+            type="button"
+            aria-label="Sections précédentes"
+            onClick={() => scrollByDir(-1)}
+            className="absolute left-0.5 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--panel-border)] bg-[rgba(13,16,24,0.9)] text-[var(--brass)]"
+          >
+            ‹
+          </button>
+        )}
+        {canRight && (
+          <button
+            type="button"
+            aria-label="Sections suivantes"
+            onClick={() => scrollByDir(1)}
+            className="absolute right-0.5 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--brass)]/50 bg-[rgba(13,16,24,0.95)] text-[var(--brass)] shadow-[0_0_12px_rgba(201,162,39,0.35)]"
+          >
+            ›
+          </button>
+        )}
+
+        <div
+          ref={scrollerRef}
+          className="flex w-full gap-1 overflow-x-auto overscroll-x-contain px-2 scroll-smooth snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {SECTIONS.map((s, i) => {
+            const active = s.id === activeSection;
+            const isLast = i === SECTIONS.length - 1;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => goToSection(s.id)}
+                className={`min-h-12 min-w-[4.35rem] shrink-0 snap-start rounded-xl px-2 py-2 text-center font-mono text-[10px] tracking-wider uppercase transition ${
+                  active
+                    ? "bg-[rgba(201,162,39,0.22)] text-[var(--brass)]"
+                    : "text-[var(--muted)]"
+                } ${isLast ? "mr-3" : ""}`}
+                aria-current={active ? "true" : undefined}
+                aria-label={`Aller à ${s.label}`}
+              >
+                {s.short}
+                <span className="mt-0.5 block text-[9px] normal-case tracking-normal opacity-80">
+                  {s.label}
+                </span>
+              </button>
+            );
+          })}
+          {/* Peek spacer so last items aren't flush */}
+          <div className="w-2 shrink-0 snap-end" aria-hidden />
+        </div>
       </div>
     </nav>
   );

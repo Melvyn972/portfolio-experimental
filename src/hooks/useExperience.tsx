@@ -40,8 +40,14 @@ export function ExperienceProvider({ children }: { children: ReactNode }) {
   const [activeSection, setActiveSection] = useState<SectionId>("entree");
   const [entered, setEntered] = useState(false);
   const [quality, setQuality] = useState<QualityMode>("auto");
-  const [reducedMotion, setReducedMotion] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 768px)").matches : false,
+  );
+  const [reducedMotion, setReducedMotion] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      : false,
+  );
   const [sceneReady, setSceneReady] = useState(false);
 
   useEffect(() => {

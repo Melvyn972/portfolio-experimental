@@ -15,7 +15,7 @@ const ExperienceCanvas = dynamic(
 );
 
 function Shell() {
-  const { reducedMotion, entered, isMobile } = useExperience();
+  const { reducedMotion, entered } = useExperience();
 
   return (
     <ScrollController>
@@ -37,8 +37,12 @@ function Shell() {
           <SectionOverlays />
         </main>
       )}
-      {!reducedMotion && !isMobile && <SectionRail />}
-      {!reducedMotion && isMobile && <MobileRail />}
+      {!reducedMotion && (
+        <>
+          <SectionRail />
+          <MobileRail />
+        </>
+      )}
       <LoaderGate />
     </ScrollController>
   );
