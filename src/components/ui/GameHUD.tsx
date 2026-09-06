@@ -42,11 +42,10 @@ export function GameHUD() {
       {state.showExplorerHint && state.phase === "playing" && !state.openChapter && (
         <div
           className="absolute left-1/2 -translate-x-1/2 animate-fade-in"
-          style={{ bottom: "calc(7.5rem + env(safe-area-inset-bottom, 0px))" }}
+          style={{ top: "calc(3.25rem + env(safe-area-inset-top, 0px))" }}
         >
-          <p className="font-display text-xs tracking-[0.28em] uppercase text-[#5c4a36] md:text-sm">Explorer</p>
-          <p className="mt-1 text-center text-[10px] text-[#7a6854] md:text-xs">
-            ZQSD · Shift courir · E interagir
+          <p className="rounded-sm bg-[#f3ead8]/55 px-2.5 py-1 text-center text-[10px] tracking-wide text-[#6b5a48] backdrop-blur-sm md:text-xs">
+            ZQSD · Shift · E — explorez la côte
           </p>
         </div>
       )}
@@ -93,14 +92,14 @@ function TopBar() {
         <button
           type="button"
           aria-label={muted ? "Activer le son" : "Couper le son"}
-          className="rounded-sm border border-[#c4a574]/40 bg-[#f7f0e4]/80 px-2.5 py-1 text-[10px] text-[#4a3c2e] backdrop-blur md:px-3 md:py-1.5 md:text-xs"
+          className="rounded-sm border border-[#c4a574]/40 bg-[#f7f0e4]/80 px-2 py-1 text-[10px] text-[#4a3c2e] backdrop-blur md:px-3 md:py-1.5 md:text-xs"
           onClick={() => toggleMute()}
         >
           {muted ? "Son" : "Muet"}
         </button>
         <button
           type="button"
-          className="rounded-sm border border-[#c4a574]/40 bg-[#f7f0e4]/80 px-2.5 py-1 text-[10px] text-[#4a3c2e] backdrop-blur md:px-3 md:py-1.5 md:text-xs"
+          className="rounded-sm border border-[#c4a574]/40 bg-[#f7f0e4]/80 px-2 py-1 text-[10px] text-[#4a3c2e] backdrop-blur md:px-3 md:py-1.5 md:text-xs"
           onClick={() => setGameState({ rescueOpen: !rescueOpen })}
         >
           Menu{done > 0 ? ` · ${done}/${total}` : ""}
@@ -156,7 +155,7 @@ function ChapterPanel({ chapter }: { chapter: ChapterId }) {
         paddingRight: "max(0.75rem, env(safe-area-inset-right))",
       }}
     >
-      <div className="identity-panel max-h-[min(70dvh,36rem)] w-full max-w-lg animate-rise overflow-y-auto border border-[#c9b896]/70 bg-[#f6f1e6]/92 p-4 shadow-[0_20px_60px_rgba(40,30,15,0.25)] backdrop-blur-xl md:max-h-[80vh] md:p-7">
+      <div className="identity-panel max-h-[min(58dvh,32rem)] w-full max-w-md animate-rise overflow-y-auto border border-[#c9b896]/60 bg-[#f6f1e6]/82 p-3.5 shadow-[0_16px_48px_rgba(40,30,15,0.22)] backdrop-blur-lg md:max-h-[75vh] md:max-w-lg md:p-7">
         <ChapterBody chapter={chapter} />
         <div className="mt-5 flex flex-wrap gap-2">
           <button
@@ -514,8 +513,8 @@ function TouchControls() {
           type="button"
           className="pointer-events-auto absolute rounded-sm border border-[#c4a574]/45 bg-[#f3ead8]/65 px-2.5 py-1.5 text-[10px] text-[#3d3226] backdrop-blur"
           style={{
-            bottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))",
-            left: "calc(5.5rem + env(safe-area-inset-left, 0px))",
+            bottom: "calc(4.75rem + env(safe-area-inset-bottom, 0px))",
+            left: "max(0.75rem, env(safe-area-inset-left))",
           }}
           onPointerDown={() => {
             inputRef.current.run = true;
@@ -582,7 +581,7 @@ function VirtualStick({
   return (
     <div
       ref={zone}
-      className="pointer-events-auto absolute h-[4.5rem] w-[4.5rem] rounded-full border border-[#c4a574]/40 bg-[#f3ead8]/35 backdrop-blur-sm md:h-24 md:w-24"
+      className="pointer-events-auto absolute h-14 w-14 rounded-full border border-[#c4a574]/35 bg-[#f3ead8]/28 backdrop-blur-[2px] sm:h-16 sm:w-16"
       style={style}
       onPointerDown={(e) => {
         setActive(true);
@@ -597,8 +596,8 @@ function VirtualStick({
       onPointerCancel={reset}
     >
       <div
-        className="absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#3d3226]/65 md:h-9 md:w-9"
-        style={{ transform: `translate(calc(-50% + ${knob.x * 22}px), calc(-50% + ${-knob.y * 22}px))` }}
+        className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#3d3226]/55 sm:h-6 sm:w-6"
+        style={{ transform: `translate(calc(-50% + ${knob.x * 16}px), calc(-50% + ${-knob.y * 16}px))` }}
       />
     </div>
   );

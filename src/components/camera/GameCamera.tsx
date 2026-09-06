@@ -22,10 +22,10 @@ const _lookB = new THREE.Vector3();
 const _dir = new THREE.Vector3();
 const _ray = new THREE.Raycaster();
 
-const CAM_DIST_DRIVE = 11.5;
-const CAM_DIST_WALK = 7.2;
-const CAM_HEIGHT_DRIVE = 5.2;
-const CAM_HEIGHT_WALK = 3.8;
+const CAM_DIST_DRIVE = 12.5;
+const CAM_DIST_WALK = 8.0;
+const CAM_HEIGHT_DRIVE = 5.8;
+const CAM_HEIGHT_WALK = 4.6;
 
 /**
  * Constant-distance follow camera with collision pull-in,
@@ -70,18 +70,23 @@ export function GameCamera() {
 
     if (state.openChapter === "identity") {
       const target = getBelvedereInteractPosition();
-      _desired.copy(target).add(_a.set(2.6, 2.0, 3.2));
-      current.current.lerp(_desired, 1 - Math.exp(-4 * dt));
-      look.current.lerp(_b.copy(target).add(_lookA.set(0, 0.35, 0)), 1 - Math.exp(-5 * dt));
+      // Stay outside the canopy — elevated three-quarter view of carnet
+      _desired.copy(target).add(_a.set(6.2, 4.2, 7.0));
+      const gY = sampleGroundHeight(_desired.x, _desired.z);
+      _desired.y = Math.max(_desired.y, gY + 2.5);
+      current.current.lerp(_desired, 1 - Math.exp(-3.5 * dt));
+      look.current.lerp(_b.copy(target).add(_lookA.set(0, 0.5, 0)), 1 - Math.exp(-4.5 * dt));
       camera.position.copy(current.current);
       camera.lookAt(look.current);
       return;
     }
 
     if (state.openChapter) {
-      // Soft hold — slight pull toward player for non-identity panels
+      // Soft hold — elevated view of player, never into architecture
       _subject.set(state.playerPos.x, state.playerPos.y, state.playerPos.z);
-      offsetPos(_desired, _subject, state.walkYaw, state.lookPitch, CAM_DIST_WALK * 0.85, CAM_HEIGHT_WALK, 0.4);
+      offsetPos(_desired, _subject, state.walkYaw, 0.18, CAM_DIST_WALK * 1.05, CAM_HEIGHT_WALK + 1.2, 0.45);
+      const gY = sampleGroundHeight(_desired.x, _desired.z);
+      _desired.y = Math.max(_desired.y, gY + 2.2);
       current.current.lerp(_desired, 1 - Math.exp(-3 * dt));
       look.current.lerp(_subject.clone().add(_a.set(0, 1.2, 0)), 1 - Math.exp(-4 * dt));
       camera.position.copy(current.current);
@@ -115,7 +120,7 @@ export function GameCamera() {
 
     // Never under ground
     const gY = sampleGroundHeight(_desired.x, _desired.z);
-    _desired.y = Math.max(_desired.y, gY + 1.8);
+    _desired.y = Math.max(_desired.y, gY + 2.4);
 
     if (walking) {
       _lookTarget.copy(_subject).add(_a.set(0, 1.35 + pitch * 0.5, 0));
@@ -131,7 +136,7 @@ export function GameCamera() {
     current.current.lerp(_desired, 1 - Math.exp(-follow * dt));
     // Extra ground clamp on smoothed position
     const cg = sampleGroundHeight(current.current.x, current.current.z);
-    current.current.y = Math.max(current.current.y, cg + 1.6);
+    current.current.y = Math.max(current.current.y, cg + 2.2);
     look.current.lerp(_lookTarget, 1 - Math.exp(-7 * dt));
     camera.position.copy(current.current);
     camera.lookAt(look.current);

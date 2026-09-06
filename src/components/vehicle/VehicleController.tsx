@@ -28,7 +28,8 @@ const TURN_RATE = 1.65;
 const WALK_SPEED = 3.8;
 const RUN_SPEED = 6.2;
 const EXIT_DIST = 4.8;
-const STOP_RADIUS = 3.8;
+const STOP_RADIUS = 5.5;
+const STOP_SPEED = 4.5;
 const REENTER_RADIUS = 3.5;
 const EXIT_LERP_TIME = 0.55;
 const ENTER_LERP_TIME = 0.4;
@@ -206,9 +207,11 @@ export function VehicleController() {
       }
 
       const distStop = Math.hypot(pos.current.x - stopPos.x, pos.current.z - stopPos.z);
-      const nearStop = distStop < STOP_RADIUS && Math.abs(velocity.current) < 3.2;
-      const nearBelvedereZone = distStop < 14;
-      if (nearBelvedereZone && Math.abs(velocity.current) > 6) velocity.current *= 1 - 1.6 * dt;
+      const nearBelvedereZone = distStop < 16;
+      // Strong assist on the stop pad so exit is always catchable
+      if (distStop < 8) velocity.current *= 1 - 2.4 * dt;
+      else if (nearBelvedereZone && Math.abs(velocity.current) > 6) velocity.current *= 1 - 1.6 * dt;
+      const nearStop = distStop < STOP_RADIUS && Math.abs(velocity.current) < STOP_SPEED;
 
       // Exit car
       if (nearStop && exitCooldown.current <= 0 && !blocked && (consumeInteractPulse() || input.exit)) {

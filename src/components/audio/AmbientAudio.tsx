@@ -187,7 +187,7 @@ export function IntroDirector() {
     const playAt = window.setTimeout(() => {
       done.current = true;
       setGameState({ phase: "playing", engineOn: true, showExplorerHint: true });
-      window.setTimeout(() => setGameState({ showExplorerHint: false }), 5500);
+      window.setTimeout(() => setGameState({ showExplorerHint: false }), 3800);
     }, 5600);
     return () => {
       clearTimeout(engineAt);

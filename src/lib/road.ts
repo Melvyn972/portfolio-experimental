@@ -101,7 +101,7 @@ export function getBelvedereWorldAnchor() {
     tangent: tangent.clone(),
     side,
     terrace: position.clone().addScaledVector(side, -8.5).setY(1.0),
-    stop: position.clone().addScaledVector(side, -1.0),
+    stop: position.clone().addScaledVector(side, -0.2),
     yaw: Math.atan2(-side.x, -side.z),
   };
 }
