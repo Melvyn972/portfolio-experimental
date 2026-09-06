@@ -64,7 +64,7 @@ export function PlayerSystem() {
   const sideTmp = useRef(new THREE.Vector3());
   const desired = useRef(new THREE.Vector3());
   const initialized = useRef(false);
-  const skipController = useRef(0);
+  const skipUntil = useRef(0);
   const exitCooldown = useRef(0);
   const suspension = useRef(0);
   const prevGround = useRef(0);
@@ -129,7 +129,7 @@ export function PlayerSystem() {
       lookPitch.current = 0.12;
       playerVel.current.set(0, 0, 0);
       transition.current.kind = null;
-      skipController.current = 12;
+      skipUntil.current = performance.now() + 200;
       setPlayerKinematic(playerPos.current, walkYaw.current, true);
       if (playerVisual.current) {
         playerVisual.current.visible = true;
@@ -397,23 +397,10 @@ export function PlayerSystem() {
 
     desired.current.x += playerVel.current.x * dt;
     desired.current.z += playerVel.current.z * dt;
-    if (typeof window !== "undefined") {
-      (window as unknown as { __walkDebug?: unknown }).__walkDebug = {
-        skip: skipController.current,
-        mode: state.mode,
-        touch: { ...inputRef.touch },
-        forward,
-        analogActive,
-        moveZ,
-        desired: { x: desired.current.x, z: desired.current.z },
-        pos: { x: playerPos.current.x, z: playerPos.current.z },
-      };
-    }
 
     const body = playerBody.current;
     const ctrl = controller.current;
-    if (skipController.current > 0) {
-      skipController.current -= 1;
+    if (performance.now() < skipUntil.current) {
       setPlayerKinematic(playerPos.current, walkYaw.current, true);
     } else if (body && ctrl) {
       const colliders = body.numColliders();
