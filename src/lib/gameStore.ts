@@ -175,6 +175,7 @@ if (typeof window !== "undefined") {
       teleportPlage: () => void;
       teleportPhare: () => void;
       teleportBelvedereWalk: () => void;
+      setWalkStick?: (x: number, y: number) => void;
       sampleHeights: (x: number, z: number) => {
         visual: number;
         walk: number;
