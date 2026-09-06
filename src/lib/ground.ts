@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { nearestRoadSample, getBelvedereWorldAnchor, ROAD_WIDTH } from "@/lib/road";
+import { nearestRoadSample, getBelvedereWorldAnchor, ROAD_WIDTH, ROAD_SURFACE_LIFT } from "@/lib/road";
 import { content } from "@/lib/content";
 
 /** Same bounds as the Terrain plane (x remapped −12…70, z shifted −55). */
@@ -8,16 +8,8 @@ export const TERRAIN_MAX_X = 70;
 export const TERRAIN_MIN_Z = -185;
 export const TERRAIN_MAX_Z = 75;
 
-/**
- * Trench ONLY under the asphalt prism (sea-side + ribbon).
- * The old +5.2 m drop carved an 8.8 m canyon that isolated Maison / Studio
- * (blue void, floating buildings). Inland verts must stay as a walkable shelf.
- */
-const ROAD_PRISM_HALF = ROAD_WIDTH * 0.5 + 0.55;
-const VISUAL_TRENCH = ROAD_PRISM_HALF + 0.28;
-const TRENCH_DROP = 1.15;
-/** Delete only faces under the asphalt prism — inland shelf stays meshed. */
-export const ROAD_CUT_MARGIN = ROAD_WIDTH * 0.5 + 0.42;
+/** Legacy name — used for soil tint near the ribbon, not a wide cut. */
+export const ROAD_CUT_MARGIN = ROAD_WIDTH * 0.5 + 0.2;
 /** Inland ramp from road edge up to the maison / studio plazas. */
 export const INLAND_SHELF_WIDTH = 14;
 export const PLAZA_HEIGHT = 1.64;
@@ -41,6 +33,11 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
   if (x < -6) {
     const lip = THREE.MathUtils.smoothstep(-6, -12, -x);
     y = THREE.MathUtils.lerp(y, -0.15, lip);
+  }
+
+  const seaRamp = seaShoulderY(lat, roadY);
+  if (seaRamp != null) {
+    y = seaRamp;
   }
 
   const shelf = inlandShelfY(lat, roadY);
@@ -102,19 +99,23 @@ export function roadClearance(x: number, z: number) {
  * interpolated faces cannot climb onto asphalt. Inland is a filled shelf.
  */
 export function computeTerrainHeight(x: number, z: number): number {
-  const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 160);
-  const lat = sample.lateral;
   const { y, roadDist, roadY } = scenicHeight(x, z);
-  // Sea / centerline only. Inland stays meshed at shelf height (below asphalt
-  // near the edge) so Route → Maison has no blue hole.
-  if (lat <= 0.55 && roadDist < VISUAL_TRENCH) {
-    return Math.min(y, roadY - TRENCH_DROP);
-  }
-  // Inland under the prism: keep the face but never let sand reach asphalt.
-  if (roadDist < ROAD_PRISM_HALF) {
-    return Math.min(y, roadY - 0.22);
+  // Drop only verts strictly under the ribbon. Shoulders stay meshed
+  // so the driving camera never sees sky through a cut hole.
+  if (roadDist < ROAD_WIDTH * 0.4) {
+    return Math.min(y, roadY - 0.32);
   }
   return y;
+}
+
+/** Sea-side sand ramp: asphalt lip → beach. Fills the old blue slit. */
+export function seaShoulderY(lat: number, roadY: number): number | null {
+  const lip = ROAD_WIDTH * 0.5 + 0.12;
+  if (lat >= -lip * 0.15) return null;
+  if (lat < -lip - 7.4) return null;
+  const t = THREE.MathUtils.clamp((-lat - lip) / 6.6, 0, 1);
+  const e = t * t * (3 - 2 * t);
+  return THREE.MathUtils.lerp(roadY + ROAD_SURFACE_LIFT - 0.02, -0.13, e);
 }
 
 /** Smooth inland shelf: road shoulder → plaza height over INLAND_SHELF_WIDTH. */
@@ -130,11 +131,9 @@ export function inlandShelfY(lat: number, roadY: number): number | null {
 /** True when a probe sits on / across the driving ribbon (used to cut triangles). */
 export function isRoadCutProbe(x: number, z: number): boolean {
   const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 160);
-  const lat = sample.lateral;
-  const roadDist = Math.min(Math.abs(lat), sample.dist);
-  // Keep inland triangles — cutting them opened the blue hole toward Maison.
-  if (lat > 0.45) return false;
-  return roadDist < ROAD_CUT_MARGIN;
+  const roadDist = Math.min(Math.abs(sample.lateral), sample.dist);
+  // Cut only the ribbon interior. Shoulders stay — that was the blue edge slit.
+  return roadDist < ROAD_WIDTH * 0.38;
 }
 
 /**

@@ -42,8 +42,8 @@ export function Terrain() {
         c.offsetHSL(0, -0.05, Math.sin(x * 2.1 + z * 1.7) * 0.04);
       }
 
-      // Only the prism shoulder is soil — inland shelf stays sand, not a dark canyon.
-      if (roadDist < ROAD_CUT_MARGIN + 0.55) {
+      // Inland ribbon only — sea shoulder stays sand, not a dark canyon wall.
+      if (roadDist < ROAD_CUT_MARGIN + 0.35 && x > 0.5) {
         c.set("#5a5448");
         c.offsetHSL(0, 0, Math.sin(x * 3.1 + z * 2.4) * 0.03);
       }
