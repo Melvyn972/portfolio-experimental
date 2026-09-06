@@ -4,7 +4,7 @@ import { CuboidCollider, HeightfieldCollider, RigidBody } from "@react-three/rap
 import { useMemo } from "react";
 import * as THREE from "three";
 import { content } from "@/lib/content";
-import { getBelvedereWorldAnchor, getRoadCurve, ROAD_WIDTH } from "@/lib/road";
+import { getBelvedereWorldAnchor, getRoadCurve, ROAD_SURFACE_LIFT, ROAD_WIDTH } from "@/lib/road";
 import {
   computeTerrainHeight,
   TERRAIN_MAX_X,
@@ -75,45 +75,33 @@ export function WorldColliders() {
         </RigidBody>
       ))}
 
-      {/* Belvedere terrace + parapets */}
-      <RigidBody type="fixed" colliders={false} position={[bel.terrace.x, 0.55, bel.terrace.z]} rotation={[0, bel.yaw, 0]}>
-        <CuboidCollider args={[5.2, 0.55, 4.2]} friction={1.3} />
+      {/* Belvedere terrace + sea parapet + stair slab */}
+      <RigidBody type="fixed" colliders={false} position={[bel.terrace.x, 0.92, bel.terrace.z]} rotation={[0, bel.yaw, 0]}>
+        <CuboidCollider args={[4.2, 0.2, 3.6]} friction={1.35} />
       </RigidBody>
       <RigidBody
         type="fixed"
         colliders={false}
         position={[
-          bel.terrace.x + bel.side.x * -4.9,
-          1.35,
-          bel.terrace.z + bel.side.z * -4.9,
+          bel.terrace.x - bel.side.x * 3.35,
+          1.42,
+          bel.terrace.z - bel.side.z * 3.35,
         ]}
         rotation={[0, bel.yaw, 0]}
       >
-        <CuboidCollider args={[0.45, 0.85, 4.0]} />
+        <CuboidCollider args={[4.1, 0.36, 0.22]} />
       </RigidBody>
       <RigidBody
         type="fixed"
         colliders={false}
         position={[
-          bel.terrace.x + bel.tangent.x * -3.7,
-          1.2,
-          bel.terrace.z + bel.tangent.z * -3.7,
+          bel.terrace.x + bel.side.x * 3.8,
+          0.45,
+          bel.terrace.z + bel.side.z * 3.8,
         ]}
         rotation={[0, bel.yaw, 0]}
       >
-        <CuboidCollider args={[4.8, 0.7, 0.35]} />
-      </RigidBody>
-      <RigidBody
-        type="fixed"
-        colliders={false}
-        position={[
-          bel.terrace.x + bel.tangent.x * 3.7,
-          1.2,
-          bel.terrace.z + bel.tangent.z * 3.7,
-        ]}
-        rotation={[0, bel.yaw, 0]}
-      >
-        <CuboidCollider args={[4.8, 0.7, 0.35]} />
+        <CuboidCollider args={[1.4, 0.2, 1.8]} friction={1.3} />
       </RigidBody>
 
       {/* Buildings — Kenney City ×6.x footprints + Dormin phare ×0.34 */}
@@ -192,9 +180,9 @@ function buildRoadColliders() {
     const len = Math.max(0.5, tangent.length() * 0.55);
     const yaw = Math.atan2(tangent.x, tangent.z);
     boxes.push({
-      pos: [mid.x, mid.y + 0.08, mid.z],
+      pos: [mid.x, mid.y + ROAD_SURFACE_LIFT, mid.z],
       yaw,
-      half: [ROAD_WIDTH * 0.52, 0.12, len],
+      half: [ROAD_WIDTH * 0.52, 0.1, len],
     });
   }
   return boxes;
@@ -219,6 +207,14 @@ function buildWalkPaths() {
       half: [2.6, 0.1, Math.max(0.5, tangent.length() * 0.55)],
     });
   }
+  const bel = getBelvedereWorldAnchor();
+  const midStairs = bel.terrace.clone().addScaledVector(bel.side, 4.2);
+  boxes.push({
+    pos: [midStairs.x, 0.55, midStairs.z],
+    yaw: bel.yaw,
+    half: [1.6, 0.18, 2.4],
+  });
+
   // Beach access near plage marker (−11, −95)
   boxes.push({ pos: [-12, computeTerrainHeight(-12, -95) + 0.06, -95], yaw: 0.15, half: [8.5, 0.1, 7] });
   // Maison plaza (in front of the building, +Z)

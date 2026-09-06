@@ -50,8 +50,16 @@ export function Terrain() {
 
   return (
     <group>
-      <mesh geometry={land} receiveShadow castShadow>
-        <meshStandardMaterial vertexColors roughness={0.92} metalness={0} flatShading={false} />
+      <mesh geometry={land} receiveShadow castShadow renderOrder={0}>
+        <meshStandardMaterial
+          vertexColors
+          roughness={0.94}
+          metalness={0}
+          flatShading={false}
+          polygonOffset
+          polygonOffsetFactor={2}
+          polygonOffsetUnits={2}
+        />
       </mesh>
     </group>
   );

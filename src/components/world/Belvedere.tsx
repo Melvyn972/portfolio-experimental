@@ -7,95 +7,75 @@ import * as THREE from "three";
 import { getBelvedereWorldAnchor } from "@/lib/road";
 import { useGameStore } from "@/hooks/useGameStore";
 
-function useShadowClone(path: string) {
-  const { scene } = useGLTF(path);
-  return useMemo(() => {
-    const c = scene.clone(true);
-    c.traverse((o) => {
-      const m = o as THREE.Mesh;
-      if (m.isMesh) {
-        m.castShadow = true;
-        m.receiveShadow = true;
-      }
-    });
-    return c;
-  }, [scene]);
-}
-
-function Placed({
-  scene,
-  position,
-  rotation = [0, 0, 0],
-  scale = 1,
-}: {
-  scene: THREE.Object3D;
-  position: [number, number, number];
-  rotation?: [number, number, number];
-  scale?: number;
-}) {
-  const clone = useMemo(() => scene.clone(true), [scene]);
-  return (
-    <group position={position} rotation={rotation} scale={scale}>
-      <primitive object={clone} />
-    </group>
-  );
-}
+const STONE = "#d2c4a6";
+const STONE_DARK = "#b4a488";
+const LIME = "#cfc3a4";
 
 /**
- * Belvedere overlook — Kenney Fantasy stone walls + hedge + lantern (no procedural shelter).
+ * Solid Mediterranean lookout — authored stone, not scaled Kenney shards.
+ * Local +Z = toward the road, −Z = sea.
  */
 export function Belvedere() {
   const anchor = useMemo(() => getBelvedereWorldAnchor(), []);
   const { terrace, yaw } = anchor;
-  const wall = useShadowClone("/models/kenney/fantasy/wall-block.glb");
-  const wallWin = useShadowClone("/models/kenney/fantasy/wall-window-stone.glb");
-  const balcony = useShadowClone("/models/kenney/fantasy/balcony-wall.glb");
-  const hedge = useShadowClone("/models/kenney/fantasy/hedge.glb");
-  const stairs = useShadowClone("/models/kenney/fantasy/stairs-stone.glb");
-  const lantern = useShadowClone("/models/lantern.glb");
-  const pine = useShadowClone("/models/pine.glb");
-  const bench = useShadowClone("/models/bench.glb");
 
   return (
     <group>
       <group position={[terrace.x, 0, terrace.z]} rotation={[0, yaw, 0]}>
-        {/* Stone terrace deck */}
-        <mesh position={[0, 0.92, 0]} receiveShadow castShadow>
-          <boxGeometry args={[9.6, 0.28, 7.8]} />
-          <meshStandardMaterial color="#d4c4a8" roughness={0.92} />
+        {/* Deck */}
+        <mesh position={[0, 0.92, 0.2]} receiveShadow castShadow>
+          <boxGeometry args={[8.4, 0.26, 7.2]} />
+          <meshStandardMaterial color={STONE} roughness={0.9} />
         </mesh>
-        <mesh position={[0, 0.78, 0]} receiveShadow>
-          <boxGeometry args={[10.2, 0.18, 8.4]} />
-          <meshStandardMaterial color="#b8a88c" roughness={0.95} />
+        <mesh position={[0, 0.76, 0.2]} receiveShadow castShadow>
+          <boxGeometry args={[9.0, 0.16, 7.8]} />
+          <meshStandardMaterial color={STONE_DARK} roughness={0.94} />
         </mesh>
 
-        {/* Sea-side parapet */}
-        <Placed scene={balcony} position={[-4.6, 1.05, 0]} rotation={[0, Math.PI / 2, 0]} scale={2.4} />
-        <Placed scene={wall} position={[-4.5, 1.05, -2.4]} rotation={[0, Math.PI / 2, 0]} scale={2.1} />
-        <Placed scene={wall} position={[-4.5, 1.05, 2.4]} rotation={[0, Math.PI / 2, 0]} scale={2.1} />
+        {/* Sea parapet (−Z) */}
+        <mesh position={[0, 1.42, -3.35]} castShadow receiveShadow>
+          <boxGeometry args={[8.2, 0.72, 0.38]} />
+          <meshStandardMaterial color={LIME} roughness={0.88} />
+        </mesh>
+        <mesh position={[-4.05, 1.42, -0.4]} castShadow receiveShadow>
+          <boxGeometry args={[0.38, 0.72, 6.2]} />
+          <meshStandardMaterial color={LIME} roughness={0.88} />
+        </mesh>
+        <mesh position={[4.05, 1.42, -1.1]} castShadow receiveShadow>
+          <boxGeometry args={[0.38, 0.72, 4.6]} />
+          <meshStandardMaterial color={LIME} roughness={0.88} />
+        </mesh>
 
-        {/* Side shelter walls */}
-        <Placed scene={wallWin} position={[0.4, 1.05, -3.5]} scale={2.3} />
-        <Placed scene={wall} position={[2.6, 1.05, -3.5]} scale={2.3} />
-        <Placed scene={wall} position={[-1.8, 1.05, 3.5]} rotation={[0, Math.PI, 0]} scale={2.3} />
+        {/* Light shelter */}
+        <mesh position={[-2.4, 2.55, -0.8]} castShadow>
+          <boxGeometry args={[0.22, 1.7, 0.22]} />
+          <meshStandardMaterial color="#8a7a62" roughness={0.8} />
+        </mesh>
+        <mesh position={[2.4, 2.55, -0.8]} castShadow>
+          <boxGeometry args={[0.22, 1.7, 0.22]} />
+          <meshStandardMaterial color="#8a7a62" roughness={0.8} />
+        </mesh>
+        <mesh position={[0, 3.42, -0.8]} castShadow receiveShadow>
+          <boxGeometry args={[5.4, 0.12, 3.2]} />
+          <meshStandardMaterial color="#c45c3e" roughness={0.72} />
+        </mesh>
 
-        {/* Approach stairs */}
-        <Placed scene={stairs} position={[3.8, 0.05, 0]} rotation={[0, -Math.PI / 2, 0]} scale={1.9} />
+        {/* Stairs toward the road (+Z) */}
+        {[0, 1, 2, 3, 4].map((i) => (
+          <mesh key={i} position={[0, 0.18 + i * 0.16, 3.55 + i * 0.55]} receiveShadow castShadow>
+            <boxGeometry args={[2.6, 0.16, 0.58]} />
+            <meshStandardMaterial color={i % 2 ? STONE : STONE_DARK} roughness={0.92} />
+          </mesh>
+        ))}
 
-        {/* Greenery */}
-        <Placed scene={hedge} position={[-2.8, 1.05, 2.8]} scale={1.6} />
-        <Placed scene={hedge} position={[1.2, 1.05, 3.2]} rotation={[0, 0.4, 0]} scale={1.4} />
-        <Placed scene={pine} position={[-3.2, 1.05, -2.6]} scale={0.28} />
-        <Placed scene={pine} position={[3.4, 1.05, -2.2]} scale={0.24} />
-
-        <Placed scene={bench} position={[2.2, 1.05, 2.0]} />
-        <Placed scene={lantern} position={[-3.6, 1.05, -1.2]} scale={1.15} />
-        <Placed scene={lantern} position={[3.2, 1.05, 2.4]} scale={1.05} />
-
-        <IdentityCarnetModel position={[0, 1.05, -0.55]} />
-        <pointLight position={[-3.6, 2.4, -1.2]} intensity={0.55} color="#ffc878" distance={10} />
+        <IdentityCarnetModel position={[0, 1.08, -0.4]} />
+        <mesh position={[0, 1.06, -0.4]} receiveShadow>
+          <cylinderGeometry args={[0.55, 0.62, 0.1, 10]} />
+          <meshStandardMaterial color="#c9a66b" roughness={0.7} />
+        </mesh>
+        <pointLight position={[0, 2.6, -0.6]} intensity={0.45} color="#ffc878" distance={9} />
       </group>
-      <StopMarker position={[anchor.stop.x, 0.03, anchor.stop.z]} />
+      <StopMarker position={[anchor.stop.x, anchor.stop.y + 0.02, anchor.stop.z]} />
     </group>
   );
 }
@@ -105,16 +85,16 @@ function StopMarker({ position }: { position: [number, number, number] }) {
   useFrame(({ clock }) => {
     if (!ring.current) return;
     const mat = ring.current.material as THREE.MeshStandardMaterial;
-    mat.emissiveIntensity = 0.15 + Math.sin(clock.elapsedTime * 2) * 0.1;
+    mat.emissiveIntensity = 0.22 + Math.sin(clock.elapsedTime * 2) * 0.12;
   });
   return (
     <group position={position}>
-      <mesh ref={ring} position={[0, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <ringGeometry args={[1.3, 1.7, 32]} />
-        <meshStandardMaterial color="#c9a66b" emissive="#8a6a3a" emissiveIntensity={0.2} />
+      <mesh ref={ring} position={[0, 0.04, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <ringGeometry args={[1.35, 1.85, 32]} />
+        <meshStandardMaterial color="#c9a66b" emissive="#8a6a3a" emissiveIntensity={0.25} />
       </mesh>
-      <mesh position={[0, 0.04, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.4, 24]} />
+      <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.42, 24]} />
         <meshStandardMaterial color="#f0e6d2" />
       </mesh>
     </group>
@@ -163,7 +143,7 @@ function IdentityCarnetModel({ position }: { position: [number, number, number] 
 
 export function getBelvedereInteractPosition() {
   const { terrace } = getBelvedereWorldAnchor();
-  return terrace.clone().setY(1.3);
+  return terrace.clone().setY(1.25);
 }
 
 export function getBelvedereStopPosition() {
@@ -171,12 +151,4 @@ export function getBelvedereStopPosition() {
   return stop.clone();
 }
 
-useGLTF.preload("/models/kenney/fantasy/wall-block.glb");
-useGLTF.preload("/models/kenney/fantasy/wall-window-stone.glb");
-useGLTF.preload("/models/kenney/fantasy/balcony-wall.glb");
-useGLTF.preload("/models/kenney/fantasy/hedge.glb");
-useGLTF.preload("/models/kenney/fantasy/stairs-stone.glb");
-useGLTF.preload("/models/lantern.glb");
-useGLTF.preload("/models/pine.glb");
-useGLTF.preload("/models/bench.glb");
 useGLTF.preload("/models/carnet.glb");

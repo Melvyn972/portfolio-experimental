@@ -16,6 +16,7 @@ import {
   sampleRoad,
   START_POSE,
   ROAD_WIDTH,
+  ROAD_SURFACE_LIFT,
 } from "@/lib/road";
 import { sampleGroundHeight, PLAYER_RADIUS, PLAYER_HEIGHT } from "@/lib/ground";
 import { findNearestInteractable } from "@/lib/interaction";
@@ -94,7 +95,7 @@ export function PlayerSystem() {
       const sample = nearestRoadSample(pos.current);
       yaw.current = Math.atan2(sample.tangent.x, sample.tangent.z);
       velocity.current = 0;
-      const yPos = pos.current.y + 0.02;
+      const yPos = pos.current.y + ROAD_SURFACE_LIFT;
       if (carBody.current) {
         carBody.current.setNextKinematicTranslation({ x: pos.current.x, y: yPos + 0.35, z: pos.current.z });
         const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw.current, 0, "YXZ"));
@@ -344,9 +345,14 @@ export function PlayerSystem() {
     const mouseY = inputRef.lookDelta.y;
     inputRef.lookDelta.x = 0;
     inputRef.lookDelta.y = 0;
-    if (!blocked && (Math.abs(look.x) > 0.08 || Math.abs(look.y) > 0.08 || Math.abs(mouseX) > 0 || Math.abs(mouseY) > 0)) {
-      lookYaw.current += look.x * 2.35 * dt + mouseX;
-      lookPitch.current = THREE.MathUtils.clamp(lookPitch.current + look.y * 1.25 * dt + mouseY, -0.28, 0.48);
+    const analogLook = !blocked && (Math.abs(look.x) > 0.06 || Math.abs(look.y) > 0.06);
+    // Fixed signs — never remapped mid-session. Right = look right, up = look up.
+    if (analogLook) {
+      lookYaw.current += look.x * 2.05 * dt;
+      lookPitch.current = THREE.MathUtils.clamp(lookPitch.current + look.y * 1.1 * dt, -0.22, 0.38);
+    } else if (!blocked && (mouseX || mouseY)) {
+      lookYaw.current += mouseX;
+      lookPitch.current = THREE.MathUtils.clamp(lookPitch.current + mouseY, -0.22, 0.38);
     }
 
     const analogActive = !blocked && (Math.abs(touch.x) > 0.1 || Math.abs(touch.y) > 0.1);
@@ -485,7 +491,7 @@ export function PlayerSystem() {
     pitch: number,
     roll = 0,
   ) {
-    const yPos = p.y + 0.02 + susp;
+    const yPos = p.y + ROAD_SURFACE_LIFT + susp;
     if (carBody.current) {
       carBody.current.setNextKinematicTranslation({ x: p.x, y: yPos + 0.35, z: p.z });
       const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch, y, roll, "YXZ"));

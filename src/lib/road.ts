@@ -20,6 +20,8 @@ const ROAD_POINTS: [number, number, number][] = [
 
 export const ROAD_WIDTH = 7.2;
 export const ROAD_LENGTH_HINT = 220;
+/** Visual asphalt sits this far above the curve so the terrain trench never z-fights. */
+export const ROAD_SURFACE_LIFT = 0.14;
 
 const curve = new THREE.CatmullRomCurve3(
   ROAD_POINTS.map((p) => new THREE.Vector3(...p)),
@@ -102,6 +104,7 @@ export function getBelvedereWorldAnchor() {
     side,
     terrace: position.clone().addScaledVector(side, -8.5).setY(1.0),
     stop: position.clone().addScaledVector(side, -0.2),
-    yaw: Math.atan2(-side.x, -side.z),
+    // Local +Z faces inland (toward the road) so stairs approach from the ribbon.
+    yaw: Math.atan2(-side.x, side.z),
   };
 }

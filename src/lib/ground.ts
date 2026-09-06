@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { nearestRoadSample, getBelvedereWorldAnchor } from "@/lib/road";
+import { nearestRoadSample, getBelvedereWorldAnchor, ROAD_WIDTH } from "@/lib/road";
 import { content } from "@/lib/content";
 
 /** Same bounds as the Terrain plane (x remapped −12…70, z shifted −55). */
@@ -71,6 +71,18 @@ export function computeTerrainHeight(x: number, z: number): number {
       const base = zone.id === "plage" ? 0.15 : zone.marker.y;
       y = Math.max(y, base);
     }
+  }
+
+  // LAST: excavate a corridor under the asphalt. Plateaus / hills must never
+  // poke through the road (iPhone QA: beige z-fighting on every shot).
+  const half = ROAD_WIDTH * 0.52;
+  const apron = 2.4;
+  if (roadDist < half) {
+    y = Math.min(y, sample.position.y - 0.32);
+  } else if (roadDist < half + apron) {
+    const k = (roadDist - half) / apron;
+    const trench = sample.position.y - 0.32;
+    y = Math.min(y, THREE.MathUtils.lerp(trench, y, k));
   }
 
   return y;

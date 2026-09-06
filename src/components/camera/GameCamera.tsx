@@ -163,16 +163,18 @@ export function GameCamera() {
       );
     }
 
-    const follow = walking ? 7.5 : 5.2;
-    if (current.current.distanceTo(_desired) > 14) {
+    const follow = walking ? 6.2 : 5.4;
+    if (current.current.distanceTo(_desired) > 18) {
       current.current.copy(_desired);
       look.current.copy(_lookTarget);
     } else {
       current.current.lerp(_desired, 1 - Math.exp(-follow * dt));
-      look.current.lerp(_lookTarget, 1 - Math.exp(-8 * dt));
+      look.current.lerp(_lookTarget, 1 - Math.exp(-7 * dt));
     }
     const cg = sampleGroundHeight(current.current.x, current.current.z);
-    current.current.y = Math.max(current.current.y, cg + 1.7, 1.6);
+    current.current.y = Math.max(current.current.y, cg + (walking ? 1.15 : 1.55), 1.5);
+    const maxAbove = _subject.y + (walking ? 4.2 : 5.4);
+    current.current.y = Math.min(current.current.y, maxAbove);
     camera.position.copy(current.current);
     camera.lookAt(look.current);
 

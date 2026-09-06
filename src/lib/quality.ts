@@ -38,5 +38,7 @@ export function resolveQuality(preset: QualityPreset, isMobile: boolean): Qualit
 
   if (preset === "eco") return eco;
   if (preset === "high") return high;
-  return isMobile ? { ...eco, shadows: true, shadowMapSize: 1024, seaSegments: 56, treeCount: 36 } : high;
+  return isMobile
+    ? { ...eco, shadows: true, shadowMapSize: 1024, postfx: true, seaSegments: 56, treeCount: 36 }
+    : high;
 }

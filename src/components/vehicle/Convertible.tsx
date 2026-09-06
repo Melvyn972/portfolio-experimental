@@ -29,6 +29,7 @@ export function Convertible({ color = "#c45c3e" }: Props) {
     const steers: THREE.Object3D[] = [];
     const mats: THREE.MeshStandardMaterial[] = [];
 
+    const hubs: THREE.Object3D[] = [];
     clone.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
       if (mesh.isMesh) {
@@ -57,12 +58,27 @@ export function Convertible({ color = "#c45c3e" }: Props) {
       }
 
       const n = obj.name.toLowerCase();
-      if (!n.includes("wheel")) return;
-      if (obj.children.length === 0) return;
-      obj.rotation.order = "YXZ";
-      spins.push(obj);
-      if (n.includes("front")) steers.push(obj);
+      if (n.includes("wheel") && obj.children.length > 0 && !n.includes("steer") && !n.includes("spin")) {
+        hubs.push(obj);
+      }
     });
+
+    for (const obj of hubs) {
+      const parent = obj.parent;
+      if (!parent) continue;
+      const steerG = new THREE.Group();
+      steerG.name = obj.name + "_steer";
+      steerG.position.copy(obj.position);
+      parent.add(steerG);
+      const spinG = new THREE.Group();
+      spinG.name = obj.name + "_spin";
+      obj.position.set(0, 0, 0);
+      obj.rotation.set(0, 0, 0);
+      steerG.add(spinG);
+      spinG.add(obj);
+      spins.push(spinG);
+      if (obj.name.toLowerCase().includes("front")) steers.push(steerG);
+    }
 
     spinNodes.current = spins;
     steerNodes.current = steers;

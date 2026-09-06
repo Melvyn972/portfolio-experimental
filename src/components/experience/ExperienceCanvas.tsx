@@ -25,7 +25,7 @@ function Scene({ isMobile }: { isMobile: boolean }) {
       <World quality={quality} />
       <WorldColliders />
       {(phase === "playing" || phase === "intro") && <PlayerSystem />}
-      <PostFX enabled={quality.postfx} />
+      <PostFX enabled={quality.postfx} ao={quality.shadows && !isMobile} />
       <ProgressiveLoader />
     </PhysicsWorld>
   );
@@ -69,7 +69,7 @@ export function ExperienceCanvas() {
       gl={{
         antialias: quality.aa,
         powerPreference: "high-performance",
-        toneMappingExposure: 1.08,
+        toneMappingExposure: 1.12,
       }}
       camera={{ fov: 42, near: 0.1, far: 280, position: [32, 24, 58] }}
       onCreated={({ gl }) => {

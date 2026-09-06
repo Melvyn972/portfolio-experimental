@@ -489,6 +489,17 @@ function TouchControls() {
     };
   }, []);
 
+  useEffect(() => {
+    if (mode !== "walking") {
+      inputRef.look.x = 0;
+      inputRef.look.y = 0;
+    }
+    if (mode !== "driving") {
+      inputRef.touch.x = 0;
+      inputRef.touch.y = 0;
+    }
+  }, [mode]);
+
   if (!isTouch || phase !== "playing" || openChapter || rescueOpen) return null;
 
   const showInteract = Boolean(interactTarget && prompt);
@@ -567,31 +578,70 @@ function VirtualStick({
   onChange: (x: number, y: number) => void;
 }) {
   const zone = useRef<HTMLDivElement>(null);
-  const [active, setActive] = useState(false);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
+  const gesture = useRef<{ id: number; ox: number; oy: number } | null>(null);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
-  const reset = () => {
-    setActive(false);
-    onChange(0, 0);
-    setKnob({ x: 0, y: 0 });
-  };
+  useEffect(() => {
+    const reset = () => {
+      gesture.current = null;
+      onChangeRef.current(0, 0);
+      setKnob({ x: 0, y: 0 });
+    };
 
-  const onMove = (clientX: number, clientY: number) => {
+    const apply = (clientX: number, clientY: number) => {
+      const g = gesture.current;
+      if (!g) return;
+      // Origin = finger-down, not widget center — iOS Safari chrome
+      // hide/show used to shift getBoundingClientRect and flip axes mid-session.
+      const radius = 52;
+      let x = (clientX - g.ox) / radius;
+      let y = (g.oy - clientY) / radius;
+      const mag = Math.hypot(x, y);
+      if (mag > 1) {
+        x /= mag;
+        y /= mag;
+      }
+      onChangeRef.current(x, y);
+      setKnob({ x, y });
+    };
+
+    const down = (e: PointerEvent) => {
+      const el = zone.current;
+      if (!el || !el.contains(e.target as Node)) return;
+      if (gesture.current) return;
+      e.preventDefault();
+      el.setPointerCapture(e.pointerId);
+      gesture.current = { id: e.pointerId, ox: e.clientX, oy: e.clientY };
+      apply(e.clientX, e.clientY);
+    };
+    const move = (e: PointerEvent) => {
+      if (!gesture.current || e.pointerId !== gesture.current.id) return;
+      e.preventDefault();
+      apply(e.clientX, e.clientY);
+    };
+    const up = (e: PointerEvent) => {
+      if (!gesture.current || e.pointerId !== gesture.current.id) return;
+      reset();
+    };
+
     const el = zone.current;
     if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    let x = (clientX - cx) / (rect.width / 2);
-    let y = (cy - clientY) / (rect.height / 2);
-    const mag = Math.hypot(x, y);
-    if (mag > 1) {
-      x /= mag;
-      y /= mag;
-    }
-    onChange(x, y);
-    setKnob({ x, y });
-  };
+    el.addEventListener("pointerdown", down, { passive: false });
+    window.addEventListener("pointermove", move, { passive: false });
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    window.addEventListener("blur", reset);
+    return () => {
+      el.removeEventListener("pointerdown", down);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      window.removeEventListener("blur", reset);
+      reset();
+    };
+  }, []);
 
   const style: CSSProperties =
     side === "left"
@@ -601,28 +651,17 @@ function VirtualStick({
         }
       : {
           bottom: "calc(1rem + env(safe-area-inset-bottom, 0px))",
-          right: "max(0.75rem, env(safe-area-inset-right))",
+          right: "max(1rem, env(safe-area-inset-right))",
         };
 
   return (
     <div
       ref={zone}
-      className="pointer-events-auto absolute h-[4.5rem] w-[4.5rem] rounded-full border border-[#c4a574]/40 bg-[#f3ead8]/32 backdrop-blur-[2px] touch-none sm:h-20 sm:w-20"
+      className="pointer-events-auto absolute h-[5rem] w-[5rem] rounded-full border border-[#c4a574]/40 bg-[#f3ead8]/32 backdrop-blur-[2px] touch-none sm:h-20 sm:w-20"
       style={style}
-      onPointerDown={(e) => {
-        setActive(true);
-        (e.target as HTMLElement).setPointerCapture(e.pointerId);
-        onMove(e.clientX, e.clientY);
-      }}
-      onPointerMove={(e) => {
-        if (!active) return;
-        onMove(e.clientX, e.clientY);
-      }}
-      onPointerUp={reset}
-      onPointerCancel={reset}
     >
       <div
-        className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#3d3226]/55 sm:h-6 sm:w-6"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#3d3226]/55 sm:h-6 sm:w-6"
         style={{ transform: `translate(calc(-50% + ${knob.x * 22}px), calc(-50% + ${-knob.y * 22}px))` }}
       />
     </div>

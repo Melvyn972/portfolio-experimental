@@ -20,12 +20,12 @@ export function Atmosphere({ dust = true, shadows = true, shadowMapSize = 2048 }
     <>
       <color attach="background" args={["#b5d0e2"]} />
       <fog attach="fog" args={["#c2dae8", 55, 190]} />
-      <ambientLight intensity={0.42} color="#fff1e0" />
-      <hemisphereLight args={["#9ec8e0", "#c4a078", 0.58]} />
+      <ambientLight intensity={0.32} color="#ffe8cc" />
+      <hemisphereLight args={["#8ec0dc", "#c4a078", 0.48]} />
       <directionalLight
         castShadow={shadows}
         position={[52, 38, 22]}
-        intensity={2.2}
+        intensity={2.55}
         color="#ffd4a0"
         shadow-mapSize={[shadowMapSize, shadowMapSize]}
         shadow-camera-near={1}
