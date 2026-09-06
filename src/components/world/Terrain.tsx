@@ -42,10 +42,10 @@ export function Terrain() {
         c.offsetHSL(0, -0.05, Math.sin(x * 2.1 + z * 1.7) * 0.04);
       }
 
-      // Near the ribbon: never paint beige — leftover slivers read as soil, not sand.
-      if (roadDist < ROAD_CUT_MARGIN + 3.2) {
+      // Only the prism shoulder is soil — inland shelf stays sand, not a dark canyon.
+      if (roadDist < ROAD_CUT_MARGIN + 0.55) {
         c.set("#5a5448");
-        c.offsetHSL(0, 0, (Math.sin(x * 3.1 + z * 2.4) * 0.03));
+        c.offsetHSL(0, 0, Math.sin(x * 3.1 + z * 2.4) * 0.03);
       }
 
       colors[i * 3] = c.r;
@@ -91,22 +91,23 @@ function cutRoadTriangles(geo: THREE.BufferGeometry, dist: Float32Array) {
     const a = index.getX(i);
     const b = index.getX(i + 1);
     const c = index.getX(i + 2);
-    const minD = Math.min(dist[a], dist[b], dist[c]);
-    if (minD < ROAD_CUT_MARGIN) continue;
-    if (minD > ROAD_CUT_MARGIN + 10) {
-      kept.push(a, b, c);
-      continue;
-    }
-
     ax.set(pos.getX(a), 0, pos.getZ(a));
     bx.set(pos.getX(b), 0, pos.getZ(b));
     cx.set(pos.getX(c), 0, pos.getZ(c));
     const mx = (ax.x + bx.x + cx.x) / 3;
     const mz = (ax.z + bx.z + cx.z) / 3;
+    const minD = Math.min(dist[a], dist[b], dist[c]);
+    if (minD > ROAD_CUT_MARGIN + 10) {
+      kept.push(a, b, c);
+      continue;
+    }
     if (isRoadCutProbe(mx, mz)) continue;
     if (isRoadCutProbe((ax.x + bx.x) * 0.5, (ax.z + bx.z) * 0.5)) continue;
     if (isRoadCutProbe((bx.x + cx.x) * 0.5, (bx.z + cx.z) * 0.5)) continue;
     if (isRoadCutProbe((cx.x + ax.x) * 0.5, (cx.z + ax.z) * 0.5)) continue;
+    if (isRoadCutProbe(pos.getX(a), pos.getZ(a))) continue;
+    if (isRoadCutProbe(pos.getX(b), pos.getZ(b))) continue;
+    if (isRoadCutProbe(pos.getX(c), pos.getZ(c))) continue;
 
     kept.push(a, b, c);
   }

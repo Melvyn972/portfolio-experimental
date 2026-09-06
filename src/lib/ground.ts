@@ -86,9 +86,10 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
   }
 
   const access = walkAccessHeight(x, z);
-  if (access != null) y = access;
+  // Never lift the driving ribbon — that pushed sand onto asphalt.
+  if (access != null && roadDist >= ROAD_WIDTH * 0.62) y = access;
 
-  return { y, roadDist, roadY, onAccess: access != null };
+  return { y, roadDist, roadY, onAccess: access != null && roadDist >= ROAD_WIDTH * 0.62 };
 }
 
 export function roadClearance(x: number, z: number) {
@@ -103,12 +104,15 @@ export function roadClearance(x: number, z: number) {
 export function computeTerrainHeight(x: number, z: number): number {
   const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 160);
   const lat = sample.lateral;
-  const roadDist = Math.min(Math.abs(lat), sample.dist);
-  const roadY = sample.position.y;
-  const { y } = scenicHeight(x, z);
-  // Never trench inland — that was the blue-void canyon.
-  if (lat <= 0.35 && roadDist < VISUAL_TRENCH) {
+  const { y, roadDist, roadY } = scenicHeight(x, z);
+  // Sea / centerline only. Inland stays meshed at shelf height (below asphalt
+  // near the edge) so Route → Maison has no blue hole.
+  if (lat <= 0.55 && roadDist < VISUAL_TRENCH) {
     return Math.min(y, roadY - TRENCH_DROP);
+  }
+  // Inland under the prism: keep the face but never let sand reach asphalt.
+  if (roadDist < ROAD_PRISM_HALF) {
+    return Math.min(y, roadY - 0.22);
   }
   return y;
 }
@@ -126,7 +130,10 @@ export function inlandShelfY(lat: number, roadY: number): number | null {
 /** True when a probe sits on / across the driving ribbon (used to cut triangles). */
 export function isRoadCutProbe(x: number, z: number): boolean {
   const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 160);
-  const roadDist = Math.min(Math.abs(sample.lateral), sample.dist);
+  const lat = sample.lateral;
+  const roadDist = Math.min(Math.abs(lat), sample.dist);
+  // Keep inland triangles — cutting them opened the blue hole toward Maison.
+  if (lat > 0.45) return false;
   return roadDist < ROAD_CUT_MARGIN;
 }
 
@@ -135,8 +142,8 @@ export function isRoadCutProbe(x: number, z: number): boolean {
  */
 export function sampleGroundHeight(x: number, z: number): number {
   const { y, roadDist, roadY, onAccess } = scenicHeight(x, z);
-  if (onAccess) return y;
   if (roadDist < ROAD_WIDTH * 0.55) return roadY;
+  if (onAccess) return y;
   return y;
 }
 
@@ -149,19 +156,19 @@ export function accessCorridors(): { width: number; pts: { x: number; z: number;
   const bel = getBelvedereWorldAnchor();
   return [
     {
-      width: 12,
+      width: 11,
       pts: [
-        { x: 0.4, z: -32, y: 0.16 },
-        { x: 8, z: -36, y: 0.95 },
+        { x: 5.2, z: -36, y: 0.42 },
+        { x: 10.5, z: -37, y: 1.15 },
         { x: 16, z: -37, y: 1.62 },
         { x: 16, z: -46, y: 1.62 },
       ],
     },
     {
-      width: 12,
+      width: 11,
       pts: [
-        { x: 1.2, z: -112, y: 0.3 },
-        { x: 9, z: -114, y: 1.1 },
+        { x: 5.4, z: -114, y: 0.55 },
+        { x: 11, z: -114, y: 1.2 },
         { x: 18, z: -113, y: 1.82 },
         { x: 18, z: -122, y: 1.82 },
       ],
