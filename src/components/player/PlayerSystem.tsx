@@ -485,7 +485,7 @@ export function PlayerSystem() {
       }
     }
 
-    if (!isFinitePos(playerPos.current)) {
+    if (!Number.isFinite(playerPos.current.x) || !Number.isFinite(playerPos.current.y) || !Number.isFinite(playerPos.current.z)) {
       const safe = safeRespawnPosition(new THREE.Vector3(0, 0.2, -38));
       playerPos.current.copy(safe);
       setPlayerKinematic(playerPos.current, walkYaw.current, true);
