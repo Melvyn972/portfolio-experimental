@@ -34,9 +34,9 @@ export function getInteractables(): Interactable[] {
       {
         id: "maison-parcours",
         chapter: "parcours",
-        label: "Parcours & formations",
+        label: "Parcours",
         position: new THREE.Vector3(maison.x + 0.5, maison.y + 1, maison.z + 4.2),
-        radius: 3.2,
+        radius: 4.6,
         walkingOnly: true,
       },
       {

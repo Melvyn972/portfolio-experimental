@@ -163,6 +163,37 @@ export function openChapter(id: ChapterId | null) {
   setGameState({ openChapter: id, rescueOpen: false, prompt: null });
 }
 
+/** Chapter → walk spawn. Menu must drop the player in the world zone, not only open a card. */
+export function chapterWalkSpawn(id: ChapterId) {
+  const zones = zoneWalkSpawns();
+  switch (id) {
+    case "identity":
+      return zones.belvedere;
+    case "parcours":
+    case "experiences":
+    case "competences":
+      return zones.maison;
+    case "projets":
+      return zones.studio;
+    case "passions":
+      return zones.plage;
+    case "activite":
+    case "cv":
+    case "contact":
+      return zones.phare;
+    default:
+      return zones.maison;
+  }
+}
+
+/** Close menus and place the player in the chapter's world zone. */
+export function travelToChapterZone(id: ChapterId) {
+  const pose = chapterWalkSpawn(id);
+  setGameState({ rescueOpen: false, openChapter: null, showExplorerHint: false });
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: pose }));
+}
+
 /** Dev helper for Playwright / QA */
 if (typeof window !== "undefined") {
   (window as unknown as {
@@ -176,6 +207,7 @@ if (typeof window !== "undefined") {
       teleportPlage: () => void;
       teleportPhare: () => void;
       teleportBelvedereWalk: () => void;
+      travelToChapterZone: (id: ChapterId) => void;
       setWalkStick: (x: number, y: number) => void;
       sampleHeights: (x: number, z: number) => {
         visual: number;
@@ -183,6 +215,7 @@ if (typeof window !== "undefined") {
         roadY: number;
         liftRoad: number;
         roadDist: number;
+        lat: number;
       };
       belvedereAnchor: () => { terrace: { x: number; y: number; z: number }; stop: { x: number; y: number; z: number }; yaw: number };
     };
@@ -217,6 +250,7 @@ if (typeof window !== "undefined") {
       const p = zoneWalkSpawns().belvedere;
       window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: p }));
     },
+    travelToChapterZone,
     setWalkStick: (x, y) => {
       inputRef.touch.x = Number.isFinite(x) ? Math.max(-1, Math.min(1, x)) : 0;
       inputRef.touch.y = Number.isFinite(y) ? Math.max(-1, Math.min(1, y)) : 0;
@@ -237,6 +271,7 @@ if (typeof window !== "undefined") {
         roadY: sample.position.y,
         liftRoad: sample.position.y + ROAD_SURFACE_LIFT,
         roadDist: Math.min(Math.abs(sample.lateral), sample.dist),
+        lat: sample.lateral,
       };
     },
   };

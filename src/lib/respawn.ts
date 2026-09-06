@@ -12,7 +12,7 @@ export function isUnsafePosition(pos: THREE.Vector3): boolean {
   if (pos.x > 36 || pos.x < -36) return true;
   if (pos.z > 58 || pos.z < -205) return true;
   const ground = sampleGroundHeight(pos.x, pos.z);
-  if (pos.y < ground - 1.8) return true;
+  if (pos.y < ground - 0.85) return true;
   return false;
 }
 

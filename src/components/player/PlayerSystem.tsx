@@ -441,6 +441,14 @@ export function PlayerSystem() {
     if (playerPos.current.z > 50) playerPos.current.z = 50;
     if (playerPos.current.z < -195) playerPos.current.z = -195;
 
+    // Soft snap if the capsule dropped into a trench / void under the mesh.
+    const standY = sampleGroundHeight(playerPos.current.x, playerPos.current.z);
+    if (Number.isFinite(standY) && playerPos.current.y < standY - 0.55) {
+      playerPos.current.y = standY;
+      playerVel.current.set(0, 0, 0);
+      setPlayerKinematic(playerPos.current, walkYaw.current, true);
+    }
+
     // Safe respawn — never stuck in void/sea/under map
     if (isUnsafePosition(playerPos.current)) {
       const safe = safeRespawnPosition(playerPos.current);

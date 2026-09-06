@@ -6,6 +6,7 @@ import {
   toggleMute,
   setQuality,
   openChapter,
+  travelToChapterZone,
   CHAPTERS,
   discoveryProgress,
   type ChapterId,
@@ -146,16 +147,17 @@ function IntroTitle() {
 }
 
 function InteractPrompt() {
-  const { prompt, interactTarget, phase, openChapter, rescueOpen, isMobile } = useGameStore();
+  const { prompt, phase, openChapter, rescueOpen, isMobile } = useGameStore();
   if (!prompt || phase !== "playing" || openChapter || rescueOpen) return null;
-
-  // On mobile, Interact lives in TouchControls bottom-right — skip center button
-  if (isMobile && interactTarget) return null;
 
   return (
     <div
       className="pointer-events-auto absolute left-1/2 -translate-x-1/2"
-      style={{ bottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))" }}
+      style={{
+        bottom: isMobile
+          ? "calc(10.5rem + env(safe-area-inset-bottom, 0px))"
+          : "calc(5.5rem + env(safe-area-inset-bottom, 0px))",
+      }}
     >
       <button
         type="button"
@@ -420,8 +422,7 @@ function DiscoveryMenu() {
                 type="button"
                 className="flex items-center justify-between border-b border-[#dccfb8]/50 py-2 text-left text-[#2c241c]"
                 onClick={() => {
-                  setGameState({ rescueOpen: false });
-                  openChapter(c.id);
+                  travelToChapterZone(c.id);
                 }}
               >
                 <span>
@@ -444,11 +445,18 @@ function DiscoveryMenu() {
         </div>
 
         <p className="mt-auto text-[10px] leading-relaxed text-[#9a8874]">
-          Fermer le menu revient exactement où vous étiez. Guidage : architecture, lumière, chemins — pas de flèches géantes.
+          Un chapitre vous place dans la zone, à pied. Approchez le lieu pour le prompt (Parcours, projets…). Fermer revient où vous étiez.
         </p>
       </aside>
     </div>
   );
+}
+
+function shortInteractLabel(prompt: string | null) {
+  if (!prompt) return "E";
+  if (/parcours/i.test(prompt)) return "Parcours";
+  const first = prompt.split(/[\s&/]/)[0]?.trim();
+  return first && first.length <= 12 ? first : "E";
 }
 
 function zoneLabel(zone: string) {
@@ -554,7 +562,7 @@ function TouchControls() {
             inputRef.interactPulse = 1;
           }}
         >
-          {prompt && prompt.length > 10 ? "E" : prompt ?? "E"}
+          {shortInteractLabel(prompt)}
         </button>
       )}
       {showRun && (

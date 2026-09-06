@@ -8,12 +8,19 @@ export const TERRAIN_MAX_X = 70;
 export const TERRAIN_MIN_Z = -185;
 export const TERRAIN_MAX_Z = 75;
 
-/** Visual trench — wider than the ribbon so interpolated faces cannot climb back onto asphalt. */
-const VISUAL_TRENCH = ROAD_WIDTH * 0.5 + 5.2;
-/** Drop visual sand this far under the curve (iPhone depth buffer still z-fights at 0.5 m). */
-const TRENCH_DROP = 2.4;
-/** Delete only faces under the asphalt prism — shoulders keep trenched terrain. */
+/**
+ * Trench ONLY under the asphalt prism (sea-side + ribbon).
+ * The old +5.2 m drop carved an 8.8 m canyon that isolated Maison / Studio
+ * (blue void, floating buildings). Inland verts must stay as a walkable shelf.
+ */
+const ROAD_PRISM_HALF = ROAD_WIDTH * 0.5 + 0.55;
+const VISUAL_TRENCH = ROAD_PRISM_HALF + 0.28;
+const TRENCH_DROP = 1.15;
+/** Delete only faces under the asphalt prism — inland shelf stays meshed. */
 export const ROAD_CUT_MARGIN = ROAD_WIDTH * 0.5 + 0.42;
+/** Inland ramp from road edge up to the maison / studio plazas. */
+export const INLAND_SHELF_WIDTH = 14;
+export const PLAZA_HEIGHT = 1.64;
 
 function scenicHeight(x: number, z: number): { y: number; roadDist: number; roadY: number; onAccess: boolean } {
   const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 160);
@@ -36,14 +43,15 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
     y = THREE.MathUtils.lerp(y, -0.15, lip);
   }
 
-  if (x > 5) {
-    const rise = THREE.MathUtils.smoothstep(5, 28, x);
+  const shelf = inlandShelfY(lat, roadY);
+  if (shelf != null) {
+    // Continuous walkable ground Route → Maison → Studio. No cliff, no trench.
+    y = shelf;
+  } else if (x > 18 && lat > INLAND_SHELF_WIDTH + ROAD_WIDTH) {
+    const rise = THREE.MathUtils.smoothstep(18, 36, x);
     const ridge =
-      Math.sin(z * 0.045) * 1.4 + Math.cos(z * 0.09 + x * 0.05) * 0.9 + Math.sin(x * 0.12) * 0.6;
-    y = Math.max(y, rise * (3.2 + ridge) + Math.pow(rise, 1.6) * 2.8);
-    if (x > 6 && x < 14 && roadDist > 6) {
-      y = Math.max(y, 1.2 + (x - 6) * 0.55 + Math.sin(z * 0.15) * 0.4);
-    }
+      Math.sin(z * 0.045) * 0.7 + Math.cos(z * 0.09 + x * 0.05) * 0.45 + Math.sin(x * 0.12) * 0.3;
+    y = Math.max(y, PLAZA_HEIGHT + rise * (1.4 + ridge));
   }
 
   const terrace = getBelvedereWorldAnchor().terrace;
@@ -89,15 +97,30 @@ export function roadClearance(x: number, z: number) {
 }
 
 /**
- * Visual terrain — always carved well under the asphalt. Remaining faces
- * inside ROAD_CUT_MARGIN are deleted in Terrain.tsx so iPhone cannot z-fight.
+ * Visual terrain. Sand is dropped only under the prism on the sea side so
+ * interpolated faces cannot climb onto asphalt. Inland is a filled shelf.
  */
 export function computeTerrainHeight(x: number, z: number): number {
-  const { y, roadDist, roadY } = scenicHeight(x, z);
-  if (roadDist < VISUAL_TRENCH) {
+  const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 160);
+  const lat = sample.lateral;
+  const roadDist = Math.min(Math.abs(lat), sample.dist);
+  const roadY = sample.position.y;
+  const { y } = scenicHeight(x, z);
+  // Never trench inland — that was the blue-void canyon.
+  if (lat <= 0.35 && roadDist < VISUAL_TRENCH) {
     return Math.min(y, roadY - TRENCH_DROP);
   }
   return y;
+}
+
+/** Smooth inland shelf: road shoulder → plaza height over INLAND_SHELF_WIDTH. */
+export function inlandShelfY(lat: number, roadY: number): number | null {
+  const edge = ROAD_WIDTH * 0.5 + 0.35;
+  if (lat < edge * 0.12) return null;
+  if (lat > edge + INLAND_SHELF_WIDTH + 10) return null;
+  const t = THREE.MathUtils.clamp((lat - edge) / INLAND_SHELF_WIDTH, 0, 1);
+  const e = t * t * (3 - 2 * t);
+  return THREE.MathUtils.lerp(roadY + 0.045, PLAZA_HEIGHT, e);
 }
 
 /** True when a probe sits on / across the driving ribbon (used to cut triangles). */
@@ -121,24 +144,34 @@ export const MAX_SLOPE = 0.55;
 export const PLAYER_RADIUS = 0.35;
 export const PLAYER_HEIGHT = 1.7;
 
-/** Inland ramps so hills never wall off Maison / Studio / Plage / Phare. */
+/** Wide inland ramps — backup if the shelf sample is missed. */
 export function accessCorridors(): { width: number; pts: { x: number; z: number; y: number }[] }[] {
   const bel = getBelvedereWorldAnchor();
   return [
     {
-      width: 4.4,
+      width: 12,
       pts: [
-        { x: 0.2, z: -38, y: 0.16 },
-        { x: 7.2, z: -38, y: 0.88 },
+        { x: 0.4, z: -32, y: 0.16 },
+        { x: 8, z: -36, y: 0.95 },
         { x: 16, z: -37, y: 1.62 },
+        { x: 16, z: -46, y: 1.62 },
       ],
     },
     {
-      width: 4.2,
+      width: 12,
       pts: [
-        { x: 1.2, z: -118, y: 0.3 },
-        { x: 9, z: -115, y: 1.05 },
+        { x: 1.2, z: -112, y: 0.3 },
+        { x: 9, z: -114, y: 1.1 },
         { x: 18, z: -113, y: 1.82 },
+        { x: 18, z: -122, y: 1.82 },
+      ],
+    },
+    {
+      width: 10,
+      pts: [
+        { x: 14, z: -40, y: 1.62 },
+        { x: 15.5, z: -76, y: 1.68 },
+        { x: 16.5, z: -112, y: 1.8 },
       ],
     },
     {

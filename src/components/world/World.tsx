@@ -54,16 +54,16 @@ function AccessPaths() {
       for (let i = 0; i < c.pts.length - 1; i++) {
         const a = c.pts[i];
         const b = c.pts[i + 1];
-        const steps = 4;
+        const steps = 5;
         for (let s = 0; s <= steps; s++) {
           const t = s / steps;
           const x = a.x + (b.x - a.x) * t;
           const z = a.z + (b.z - a.z) * t;
           const y = sampleGroundHeight(x, z);
           items.push({
-            pos: [x, y + 0.03, z],
+            pos: [x, y + 0.025, z],
             yaw: Math.atan2(b.x - a.x, b.z - a.z),
-            size: [1.15, 0.05, 1.35],
+            size: [2.4, 0.05, 2.1],
           });
         }
       }
@@ -71,8 +71,27 @@ function AccessPaths() {
     return items;
   }, []);
 
+  const plazas = useMemo(() => {
+    return [
+      { x: 16, z: -37 },
+      { x: 16, z: -42 },
+      { x: 18, z: -113 },
+      { x: 9, z: -37 },
+      { x: 10, z: -114 },
+    ].map((p) => ({
+      pos: [p.x, sampleGroundHeight(p.x, p.z) + 0.02, p.z] as [number, number, number],
+      size: [7.2, 0.06, 6.4] as [number, number, number],
+    }));
+  }, []);
+
   return (
     <group>
+      {plazas.map((p, i) => (
+        <mesh key={`plaza-${i}`} position={p.pos} receiveShadow>
+          <boxGeometry args={p.size} />
+          <meshStandardMaterial color="#c8b89a" roughness={0.93} />
+        </mesh>
+      ))}
       {slabs.map((s, i) => (
         <mesh key={i} position={s.pos} rotation={[0, s.yaw, 0]} receiveShadow>
           <boxGeometry args={s.size} />
