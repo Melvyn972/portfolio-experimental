@@ -94,7 +94,7 @@ export function PlayerSystem() {
       const sample = nearestRoadSample(pos.current);
       yaw.current = Math.atan2(sample.tangent.x, sample.tangent.z);
       velocity.current = 0;
-      const yPos = pos.current.y + 0.08;
+      const yPos = pos.current.y + 0.02;
       if (carBody.current) {
         carBody.current.setNextKinematicTranslation({ x: pos.current.x, y: yPos + 0.35, z: pos.current.z });
         const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw.current, 0, "YXZ"));
@@ -119,7 +119,8 @@ export function PlayerSystem() {
     const onTeleportWalk = (ev: Event) => {
       const detail = (ev as CustomEvent<{ x: number; y: number; z: number; yaw?: number }>).detail;
       if (!detail) return;
-      playerPos.current.set(detail.x, detail.y, detail.z);
+      const feetY = sampleGroundHeight(detail.x, detail.z);
+      playerPos.current.set(detail.x, feetY, detail.z);
       walkYaw.current = detail.yaw ?? walkYaw.current;
       lookYaw.current = walkYaw.current;
       lookPitch.current = 0.12;
@@ -132,7 +133,7 @@ export function PlayerSystem() {
       setGameState({
         phase: "playing",
         mode: "walking",
-        playerPos: { x: detail.x, y: detail.y, z: detail.z },
+        playerPos: { x: detail.x, y: feetY, z: detail.z },
         walkYaw: walkYaw.current,
         lookYaw: lookYaw.current,
         nearStopSpot: false,
@@ -484,7 +485,7 @@ export function PlayerSystem() {
     pitch: number,
     roll = 0,
   ) {
-    const yPos = p.y + 0.08 + susp;
+    const yPos = p.y + 0.02 + susp;
     if (carBody.current) {
       carBody.current.setNextKinematicTranslation({ x: p.x, y: yPos + 0.35, z: p.z });
       const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch, y, roll, "YXZ"));

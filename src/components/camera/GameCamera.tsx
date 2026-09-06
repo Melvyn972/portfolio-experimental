@@ -143,7 +143,7 @@ export function GameCamera() {
     }
 
     const gY = sampleGroundHeight(_desired.x, _desired.z);
-    _desired.y = Math.max(_desired.y, gY + (walking ? 3.2 : 2.2));
+    _desired.y = Math.max(_desired.y, gY + (walking ? 1.85 : 2.0));
     // Never sink under sea plane
     _desired.y = Math.max(_desired.y, 1.4);
 
@@ -158,10 +158,15 @@ export function GameCamera() {
     }
 
     const follow = walking ? 7.5 : 5.2;
-    current.current.lerp(_desired, 1 - Math.exp(-follow * dt));
+    if (current.current.distanceTo(_desired) > 14) {
+      current.current.copy(_desired);
+      look.current.copy(_lookTarget);
+    } else {
+      current.current.lerp(_desired, 1 - Math.exp(-follow * dt));
+      look.current.lerp(_lookTarget, 1 - Math.exp(-8 * dt));
+    }
     const cg = sampleGroundHeight(current.current.x, current.current.z);
-    current.current.y = Math.max(current.current.y, cg + (walking ? 2.8 : 1.9), 1.6);
-    look.current.lerp(_lookTarget, 1 - Math.exp(-8 * dt));
+    current.current.y = Math.max(current.current.y, cg + 1.7, 1.6);
     camera.position.copy(current.current);
     camera.lookAt(look.current);
 

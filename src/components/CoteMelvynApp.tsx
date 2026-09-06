@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { GameHUD } from "@/components/ui/GameHUD";
 import { AmbientAudio, IntroDirector } from "@/components/audio/AmbientAudio";
@@ -24,8 +24,10 @@ function LoaderScreen() {
 
 export function CoteMelvynApp() {
   const { phase } = useGameStore();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     document.body.classList.add("game-locked");
     document.body.classList.remove("cv-page");
     return () => {
@@ -35,11 +37,11 @@ export function CoteMelvynApp() {
 
   return (
     <main className="relative h-[100dvh] w-full overflow-hidden bg-[#d8e6ef]">
-      <ExperienceCanvas />
+      {mounted ? <ExperienceCanvas /> : <LoaderScreen />}
       <GameHUD />
-      <AmbientAudio />
-      <IntroDirector />
-      {phase === "boot" && (
+      {mounted && <AmbientAudio />}
+      {mounted && <IntroDirector />}
+      {mounted && phase === "boot" && (
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-[#d8e6ef]">
           <div className="animate-fade-in text-center">
             <p className="font-display text-3xl text-[#2f281f]">Côte Melvyn</p>

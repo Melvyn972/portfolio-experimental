@@ -1,10 +1,17 @@
 "use client";
 
-import { CuboidCollider, RigidBody } from "@react-three/rapier";
+import { CuboidCollider, HeightfieldCollider, RigidBody } from "@react-three/rapier";
 import { useMemo } from "react";
 import * as THREE from "three";
 import { content } from "@/lib/content";
 import { getBelvedereWorldAnchor, getRoadCurve, ROAD_WIDTH } from "@/lib/road";
+import {
+  computeTerrainHeight,
+  TERRAIN_MAX_X,
+  TERRAIN_MAX_Z,
+  TERRAIN_MIN_X,
+  TERRAIN_MIN_Z,
+} from "@/lib/ground";
 
 /**
  * Static Rapier colliders for the coastal slice.
@@ -19,9 +26,18 @@ export function WorldColliders() {
   const maison = content.zones.zones.find((z) => z.id === "maison-atelier")?.marker;
   const studio = content.zones.zones.find((z) => z.id === "studio")?.marker;
   const phare = content.zones.zones.find((z) => z.id === "phare")?.marker;
+  const heightfield = useMemo(() => buildTerrainHeightfield(), []);
 
   return (
     <group>
+      {/* Visual-matching heightfield so pied never walks through hills */}
+      <RigidBody type="fixed" colliders={false} position={heightfield.pos}>
+        <HeightfieldCollider
+          args={[heightfield.ncols, heightfield.nrows, heightfield.heights, heightfield.scale]}
+          friction={1.15}
+          restitution={0}
+        />
+      </RigidBody>
       {/* Ground slabs — keep player from falling under map */}
       <RigidBody type="fixed" colliders={false} position={[0, -0.5, -70]}>
         <CuboidCollider args={[80, 0.5, 140]} friction={1.2} restitution={0} />
@@ -139,6 +155,29 @@ export function WorldColliders() {
   );
 }
 
+function buildTerrainHeightfield() {
+  const ncols = 48;
+  const nrows = 80;
+  const sizeX = TERRAIN_MAX_X - TERRAIN_MIN_X;
+  const sizeZ = TERRAIN_MAX_Z - TERRAIN_MIN_Z;
+  const heights: number[] = [];
+  // Rapier column-major: i * (nrows + 1) + j
+  for (let ix = 0; ix <= ncols; ix++) {
+    for (let iz = 0; iz <= nrows; iz++) {
+      const x = TERRAIN_MIN_X + (ix / ncols) * sizeX;
+      const z = TERRAIN_MIN_Z + (iz / nrows) * sizeZ;
+      heights.push(computeTerrainHeight(x, z));
+    }
+  }
+  return {
+    ncols,
+    nrows,
+    heights,
+    scale: { x: sizeX, y: 1, z: sizeZ },
+    pos: [(TERRAIN_MIN_X + TERRAIN_MAX_X) / 2, 0, (TERRAIN_MIN_Z + TERRAIN_MAX_Z) / 2] as [number, number, number],
+  };
+}
+
 function buildRoadColliders() {
   const curve = getRoadCurve();
   const boxes: { pos: [number, number, number]; yaw: number; half: [number, number, number] }[] = [];
@@ -181,11 +220,11 @@ function buildWalkPaths() {
     });
   }
   // Beach access near plage marker (−22, −95)
-  boxes.push({ pos: [-14, 0.06, -95], yaw: 0.15, half: [8.5, 0.1, 7] });
+  boxes.push({ pos: [-14, computeTerrainHeight(-14, -95) + 0.06, -95], yaw: 0.15, half: [8.5, 0.1, 7] });
   // Maison plaza (in front of the building, +Z)
-  boxes.push({ pos: [16, 0.08, -37], yaw: 0, half: [6, 0.1, 5] });
+  boxes.push({ pos: [16, computeTerrainHeight(16, -37) + 0.06, -37], yaw: 0, half: [6, 0.1, 5] });
   // Studio plaza
-  boxes.push({ pos: [18, 0.08, -113], yaw: 0, half: [5, 0.1, 5] });
+  boxes.push({ pos: [18, computeTerrainHeight(18, -113) + 0.06, -113], yaw: 0, half: [5, 0.1, 5] });
   return boxes;
 }
 

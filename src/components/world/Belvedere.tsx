@@ -168,7 +168,7 @@ export function getBelvedereInteractPosition() {
 
 export function getBelvedereStopPosition() {
   const { stop } = getBelvedereWorldAnchor();
-  return stop.clone().setY(0.05);
+  return stop.clone();
 }
 
 useGLTF.preload("/models/kenney/fantasy/wall-block.glb");

@@ -10,8 +10,8 @@ type Props = {
 };
 
 /**
- * Hero vehicle: RGS Dev CC0 Roadster (authored FBX → GLB).
- * Separate body + 4 wheel meshes. Windows are transparent glass.
+ * Hero vehicle: RGS Dev CC0 Roadster (authored FBX → named GLB).
+ * Wheel_* groups are hub-centered. Windows are transparent glass.
  * No procedural ExtrudeGeometry fallback on this path.
  */
 export function Convertible({ color = "#c45c3e" }: Props) {
@@ -28,59 +28,41 @@ export function Convertible({ color = "#c45c3e" }: Props) {
     const spins: THREE.Object3D[] = [];
     const steers: THREE.Object3D[] = [];
     const mats: THREE.MeshStandardMaterial[] = [];
-    const wheelMeshes: THREE.Mesh[] = [];
 
     clone.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
-      if (!mesh.isMesh) return;
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      const name = mesh.name.toLowerCase();
-      if (name.includes("wheel")) wheelMeshes.push(mesh);
+      if (mesh.isMesh) {
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        const raw = mesh.material;
+        const list = Array.isArray(raw) ? raw : raw ? [raw] : [];
+        list.forEach((mat, idx) => {
+          if (!(mat instanceof THREE.MeshStandardMaterial) && !(mat instanceof THREE.MeshPhysicalMaterial)) return;
+          const cloned = mat.clone();
+          const matName = `${cloned.name} ${mesh.name}`.toLowerCase();
+          if (matName.includes("window") || cloned.transparent) {
+            cloned.transparent = true;
+            cloned.opacity = Math.min(cloned.opacity || 1, 0.4);
+            cloned.depthWrite = false;
+            cloned.metalness = 0.35;
+            cloned.roughness = 0.06;
+            cloned.side = THREE.DoubleSide;
+          } else if (matName.includes("body blue") || cloned.color.getHexString() === "c45c3e") {
+            cloned.color.lerp(new THREE.Color(color), 0.2);
+            mats.push(cloned);
+          }
+          if (Array.isArray(mesh.material)) mesh.material[idx] = cloned;
+          else mesh.material = cloned;
+        });
+      }
 
-      const raw = mesh.material;
-      const list = Array.isArray(raw) ? raw : raw ? [raw] : [];
-      list.forEach((mat, idx) => {
-        if (!(mat instanceof THREE.MeshStandardMaterial) && !(mat instanceof THREE.MeshPhysicalMaterial)) return;
-        const cloned = mat.clone();
-        const matName = `${cloned.name} ${name}`.toLowerCase();
-        if (matName.includes("window") || cloned.transparent) {
-          cloned.transparent = true;
-          cloned.opacity = Math.min(cloned.opacity || 1, 0.4);
-          cloned.depthWrite = false;
-          cloned.metalness = 0.35;
-          cloned.roughness = 0.06;
-          cloned.side = THREE.DoubleSide;
-        } else if (matName.includes("body blue") || cloned.color.getHexString() === "c45c3e") {
-          cloned.color.lerp(new THREE.Color(color), 0.2);
-          mats.push(cloned);
-        }
-        if (Array.isArray(mesh.material)) mesh.material[idx] = cloned;
-        else mesh.material = cloned;
-      });
+      const n = obj.name.toLowerCase();
+      if (!n.includes("wheel")) return;
+      if (obj.children.length === 0) return;
+      obj.rotation.order = "YXZ";
+      spins.push(obj);
+      if (n.includes("front")) steers.push(obj);
     });
-
-    for (const mesh of wheelMeshes) {
-      const parent = mesh.parent;
-      if (!parent) continue;
-      const n = mesh.name.toLowerCase();
-      const isFront = n.includes("front");
-      const steerG = new THREE.Group();
-      steerG.name = mesh.name + "_steer";
-      steerG.position.copy(mesh.position);
-      steerG.quaternion.copy(mesh.quaternion);
-      steerG.scale.copy(mesh.scale);
-      const spinG = new THREE.Group();
-      spinG.name = mesh.name + "_spin";
-      mesh.position.set(0, 0, 0);
-      mesh.quaternion.identity();
-      mesh.scale.set(1, 1, 1);
-      parent.add(steerG);
-      steerG.add(spinG);
-      spinG.add(mesh);
-      spins.push(spinG);
-      if (isFront) steers.push(steerG);
-    }
 
     spinNodes.current = spins;
     steerNodes.current = steers;
@@ -121,9 +103,9 @@ export function Convertible({ color = "#c45c3e" }: Props) {
     });
   });
 
-  // RGS roadster ~4.35 m, nose +Z, wheels on y=0
+  // RGS roadster ~4.35 m, nose +Z, tires on y=0
   return (
-    <group ref={root} scale={1.05} position={[0, 0, 0]}>
+    <group ref={root} scale={1.05} position={[0, 0.02, 0]}>
       <primitive object={model} />
     </group>
   );

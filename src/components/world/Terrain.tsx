@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import * as THREE from "three";
-import { nearestRoadSample, getBelvedereWorldAnchor } from "@/lib/road";
+import { computeTerrainHeight } from "@/lib/ground";
 
 export function Terrain() {
   const land = useMemo(() => {
@@ -18,64 +18,11 @@ export function Terrain() {
 
     const colors = new Float32Array(pos.count * 3);
     const c = new THREE.Color();
-    const terrace = getBelvedereWorldAnchor().terrace;
 
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i);
       const z = pos.getZ(i);
-      let y = 0.02;
-
-      const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 60);
-      const lat = sample.lateral;
-      const roadDist = Math.abs(lat);
-
-      if (roadDist < 5) {
-        y = sample.position.y;
-      } else if (roadDist < 10) {
-        const t = (roadDist - 5) / 5;
-        y = THREE.MathUtils.lerp(sample.position.y, 0.15, t);
-      } else {
-        y = 0.2 + Math.sin(x * 0.04 + z * 0.02) * 0.15 + Math.cos(z * 0.03) * 0.08;
-      }
-
-      if (x < -6) {
-        const lip = THREE.MathUtils.smoothstep(-6, -12, -x);
-        y = THREE.MathUtils.lerp(y, -0.15, lip);
-      }
-
-      if (x > 5) {
-        const rise = THREE.MathUtils.smoothstep(5, 28, x);
-        const ridge =
-          Math.sin(z * 0.045) * 1.4 +
-          Math.cos(z * 0.09 + x * 0.05) * 0.9 +
-          Math.sin(x * 0.12) * 0.6;
-        y = Math.max(y, rise * (3.2 + ridge) + Math.pow(rise, 1.6) * 2.8);
-        if (x > 6 && x < 14 && roadDist > 6) {
-          y = Math.max(y, 1.2 + (x - 6) * 0.55 + Math.sin(z * 0.15) * 0.4);
-        }
-      }
-
-      // Belvedere plateau pocket (synced to terrace)
-      const dx = x - terrace.x;
-      const dz = z - terrace.z;
-      if (dx * dx + dz * dz < 120) {
-        y = Math.max(y, 0.95);
-      }
-
-      // Future zone plateaus
-      if (x > 12 && z < -30 && z > -55) y = Math.max(y, 1.6);
-      if (x > 12 && z < -108 && z > -130) y = Math.max(y, 1.8);
-      if (x > 2 && z < -175 && z > -195) y = Math.max(y, 3.8);
-      // Phare rocky outcrop
-      {
-        const pdx = x - -8;
-        const pdz = z - -168;
-        if (pdx * pdx + pdz * pdz < 90) {
-          const falloff = 1 - Math.sqrt(pdx * pdx + pdz * pdz) / 9.5;
-          y = Math.max(y, 0.35 + falloff * 1.4);
-        }
-      }
-      if (x < -14 && z < -85 && z > -110) y = Math.min(y, 0.2);
+      const y = computeTerrainHeight(x, z);
 
       pos.setY(i, y);
 
