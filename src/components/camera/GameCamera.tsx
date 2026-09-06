@@ -183,7 +183,7 @@ export function GameCamera() {
     }
 
     const follow = walking ? 6.2 : 5.4;
-    if (current.current.distanceTo(_desired) > 18) {
+    if (current.current.distanceTo(_desired) > 8) {
       current.current.copy(_desired);
       look.current.copy(_lookTarget);
     } else {

@@ -389,17 +389,14 @@ export function PlayerSystem() {
     const speed = run ? RUN_SPEED : WALK_SPEED;
 
     if (Math.abs(moveX) > 0.01 || Math.abs(moveZ) > 0.01) {
-      // Prefer camera XZ look so stick-up matches the screen. If the chase cam
-      // is still lerping or has flipped in front, fall back to lookYaw (never invert).
-      const lx = Math.sin(lookYaw.current);
-      const lz = Math.cos(lookYaw.current);
+      // Stick / ZQSD forward = what is on screen (camera XZ). Never lookYaw-only:
+      // during chase-cam lerp lookYaw disagrees with the picture and reads inverted.
       camera.getWorldDirection(tmp.current);
       tmp.current.y = 0;
       if (tmp.current.lengthSq() < 1e-6) {
-        tmp.current.set(lx, 0, lz);
+        tmp.current.set(Math.sin(lookYaw.current), 0, Math.cos(lookYaw.current));
       } else {
         tmp.current.normalize();
-        if (tmp.current.x * lx + tmp.current.z * lz < 0.2) tmp.current.set(lx, 0, lz);
       }
       sideTmp.current.set(tmp.current.z, 0, -tmp.current.x);
       const move = new THREE.Vector3()
