@@ -160,13 +160,16 @@ if (typeof window !== "undefined") {
       getState: typeof getGameState;
       setState: typeof setGameState;
       teleportBelvedere: () => void;
+      teleportWalk: (x: number, y: number, z: number, yaw?: number) => void;
     };
   }).__coteMelvyn = {
     getState: getGameState,
     setState: setGameState,
     teleportBelvedere: () => {
-      // Signal PlayerSystem via custom event — position applied next frame
       window.dispatchEvent(new CustomEvent("cote:teleport-belvedere"));
+    },
+    teleportWalk: (x, y, z, yaw) => {
+      window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: { x, y, z, yaw } }));
     },
   };
 }

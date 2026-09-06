@@ -48,7 +48,35 @@ export function CoastalZones() {
   const maison = useShadowClone("/models/maison.glb");
   const studio = useShadowClone("/models/studio.glb");
   const atelier = useShadowClone("/models/kenney/city/atelier.glb");
-  const phare = useShadowClone("/models/phare.glb");
+  const { scene: phareSrc } = useGLTF("/models/phare.glb");
+  const phare = useMemo(() => {
+    const c = phareSrc.clone(true);
+    c.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (!m.isMesh) return;
+      m.castShadow = true;
+      m.receiveShadow = true;
+      const mat = m.material as THREE.MeshStandardMaterial;
+      if (!mat?.color) return;
+      const cloned = mat.clone();
+      const n = (mat.name || m.name || "").toLowerCase();
+      if (n.includes("detail")) {
+        cloned.color.set("#d4542a");
+        cloned.roughness = 0.55;
+      } else if (n.includes("material")) {
+        // lantern glass / light ring
+        cloned.color.set("#ffe6a8");
+        cloned.emissive = new THREE.Color("#ffb347");
+        cloned.emissiveIntensity = 0.85;
+        cloned.roughness = 0.35;
+      } else {
+        cloned.color.set("#f2efe8");
+        cloned.roughness = 0.82;
+      }
+      m.material = cloned;
+    });
+    return c;
+  }, [phareSrc]);
   const phareRocks = useShadowClone("/models/rocks-dormin.glb");
   const fence = useShadowClone("/models/kenney/city/fence.glb");
   const pine = useShadowClone("/models/pine.glb");
@@ -56,9 +84,9 @@ export function CoastalZones() {
   const pier = useShadowClone("/models/pier.glb");
   const stairs = useShadowClone("/models/kenney/fantasy/stairs-stone.glb");
   const lantern = useShadowClone("/models/lantern.glb");
-  /** Dormin lighthouse mesh is Y-centered (−14.5…14.5); lift by half-height×scale. */
+  /** Dormin lighthouse sits on y=0 locally (≈29u tall) — do NOT double-lift. */
   const PHARE_SCALE = 0.34;
-  const PHARE_Y = 14.5 * PHARE_SCALE;
+  const PHARE_Y = 0.55;
 
   const markers = useMemo(() => {
     const map: Record<string, { x: number; y: number; z: number }> = {};
@@ -116,14 +144,20 @@ export function CoastalZones() {
         <group>
           {/* Daniel Dormin lighthouse — sit base on ground */}
           <Placed scene={phare} position={[p.x, PHARE_Y, p.z]} scale={PHARE_SCALE} />
-          <Placed scene={phareRocks} position={[p.x + 2.5, 0.2, p.z - 1.5]} scale={2.2} />
-          <Placed scene={phareRocks} position={[p.x - 3, 0.15, p.z + 2]} rotation={[0, 1.1, 0]} scale={1.8} />
-          <Placed scene={phareRocks} position={[p.x + 1, 0.1, p.z + 3.5]} rotation={[0, -0.6, 0]} scale={1.5} />
+          {/* Rocky skirt so the tower reads anchored */}
+          <Placed scene={phareRocks} position={[p.x + 2.2, 0.35, p.z - 1.2]} scale={2.6} />
+          <Placed scene={phareRocks} position={[p.x - 2.8, 0.3, p.z + 1.8]} rotation={[0, 1.1, 0]} scale={2.2} />
+          <Placed scene={phareRocks} position={[p.x + 0.5, 0.25, p.z + 3.2]} rotation={[0, -0.6, 0]} scale={2.0} />
+          <Placed scene={phareRocks} position={[p.x - 1.2, 0.4, p.z - 2.8]} rotation={[0, 2.1, 0]} scale={2.4} />
+          <mesh position={[p.x, 0.2, p.z]} receiveShadow castShadow>
+            <cylinderGeometry args={[4.6, 5.4, 0.55, 10]} />
+            <meshStandardMaterial color="#b9a888" roughness={0.95} />
+          </mesh>
           <Placed scene={pine} position={[p.x + 6, 0, p.z + 4]} scale={0.55} />
           <Placed scene={pine} position={[p.x - 5, 0, p.z - 3]} scale={0.45} />
-          <Placed scene={lantern} position={[p.x + 3.2, 0, p.z + 2.4]} scale={1.4} />
+          <Placed scene={lantern} position={[p.x + 3.2, 0.55, p.z + 2.4]} scale={1.4} />
           <pointLight
-            position={[p.x, PHARE_Y + 4.6, p.z]}
+            position={[p.x, 0.55 + 28.95 * PHARE_SCALE * 0.92, p.z]}
             intensity={2.4}
             color="#ffd090"
             distance={52}

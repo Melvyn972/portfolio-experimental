@@ -17,19 +17,22 @@ import { getRoadCurve } from "@/lib/road";
 function ShoreRocks({ detailed }: { detailed: boolean }) {
   const { scene: coast } = useGLTF("/models/rock-coast-a.glb");
   const { scene: cliff } = useGLTF("/models/cliff-coast.glb");
+  const { scene: dormin } = useGLTF("/models/rocks-dormin.glb");
   const { scene: rockA } = useGLTF("/models/rock-a.glb");
   const { scene: rockB } = useGLTF("/models/rock-b.glb");
   const { scene: rockC } = useGLTF("/models/rock-c.glb");
 
   const rocks = useMemo(() => {
     const curve = getRoadCurve();
-    const sources = detailed ? [coast, cliff, rockA, rockB, rockC] : [rockA, rockB, rockC];
-    return Array.from({ length: detailed ? 20 : 14 }, (_, i) => {
-      const t = 0.08 + (i / 20) * 0.85;
+    // Keep detailed rocks well clear of the 7.2m road ribbon (half ≈ 3.6)
+    const sources = detailed ? [dormin, coast, rockA, rockB, rockC] : [dormin, rockA, rockB, rockC];
+    return Array.from({ length: detailed ? 18 : 12 }, (_, i) => {
+      const t = 0.08 + (i / 18) * 0.85;
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-      const pos = p.clone().addScaledVector(side, -10.5 - (i % 5) * 1.15);
+      const lateral = -13.5 - (i % 5) * 1.35;
+      const pos = p.clone().addScaledVector(side, lateral);
       pos.y = -0.05 + (i % 3) * 0.08;
       const src = sources[i % sources.length];
       const clone = src.clone(true);
@@ -46,15 +49,16 @@ function ShoreRocks({ detailed }: { detailed: boolean }) {
           }
         }
       });
-      const isPh = src === coast || src === cliff;
+      const isCoast = src === coast;
+      const isDormin = src === dormin;
       return {
         object: clone,
         position: [pos.x, pos.y, pos.z] as [number, number, number],
-        scale: isPh ? 0.45 + (i % 4) * 0.12 : 0.75 + (i % 4) * 0.35,
+        scale: isCoast ? 0.22 + (i % 4) * 0.05 : isDormin ? 1.6 + (i % 3) * 0.35 : 0.75 + (i % 4) * 0.35,
         rot: i * 0.7,
       };
     });
-  }, [coast, cliff, rockA, rockB, rockC, detailed]);
+  }, [coast, dormin, rockA, rockB, rockC, detailed]);
 
   const cliffs = useMemo(() => {
     if (!detailed) return [] as {
@@ -64,11 +68,12 @@ function ShoreRocks({ detailed }: { detailed: boolean }) {
       scale: number;
     }[];
     const curve = getRoadCurve();
-    return [0.2, 0.45, 0.7].map((t, i) => {
+    return [0.22, 0.48, 0.72].map((t, i) => {
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-      const pos = p.clone().addScaledVector(side, -18);
+      // Far cliff faces — never overhang the driveable ribbon
+      const pos = p.clone().addScaledVector(side, -22);
       const clone = cliff.clone(true);
       clone.traverse((o) => {
         const m = o as THREE.Mesh;
@@ -79,9 +84,9 @@ function ShoreRocks({ detailed }: { detailed: boolean }) {
       });
       return {
         object: clone,
-        position: [pos.x, -0.4, pos.z] as [number, number, number],
+        position: [pos.x, -0.6, pos.z] as [number, number, number],
         yaw: Math.atan2(side.x, side.z) + Math.PI,
-        scale: 1.1 + i * 0.15,
+        scale: 0.55 + i * 0.08,
       };
     });
   }, [cliff, detailed]);
@@ -104,6 +109,7 @@ function ShoreRocks({ detailed }: { detailed: boolean }) {
 
 useGLTF.preload("/models/rock-coast-a.glb");
 useGLTF.preload("/models/cliff-coast.glb");
+useGLTF.preload("/models/rocks-dormin.glb");
 
 export function World({ quality }: { quality: QualitySettings }) {
   return (

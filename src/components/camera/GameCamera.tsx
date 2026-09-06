@@ -24,9 +24,9 @@ const _from = { x: 0, y: 0, z: 0 };
 const _rayDir = { x: 0, y: 0, z: 0 };
 
 const CAM_DIST_DRIVE = 11.5;
-const CAM_DIST_WALK = 6.8;
+const CAM_DIST_WALK = 8.4;
 const CAM_HEIGHT_DRIVE = 4.8;
-const CAM_HEIGHT_WALK = 3.4;
+const CAM_HEIGHT_WALK = 4.2;
 
 /**
  * Modern third-person camera:
@@ -114,30 +114,33 @@ export function GameCamera() {
     dist.current = THREE.MathUtils.lerp(dist.current, targetDist, 1 - Math.exp(-3.2 * dt));
     offsetPos(_desired, _subject, yaw, pitch, dist.current, height, side);
 
-    // Rapier ray obstacle avoidance
+    // Rapier ray obstacle avoidance — pull camera in + lift when blocked
     _dir.copy(_desired).sub(_subject);
     const fullLen = _dir.length();
     if (fullLen > 0.15) {
       _dir.normalize();
       _from.x = _subject.x;
-      _from.y = _subject.y;
+      _from.y = _subject.y + 0.35;
       _from.z = _subject.z;
       _rayDir.x = _dir.x;
       _rayDir.y = _dir.y;
       _rayDir.z = _dir.z;
       const ray = new rapier.Ray(_from, _rayDir);
       const hit = world.castRay(ray, fullLen, true, undefined, undefined, undefined, undefined, (collider) => {
-        // Ignore character/vehicle sensors if any — accept all fixed
         return collider.isSensor() ? false : true;
       });
-      if (hit && hit.timeOfImpact < fullLen - 0.2) {
-        const pull = Math.max(walking ? 1.8 : 2.4, hit.timeOfImpact - 0.45);
+      if (hit && hit.timeOfImpact < fullLen - 0.25) {
+        const pull = Math.max(walking ? 2.6 : 2.8, hit.timeOfImpact - 0.55);
         _desired.copy(_subject).addScaledVector(_dir, pull);
+        // Prefer lifting over burying into walls/terrain
+        _desired.y += walking ? 1.15 : 0.7;
       }
     }
 
     const gY = sampleGroundHeight(_desired.x, _desired.z);
-    _desired.y = Math.max(_desired.y, gY + (walking ? 1.6 : 2.0));
+    _desired.y = Math.max(_desired.y, gY + (walking ? 2.2 : 2.0));
+    // Never sink under sea plane
+    _desired.y = Math.max(_desired.y, 1.4);
 
     if (walking) {
       _lookTarget.copy(_subject).add(_a.set(0, 0.15 + pitch * 0.4, 0));
@@ -152,7 +155,7 @@ export function GameCamera() {
     const follow = walking ? 7.5 : 5.2;
     current.current.lerp(_desired, 1 - Math.exp(-follow * dt));
     const cg = sampleGroundHeight(current.current.x, current.current.z);
-    current.current.y = Math.max(current.current.y, cg + (walking ? 1.5 : 1.9));
+    current.current.y = Math.max(current.current.y, cg + (walking ? 2.0 : 1.9), 1.4);
     look.current.lerp(_lookTarget, 1 - Math.exp(-8 * dt));
     camera.position.copy(current.current);
     camera.lookAt(look.current);

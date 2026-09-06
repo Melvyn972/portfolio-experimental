@@ -67,6 +67,15 @@ export function Terrain() {
       if (x > 12 && z < -30 && z > -55) y = Math.max(y, 1.6);
       if (x > 12 && z < -108 && z > -130) y = Math.max(y, 1.8);
       if (x > 2 && z < -175 && z > -195) y = Math.max(y, 3.8);
+      // Phare rocky outcrop
+      {
+        const pdx = x - -8;
+        const pdz = z - -168;
+        if (pdx * pdx + pdz * pdz < 90) {
+          const falloff = 1 - Math.sqrt(pdx * pdx + pdz * pdz) / 9.5;
+          y = Math.max(y, 0.35 + falloff * 1.4);
+        }
+      }
       if (x < -14 && z < -85 && z > -110) y = Math.min(y, 0.2);
 
       pos.setY(i, y);

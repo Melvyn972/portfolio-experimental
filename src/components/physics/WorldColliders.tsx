@@ -112,7 +112,7 @@ export function WorldColliders() {
       )}
       {phare && (
         <>
-          <RigidBody type="fixed" colliders={false} position={[phare.x, 4.95, phare.z]}>
+          <RigidBody type="fixed" colliders={false} position={[phare.x, 5.5, phare.z]}>
             <CuboidCollider args={[1.9, 4.95, 1.9]} />
           </RigidBody>
           {/* Rock skirt around lighthouse base */}
@@ -162,7 +162,7 @@ function buildRockColliders() {
     const p = curve.getPointAt(t);
     const tangent = curve.getTangentAt(t);
     const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-    const pos = p.clone().addScaledVector(side, -11 - (i % 5) * 1.1);
+    const pos = p.clone().addScaledVector(side, -13.5 - (i % 5) * 1.35);
     const s = 0.7 + (i % 4) * 0.35;
     rocks.push({
       pos: [pos.x, 0.4 * s, pos.z],
@@ -175,10 +175,10 @@ function buildRockColliders() {
     const p = curve.getPointAt(t);
     const tangent = curve.getTangentAt(t);
     const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-    const pos = p.clone().addScaledVector(side, -16);
+    const pos = p.clone().addScaledVector(side, -22);
     rocks.push({
       pos: [pos.x, 1.2, pos.z],
-      half: [2.2, 2.0, 2.5],
+      half: [2.4, 2.2, 2.4],
     });
   }
   return rocks;

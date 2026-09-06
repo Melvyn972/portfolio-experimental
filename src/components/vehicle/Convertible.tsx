@@ -39,16 +39,14 @@ export function Convertible({ color = "#c45c3e" }: Props) {
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         const mat = mesh.material as THREE.MeshStandardMaterial;
-        if (mat && "color" in mat) {
+        if (mat && "color" in mat && (name.includes("body") || name.includes("spoiler"))) {
           const cloned = mat.clone();
-          // Tint body toward terracotta while keeping Kenney atlas readable
-          if (name.includes("body") || name.includes("spoiler") || !name.includes("wheel")) {
-            cloned.color.lerp(new THREE.Color(color), 0.55);
-            cloned.metalness = Math.max(cloned.metalness ?? 0, 0.25);
-            cloned.roughness = Math.min(cloned.roughness ?? 1, 0.55);
-            mats.push(cloned);
-            mesh.material = cloned;
-          }
+          // Light terracotta wash — keep Kenney colormap readable
+          cloned.color.lerp(new THREE.Color(color), 0.35);
+          cloned.metalness = Math.max(cloned.metalness ?? 0, 0.2);
+          cloned.roughness = Math.min(cloned.roughness ?? 1, 0.6);
+          mats.push(cloned);
+          mesh.material = cloned;
         }
       }
     });

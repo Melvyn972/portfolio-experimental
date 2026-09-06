@@ -60,8 +60,8 @@ export function buildWorldColliders(): Collider[] {
       list.push(box("studio", x, 3.45, z, 8.0, 6.9, 6.3));
     }
     if (zone.id === "phare") {
-      // Daniel Dormin lighthouse @ ×0.34 (centered mesh → sit on ground)
-      list.push(box("phare", x, 4.95, z, 3.8, 9.9, 3.8));
+      // Daniel Dormin lighthouse @ ×0.34 — mesh already grounded at local y=0
+      list.push(box("phare", x, 5.5, z, 3.8, 9.9, 3.8));
       list.push(box("phare-base", x, 0.55, z, 8.4, 1.1, 8.0));
     }
   }

@@ -114,8 +114,36 @@ export function PlayerSystem() {
         interactTarget: "exit-car",
       });
     };
+
+    const onTeleportWalk = (ev: Event) => {
+      const detail = (ev as CustomEvent<{ x: number; y: number; z: number; yaw?: number }>).detail;
+      if (!detail) return;
+      playerPos.current.set(detail.x, detail.y, detail.z);
+      walkYaw.current = detail.yaw ?? walkYaw.current;
+      playerVel.current.set(0, 0, 0);
+      setPlayerKinematic(playerPos.current, walkYaw.current, true);
+      if (playerVisual.current) {
+        playerVisual.current.visible = true;
+        playerVisual.current.rotation.y = walkYaw.current;
+      }
+      setGameState({
+        phase: "playing",
+        mode: "walking",
+        playerPos: { x: detail.x, y: detail.y, z: detail.z },
+        walkYaw: walkYaw.current,
+        nearStopSpot: false,
+        prompt: null,
+        interactTarget: null,
+        showExplorerHint: false,
+      });
+    };
+
     window.addEventListener("cote:teleport-belvedere", onTeleport);
-    return () => window.removeEventListener("cote:teleport-belvedere", onTeleport);
+    window.addEventListener("cote:teleport-walk", onTeleportWalk as EventListener);
+    return () => {
+      window.removeEventListener("cote:teleport-belvedere", onTeleport);
+      window.removeEventListener("cote:teleport-walk", onTeleportWalk as EventListener);
+    };
   }, []);
 
   useFrame((_, rawDt) => {
@@ -565,9 +593,9 @@ function ExplorerAvatar() {
     }
   });
 
-  // Quaternius Rogue ≈ 2.8u tall → scale to ~1.7m
+  // Quaternius Rogue ≈ 2.8u tall → scale to ~1.75m
   return (
-    <group ref={group} scale={0.62} position={[0, 0, 0]}>
+    <group ref={group} scale={0.64} position={[0, 0, 0]}>
       <primitive object={model} />
     </group>
   );
