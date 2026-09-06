@@ -219,8 +219,8 @@ function buildWalkPaths() {
       half: [2.6, 0.1, Math.max(0.5, tangent.length() * 0.55)],
     });
   }
-  // Beach access near plage marker (−22, −95)
-  boxes.push({ pos: [-14, computeTerrainHeight(-14, -95) + 0.06, -95], yaw: 0.15, half: [8.5, 0.1, 7] });
+  // Beach access near plage marker (−11, −95)
+  boxes.push({ pos: [-12, computeTerrainHeight(-12, -95) + 0.06, -95], yaw: 0.15, half: [8.5, 0.1, 7] });
   // Maison plaza (in front of the building, +Z)
   boxes.push({ pos: [16, computeTerrainHeight(16, -37) + 0.06, -37], yaw: 0, half: [6, 0.1, 5] });
   // Studio plaza

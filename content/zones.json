@@ -39,7 +39,7 @@
       "name": "La Plage",
       "status": "playable",
       "role": "Passions",
-      "marker": { "x": -22, "y": 0.15, "z": -95 }
+      "marker": { "x": -11, "y": 0.18, "z": -95 }
     },
     {
       "id": "phare",

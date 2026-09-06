@@ -170,11 +170,11 @@ export function CoastalZones() {
 
       {plage && (
         <group position={[plage.x, 0, plage.z]}>
-          <Placed scene={pier} position={[0, 0.9, -2]} rotation={[0, 0.3, 0]} scale={0.42} />
-          <Placed scene={pine} position={[4, 0, 3]} scale={0.42} />
-          <Placed scene={pine} position={[-3, 0, -1]} scale={0.38} />
-          <Placed scene={hedge} position={[1, 0, 5]} scale={1.8} />
-          <Placed scene={lantern} position={[-2, 0, 2]} scale={1.2} />
+          <Placed scene={pier} position={[-3.2, 0.08, -1.2]} rotation={[0, 0.55, 0]} scale={0.38} />
+          <Placed scene={pine} position={[3.4, 0, 2.4]} scale={0.42} />
+          <Placed scene={pine} position={[2.2, 0, -2.6]} scale={0.36} />
+          <Placed scene={hedge} position={[1.4, 0, 4.2]} scale={1.8} />
+          <Placed scene={lantern} position={[1.6, 0, 1.2]} scale={1.2} />
         </group>
       )}
 

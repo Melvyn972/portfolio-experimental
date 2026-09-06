@@ -5,6 +5,7 @@ import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { getRoadCurve, getBelvedereWorldAnchor } from "@/lib/road";
+import { computeTerrainHeight } from "@/lib/ground";
 
 type TreeType = "pine" | "olive" | "bougainvillea" | "cypress";
 
@@ -76,9 +77,11 @@ export function Vegetation({ count = 60 }: { count?: number }) {
       const tangent = curve.getTangentAt(t);
       const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
       const cliffSide = i % 5 !== 1;
-      const dist = cliffSide ? 8 + (i % 6) * 1.6 + (i % 3) * 0.4 : -9 - (i % 4) * 1.5;
+      const dist = cliffSide ? 8 + (i % 6) * 1.6 + (i % 3) * 0.4 : -7.2 - (i % 3) * 0.8;
       const pos = p.clone().addScaledVector(side, dist);
-      pos.y = cliffSide ? 0.05 + (i % 5) * 0.12 : 0.02;
+      // Never plant in the sea ( Melvyn QA: floating pink shards over water )
+      if (pos.x < -8.5) continue;
+      pos.y = computeTerrainHeight(pos.x, pos.z);
       let type: TreeType = "pine";
       if (!cliffSide) type = i % 3 === 0 ? "bougainvillea" : "pine";
       else if (i % 7 === 0) type = "cypress";
@@ -102,7 +105,11 @@ export function Vegetation({ count = 60 }: { count?: number }) {
     for (let i = 0; i < 10; i++) {
       items.push({
         type: i % 3 === 0 ? "bougainvillea" : i % 3 === 1 ? "cypress" : "pine",
-        position: [terrace.x - 3 + i * 0.9, 0.95, terrace.z - 2 - (i % 4) * 1.1],
+        position: [
+          terrace.x - 3 + i * 0.9,
+          computeTerrainHeight(terrace.x - 3 + i * 0.9, terrace.z - 2 - (i % 4) * 1.1),
+          terrace.z - 2 - (i % 4) * 1.1,
+        ],
         scale: i % 3 === 2 ? 0.32 + (i % 3) * 0.04 : 1 + (i % 3) * 0.12,
         rot: i * 0.9,
         sway: 200 + i,

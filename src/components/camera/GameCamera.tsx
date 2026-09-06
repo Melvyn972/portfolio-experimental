@@ -135,10 +135,16 @@ export function GameCamera() {
         return true;
       });
       if (hit && hit.timeOfImpact < fullLen - 0.25) {
-        const pull = Math.max(walking ? 2.6 : 2.8, hit.timeOfImpact - 0.55);
-        _desired.copy(_subject).addScaledVector(_dir, pull);
-        // Prefer lifting over burying into walls/terrain
-        _desired.y += walking ? 1.15 : 0.7;
+        const hitY = _from.y + _rayDir.y * hit.timeOfImpact;
+        const groundHit = hitY < _subject.y - 0.2;
+        if (groundHit) {
+          // Heightfield / road — lift, never pull into the cockpit
+          _desired.y = Math.max(_desired.y, sampleGroundHeight(_desired.x, _desired.z) + (walking ? 1.9 : 2.2));
+        } else {
+          const pull = Math.max(walking ? 2.6 : 4.6, hit.timeOfImpact - 0.55);
+          _desired.copy(_subject).addScaledVector(_dir, pull);
+          _desired.y += walking ? 1.15 : 0.7;
+        }
       }
     }
 
