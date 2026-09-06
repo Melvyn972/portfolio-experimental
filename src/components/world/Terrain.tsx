@@ -12,9 +12,16 @@ import {
   roadClearance,
 } from "@/lib/ground";
 
+const SAND = new THREE.Color("#c4ae86");
+const WET = new THREE.Color("#a8946c");
+const APRON = new THREE.Color("#cbb492");
+const DIRT = new THREE.Color("#b39a74");
+const GRASS = new THREE.Color("#6d8754");
+const ROCK = new THREE.Color("#b4a488");
+
 /**
- * Continuous coastal heightfield. No triangle cuts, no trench under the road.
- * Sand stays flush under a thin asphalt overlay (polygonOffset keeps it below).
+ * Continuous coastal heightfield. Sand stays above the water sheet.
+ * Colors lerp — no hard white / cyan biome seams.
  */
 export function Terrain() {
   const land = useMemo(() => {
@@ -22,7 +29,7 @@ export function Terrain() {
     const sizeZ = TERRAIN_MAX_Z - TERRAIN_MIN_Z;
     const midX = (TERRAIN_MIN_X + TERRAIN_MAX_X) / 2;
     const midZ = (TERRAIN_MIN_Z + TERRAIN_MAX_Z) / 2;
-    const geo = new THREE.PlaneGeometry(sizeX, sizeZ, 118, 188);
+    const geo = new THREE.PlaneGeometry(sizeX, sizeZ, 124, 196);
     geo.rotateX(-Math.PI / 2);
     const pos = geo.attributes.position as THREE.BufferAttribute;
 
@@ -37,16 +44,19 @@ export function Terrain() {
       const { y, roadDist } = roadClearance(x, z);
       pos.setY(i, computeTerrainHeight(x, z));
 
-      if (x < -6 || roadDist < ROAD_SAND_APRON + 1.2) c.set("#d7c09a");
-      else if (y > 4.5) c.set("#c2b094");
-      else if (y > 2.2) c.set("#cbb89a");
-      else if (y > 0.9) c.set("#b8a47e");
-      else if (x < 2) c.set("#d0b890");
-      else c.set("#7f9660");
+      const sandMix = THREE.MathUtils.smoothstep(-2, -10, -x);
+      const wetMix = THREE.MathUtils.smoothstep(-13.5, -18.2, -x);
+      const apronMix = THREE.MathUtils.clamp(1 - (roadDist - ROAD_SAND_APRON) / 3.2, 0, 1);
+      const grassMix = THREE.MathUtils.smoothstep(0.7, 2.4, y) * (1 - sandMix);
+      const rockMix = THREE.MathUtils.smoothstep(3.2, 5.2, y);
 
-      if (y < 1.2 && x > 2) {
-        c.offsetHSL(0, -0.05, Math.sin(x * 2.1 + z * 1.7) * 0.04);
-      }
+      c.copy(DIRT);
+      c.lerp(SAND, Math.max(sandMix, apronMix * 0.85));
+      c.lerp(WET, wetMix * 0.62);
+      c.lerp(APRON, apronMix * (1 - sandMix) * 0.55);
+      c.lerp(GRASS, grassMix * 0.72);
+      c.lerp(ROCK, rockMix);
+      c.offsetHSL(0, -0.03, Math.sin(x * 1.4 + z * 1.1) * 0.012);
 
       colors[i * 3] = c.r;
       colors[i * 3 + 1] = c.g;
@@ -59,17 +69,27 @@ export function Terrain() {
     return geo;
   }, []);
 
+  const midZ = (TERRAIN_MIN_Z + TERRAIN_MAX_Z) / 2;
+  const sizeZ = TERRAIN_MAX_Z - TERRAIN_MIN_Z;
+
   return (
-    <mesh geometry={land} receiveShadow castShadow renderOrder={0} frustumCulled={false}>
-      <meshStandardMaterial
-        vertexColors
-        roughness={0.94}
-        metalness={0}
-        flatShading={false}
-        polygonOffset
-        polygonOffsetFactor={8}
-        polygonOffsetUnits={8}
-      />
-    </mesh>
+    <group>
+      <mesh geometry={land} receiveShadow renderOrder={0} frustumCulled={false}>
+        <meshStandardMaterial
+          vertexColors
+          roughness={0.96}
+          metalness={0}
+          flatShading={false}
+          polygonOffset
+          polygonOffsetFactor={3}
+          polygonOffsetUnits={3}
+        />
+      </mesh>
+      {/* Vertical lip so the paper-thin sand edge never reads as a floating slab. */}
+      <mesh position={[TERRAIN_MIN_X, -0.24, midZ]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
+        <planeGeometry args={[sizeZ, 0.14]} />
+        <meshStandardMaterial color="#a8946c" roughness={0.97} metalness={0} side={THREE.DoubleSide} />
+      </mesh>
+    </group>
   );
 }

@@ -2,8 +2,8 @@ import * as THREE from "three";
 import { nearestRoadSample, getBelvedereWorldAnchor, ROAD_WIDTH, ROAD_SURFACE_LIFT } from "@/lib/road";
 import { content } from "@/lib/content";
 
-/** Visual + heightfield bounds. Extends past the beach so sand meets the sea. */
-export const TERRAIN_MIN_X = -24;
+/** Visual bounds — sand overlaps the water sheet by ~1 m from above (no underside gap). */
+export const TERRAIN_MIN_X = -18.4;
 export const TERRAIN_MAX_X = 70;
 export const TERRAIN_MIN_Z = -185;
 export const TERRAIN_MAX_Z = 75;
@@ -43,10 +43,10 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
   const seaRamp = seaShoulderY(lat, roadY);
   if (seaRamp != null) y = seaRamp;
 
-  // Beach drop only well past the apron — never at the driving lip.
-  if (x < -12 && roadDist > ROAD_SAND_APRON + 2.2) {
-    const lip = THREE.MathUtils.smoothstep(-12, -20, -x);
-    y = THREE.MathUtils.lerp(y, -0.14, lip);
+  // Beach slopes to the waterline, always a few cm above the sea sheet (y = −0.22).
+  if (x < -11 && roadDist > ROAD_SAND_APRON + 1.8) {
+    const lip = THREE.MathUtils.smoothstep(-11, -17.6, -x);
+    y = THREE.MathUtils.lerp(y, -0.18, lip);
   }
 
   const shelf = inlandShelfY(lat, roadY);
@@ -125,7 +125,7 @@ export function seaShoulderY(lat: number, roadY: number): number | null {
   if (lat < -ROAD_SAND_APRON - 10) return null;
   const t = THREE.MathUtils.clamp((-lat - ROAD_SAND_APRON) / 8.5, 0, 1);
   const e = t * t * (3 - 2 * t);
-  return THREE.MathUtils.lerp(bed, -0.12, e);
+  return THREE.MathUtils.lerp(bed, -0.08, e);
 }
 
 /** Smooth inland shelf: road shoulder → plaza height over INLAND_SHELF_WIDTH. */

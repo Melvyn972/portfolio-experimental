@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useGLTF } from "@react-three/drei";
-import { Sky, ContactShadows, Environment } from "@react-three/drei";
+import { Sky, Environment } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import * as THREE from "three";
@@ -19,8 +19,8 @@ type AtmosphereProps = {
 export function Atmosphere({ dust = true, shadows = true, shadowMapSize = 2048 }: AtmosphereProps) {
   return (
     <>
-      <color attach="background" args={["#9ec4d6"]} />
-      <fog attach="fog" args={["#c5d6e4", 42, 175]} />
+      <color attach="background" args={["#87aeb8"]} />
+      <fog attach="fog" args={["#9bb8bc", 55, 190]} />
       <ambientLight intensity={0.28} color="#ffd8b8" />
       <hemisphereLight args={["#7eb4d4", "#c4a078", 0.7]} />
       <directionalLight
@@ -50,10 +50,7 @@ export function Atmosphere({ dust = true, shadows = true, shadowMapSize = 2048 }
         rayleigh={0.62}
         turbidity={8.5}
       />
-      <Environment files="/hdri/venice_sunset_1k.hdr" background={false} environmentIntensity={0.82} />
-      {shadows && (
-        <ContactShadows position={[0, 0.015, -70]} opacity={0.38} scale={140} blur={2.1} far={18} color="#2a2218" />
-      )}
+      <Environment files="/hdri/venice_sunset_1k.hdr" background={false} environmentIntensity={0.72} />
       {dust && <DustMotes />}
     </>
   );

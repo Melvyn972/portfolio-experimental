@@ -4,65 +4,57 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
+/** Inland water edge — past the beach, never under the road lip. */
+export const SEA_INLAND_X = -17.4;
+export const SEA_SURFACE_Y = -0.22;
+
 const seaVertex = /* glsl */ `
 uniform float uTime;
 varying vec2 vUv;
-varying float vWave;
-varying float vShore;
+varying float vDeep;
+
+#include <common>
+#include <fog_pars_vertex>
 
 void main() {
   vUv = uv;
-  vShore = uv.x;
+  vDeep = 1.0 - uv.x;
   vec3 pos = position;
-  float deep = 1.0 - uv.x;
-  float w1 = sin(pos.y * 0.1 + uTime * 0.9) * 0.38 * (0.35 + deep);
-  float w2 = cos(pos.y * 0.15 + pos.x * 0.1 + uTime * 0.6) * 0.24;
-  float w3 = sin((pos.x + pos.y) * 0.07 + uTime * 0.4) * 0.28 * deep;
-  float w4 = sin(pos.y * 0.35 - uTime * 1.4) * 0.08 * deep;
-  vWave = w1 + w2 + w3 + w4;
-  pos.z += vWave;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+  float amp = vDeep * vDeep * 0.045;
+  pos.z += sin(pos.y * 0.12 + uTime * 0.48) * amp;
+  pos.z += cos(pos.y * 0.07 + pos.x * 0.05 + uTime * 0.28) * amp * 0.5;
+  vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+  gl_Position = projectionMatrix * mvPosition;
+  #include <fog_vertex>
 }
 `;
 
 const seaFragment = /* glsl */ `
-uniform float uTime;
 varying vec2 vUv;
-varying float vWave;
-varying float vShore;
+varying float vDeep;
+
+#include <common>
+#include <fog_pars_fragment>
 
 void main() {
-  vec3 deep = vec3(0.03, 0.26, 0.36);
-  vec3 mid = vec3(0.10, 0.52, 0.58);
-  vec3 turquoise = vec3(0.28, 0.76, 0.72);
-  vec3 shallow = vec3(0.62, 0.90, 0.86);
-  vec3 foam = vec3(0.96, 0.99, 0.97);
-  vec3 horizon = vec3(0.55, 0.78, 0.82);
-
-  float shore = vShore;
-  vec3 col = mix(deep, mid, shore * 0.45 + 0.2);
-  col = mix(col, turquoise, pow(shore, 1.05));
-  col = mix(col, shallow, pow(shore, 2.1));
-  col = mix(col, horizon, pow(1.0 - shore, 1.8) * 0.25);
-
-  float sparkle = pow(max(0.0, sin(vUv.y * 50.0 + uTime * 1.1) * cos(vUv.x * 28.0 - uTime * 0.8)), 8.0);
-  col += foam * sparkle * 0.28;
-
-  float crest = smoothstep(0.2, 0.48, vWave);
-  col = mix(col, foam, crest * 0.38 * (0.35 + shore));
-
-  float foamBand = smoothstep(0.8, 0.95, shore);
-  float foamNoise = 0.5 + 0.5 * sin(vUv.y * 28.0 + uTime * 2.0);
-  col = mix(col, foam, foamBand * foamNoise * 0.72);
-
-  float depthFade = smoothstep(0.0, 0.35, 1.0 - shore);
-  col = mix(col, deep, depthFade * 0.35);
-
-  gl_FragColor = vec4(col, 0.96);
+  vec3 deep = vec3(0.12, 0.30, 0.34);
+  vec3 mid = vec3(0.20, 0.42, 0.44);
+  vec3 shore = vec3(0.30, 0.48, 0.46);
+  vec3 col = mix(deep, mid, smoothstep(0.0, 0.68, vUv.x));
+  col = mix(col, shore, smoothstep(0.78, 1.0, vUv.x));
+  float sparkle = pow(max(0.0, sin(vUv.y * 28.0) * cos(vUv.x * 18.0)), 18.0);
+  col += vec3(0.06, 0.07, 0.06) * sparkle * vDeep * 0.22;
+  col *= 0.90 + 0.08 * (1.0 - vDeep);
+  gl_FragColor = vec4(col, 1.0);
+  #include <fog_fragment>
 }
 `;
 
-export function Sea({ segments = 80 }: { segments?: number }) {
+/**
+ * One grounded water sheet. No stacked planes, no metre-high waves,
+ * no inland overlap with the sand bed (that read as floating dark slabs).
+ */
+export function Sea({ segments = 64 }: { segments?: number }) {
   const mat = useRef<THREE.ShaderMaterial>(null);
   const uniforms = useMemo(() => ({ uTime: { value: 0 } }), []);
 
@@ -70,27 +62,25 @@ export function Sea({ segments = 80 }: { segments?: number }) {
     if (mat.current) mat.current.uniforms.uTime.value += dt;
   });
 
-  const segsX = Math.max(32, Math.floor(segments * 0.55));
-  const segsZ = Math.max(48, Math.floor(segments * 1.2));
+  const width = 78;
+  const depth = 260;
+  const centerX = SEA_INLAND_X - width * 0.5;
+  const segsX = Math.max(24, Math.floor(segments * 0.45));
+  const segsZ = Math.max(36, Math.floor(segments * 0.9));
 
   return (
-    <group>
-      {/* Inland edge ≈ x −16.5 — well past the road lip so cyan cannot show under asphalt. */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-52.5, -0.62, -60]} receiveShadow>
-        <planeGeometry args={[72, 288]} />
-        <meshPhysicalMaterial color="#0a5c64" roughness={0.22} metalness={0.42} envMapIntensity={1.15} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-46.5, -0.28, -60]} renderOrder={1}>
-        <planeGeometry args={[60, 248, segsX, segsZ]} />
-        <shaderMaterial
-          ref={mat}
-          uniforms={uniforms}
-          vertexShader={seaVertex}
-          fragmentShader={seaFragment}
-          transparent
-          depthWrite={false}
-        />
-      </mesh>
-    </group>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[centerX, SEA_SURFACE_Y, -55]} renderOrder={0} frustumCulled={false}>
+      <planeGeometry args={[width, depth, segsX, segsZ]} />
+      <shaderMaterial
+        ref={mat}
+        uniforms={uniforms}
+        vertexShader={seaVertex}
+        fragmentShader={seaFragment}
+        fog
+        depthWrite
+        transparent={false}
+        side={THREE.FrontSide}
+      />
+    </mesh>
   );
 }

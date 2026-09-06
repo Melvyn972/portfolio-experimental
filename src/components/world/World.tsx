@@ -66,7 +66,7 @@ function AccessPaths() {
           items.push({
             pos: [x, y + 0.02, z],
             yaw: Math.atan2(b.x - a.x, b.z - a.z),
-            size: [1.6, 0.04, 1.5],
+            size: [1.35, 0.025, 1.25],
           });
         }
       }
