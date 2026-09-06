@@ -49,7 +49,7 @@ export function Atmosphere({ dust = true, shadows = true, shadowMapSize = 2048 }
         rayleigh={0.62}
         turbidity={8.5}
       />
-      <Environment files="/hdri/venice_sunset_1k.hdr" background={false} environmentIntensity={0.92} />
+      <Environment files="/hdri/venice_sunset_1k.hdr" background={false} environmentIntensity={1.08} />
       {shadows && (
         <ContactShadows position={[0, 0.015, -70]} opacity={0.38} scale={140} blur={2.1} far={18} color="#2a2218" />
       )}

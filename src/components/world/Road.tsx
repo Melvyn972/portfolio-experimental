@@ -4,8 +4,11 @@ import { useMemo } from "react";
 import * as THREE from "three";
 import { getRoadCurve, ROAD_SURFACE_LIFT, ROAD_WIDTH } from "@/lib/road";
 
-const ROAD_HALF = ROAD_WIDTH / 2 + 0.5;
-const SLAB_DEPTH = 1.45;
+/** Visual asphalt half-width — slightly wider than drive ribbon so it overlaps berms. */
+const ASPHALT_HALF = ROAD_WIDTH / 2 + 0.18;
+/** Thin slab — a 1.45 m wall was the grey/blue underside strip. */
+const SLAB_DEPTH = 0.16;
+const SEGMENTS = 120;
 
 function makeAsphaltTexture() {
   const s = 64;
@@ -27,47 +30,30 @@ function makeAsphaltTexture() {
   return tex;
 }
 
-function buildRoadPrism() {
+function buildRoadRibbon() {
   const curve = getRoadCurve();
-  const frames = curve.computeFrenetFrames(96, false);
+  const frames = curve.computeFrenetFrames(SEGMENTS, false);
   const positions: number[] = [];
   const uvs: number[] = [];
   const indices: number[] = [];
 
-  for (let i = 0; i <= 96; i++) {
-    const t = i / 96;
+  for (let i = 0; i <= SEGMENTS; i++) {
+    const t = i / SEGMENTS;
     const p = curve.getPointAt(t);
     const side = new THREE.Vector3(-frames.tangents[i].z, 0, frames.tangents[i].x).normalize();
-    const left = p.clone().addScaledVector(side, -ROAD_HALF);
-    const right = p.clone().addScaledVector(side, ROAD_HALF);
+    const left = p.clone().addScaledVector(side, -ASPHALT_HALF);
+    const right = p.clone().addScaledVector(side, ASPHALT_HALF);
     const yTop = p.y + ROAD_SURFACE_LIFT;
     const yBot = yTop - SLAB_DEPTH;
-    // 0 LT, 1 RT, 2 LB, 3 RB
-    positions.push(
-      left.x, yTop, left.z,
-      right.x, yTop, right.z,
-      left.x, yBot, left.z,
-      right.x, yBot, right.z,
-    );
+    positions.push(left.x, yTop, left.z, right.x, yTop, right.z, left.x, yBot, left.z, right.x, yBot, right.z);
     uvs.push(0, t * 28, 1, t * 28, 0, t * 28, 1, t * 28);
-    if (i < 96) {
+    if (i < SEGMENTS) {
       const a = i * 4;
       const b = a + 4;
-      // top
       indices.push(a, a + 1, b, a + 1, b + 1, b);
-      // bottom
       indices.push(a + 2, b + 2, a + 3, a + 3, b + 2, b + 3);
-      // left wall
-      indices.push(a, b, a + 2, b, b + 2, a + 2);
-      // right wall
-      indices.push(a + 1, a + 3, b + 1, b + 1, a + 3, b + 3);
     }
   }
-
-  // end caps
-  const last = 96 * 4;
-  indices.push(0, 2, 1, 1, 2, 3);
-  indices.push(last, last + 1, last + 2, last + 1, last + 3, last + 2);
 
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
@@ -77,64 +63,70 @@ function buildRoadPrism() {
   return geo;
 }
 
-/** Solid apron tucked under the asphalt so the trench never shows sky. */
-function Shoulder({ side }: { side: 1 | -1 }) {
-  const geo = useMemo(() => {
-    const curve = getRoadCurve();
-    const positions: number[] = [];
-    const indices: number[] = [];
-    const n = 88;
-    const reach = side < 0 ? 6.4 : 3.6;
-    for (let i = 0; i <= n; i++) {
-      const t = i / n;
-      const p = curve.getPointAt(t);
-      const tangent = curve.getTangentAt(t);
-      const lateral = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-      // Tuck under the prism so no blue slit at the asphalt lip.
-      const inner = p.clone().addScaledVector(lateral, side * (ROAD_HALF - 0.22));
-      const mid = p.clone().addScaledVector(lateral, side * (ROAD_HALF + 0.85));
-      const outer = p.clone().addScaledVector(lateral, side * (ROAD_HALF + reach));
-      inner.y = p.y + ROAD_SURFACE_LIFT - 0.012;
-      mid.y = side < 0 ? p.y - 0.08 : p.y + 0.03;
-      outer.y = side < 0 ? -0.16 : p.y + 0.02;
-      const drop = inner.clone();
-      drop.y = inner.y - 1.85;
-      // 0 inner, 1 mid, 2 outer, 3 drop
-      positions.push(inner.x, inner.y, inner.z, mid.x, mid.y, mid.z, outer.x, outer.y, outer.z, drop.x, drop.y, drop.z);
-      if (i < n) {
-        const a = i * 4;
-        const b = a + 4;
-        const flip = side > 0;
-        const quad = (i0: number, i1: number, i2: number, i3: number) => {
-          if (flip) indices.push(i0, i2, i1, i1, i2, i3);
-          else indices.push(i0, i1, i2, i1, i3, i2);
-        };
-        quad(a, a + 1, b, b + 1);
-        quad(a + 1, a + 2, b + 1, b + 2);
-        quad(a, a + 3, b, b + 3);
-      }
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-    g.setIndex(indices);
-    g.computeVertexNormals();
-    return g;
-  }, [side]);
+/**
+ * Continuous sand/earth slope from under the asphalt lip out to the beach / shelf.
+ * No vertical walls — those read as the blue/grey underside strip.
+ */
+function buildBerm(side: 1 | -1) {
+  const curve = getRoadCurve();
+  const positions: number[] = [];
+  const indices: number[] = [];
+  const sea = side < 0;
+  const reach = sea ? 7.2 : 4.2;
 
-  return (
-    <mesh geometry={geo} receiveShadow>
-      <meshStandardMaterial color={side < 0 ? "#cbb89a" : "#8a7d68"} roughness={0.94} />
-    </mesh>
-  );
+  for (let i = 0; i <= SEGMENTS; i++) {
+    const t = i / SEGMENTS;
+    const p = curve.getPointAt(t);
+    const tangent = curve.getTangentAt(t);
+    const lat = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+    const yRoad = p.y + ROAD_SURFACE_LIFT;
+
+    const a = p.clone().addScaledVector(lat, side * (ASPHALT_HALF - 0.35));
+    const b = p.clone().addScaledVector(lat, side * (ASPHALT_HALF + 0.06));
+    const c = p.clone().addScaledVector(lat, side * (ASPHALT_HALF + reach * 0.42));
+    const d = p.clone().addScaledVector(lat, side * (ASPHALT_HALF + reach));
+    a.y = yRoad - 0.006;
+    b.y = yRoad - 0.014;
+    c.y = sea ? THREE.MathUtils.lerp(yRoad - 0.05, -0.08, 0.45) : yRoad + 0.02;
+    d.y = sea ? -0.14 : p.y + 0.03;
+
+    positions.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z, d.x, d.y, d.z);
+    if (i < SEGMENTS) {
+      const s0 = i * 4;
+      const s1 = s0 + 4;
+      const flip = side > 0;
+      const quad = (i0: number, i1: number, i2: number, i3: number) => {
+        if (flip) indices.push(i0, i2, i1, i1, i2, i3);
+        else indices.push(i0, i1, i2, i1, i3, i2);
+      };
+      quad(s0, s0 + 1, s1, s1 + 1);
+      quad(s0 + 1, s0 + 2, s1 + 1, s1 + 2);
+      quad(s0 + 2, s0 + 3, s1 + 2, s1 + 3);
+    }
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+  return geo;
 }
 
 export function Road() {
-  const prism = useMemo(() => buildRoadPrism(), []);
+  const ribbon = useMemo(() => buildRoadRibbon(), []);
+  const seaBerm = useMemo(() => buildBerm(-1), []);
+  const inlandBerm = useMemo(() => buildBerm(1), []);
   const asphalt = useMemo(() => makeAsphaltTexture(), []);
 
   return (
     <group>
-      <mesh geometry={prism} receiveShadow castShadow renderOrder={2}>
+      <mesh geometry={seaBerm} receiveShadow>
+        <meshStandardMaterial color="#d7c4a4" roughness={0.96} depthWrite />
+      </mesh>
+      <mesh geometry={inlandBerm} receiveShadow>
+        <meshStandardMaterial color="#b7a888" roughness={0.95} depthWrite />
+      </mesh>
+      <mesh geometry={ribbon} receiveShadow renderOrder={2}>
         <meshStandardMaterial
           color="#2c2b29"
           map={asphalt}
@@ -142,44 +134,12 @@ export function Road() {
           metalness={0.06}
           envMapIntensity={0.35}
           polygonOffset
-          polygonOffsetFactor={-3}
-          polygonOffsetUnits={-3}
+          polygonOffsetFactor={-2}
+          polygonOffsetUnits={-2}
         />
       </mesh>
       <RoadMarkings />
       <RoadEdgeLines />
-      <Shoulder side={1} />
-      <Shoulder side={-1} />
-      <SeaCurb />
-    </group>
-  );
-}
-
-/** Extra sea-side fascia — hides remaining sky slits at the asphalt lip. */
-function SeaCurb() {
-  const blocks = useMemo(() => {
-    const curve = getRoadCurve();
-    return Array.from({ length: 40 }, (_, i) => {
-      const t = (i + 0.5) / 40;
-      const p = curve.getPointAt(t);
-      const tangent = curve.getTangentAt(t);
-      const lateral = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-      const pos = p.clone().addScaledVector(lateral, -(ROAD_HALF - 0.28));
-      return {
-        position: [pos.x, p.y + ROAD_SURFACE_LIFT - 0.62, pos.z] as [number, number, number],
-        yaw: Math.atan2(tangent.x, tangent.z),
-      };
-    });
-  }, []);
-
-  return (
-    <group>
-      {blocks.map((b, i) => (
-        <mesh key={i} position={b.position} rotation={[0, b.yaw, 0]} receiveShadow>
-          <boxGeometry args={[0.72, 1.35, 6.4]} />
-          <meshStandardMaterial color="#c8b492" roughness={0.95} />
-        </mesh>
-      ))}
     </group>
   );
 }
@@ -187,16 +147,16 @@ function SeaCurb() {
 function RoadEdgeLines() {
   const edges = useMemo(() => {
     const curve = getRoadCurve();
-    const half = ROAD_WIDTH / 2 - 0.28;
+    const half = ROAD_WIDTH / 2 - 0.38;
     return [1, -1].flatMap((side) =>
-      Array.from({ length: 52 }, (_, i) => {
-        const t = (i + 0.5) / 52;
+      Array.from({ length: 56 }, (_, i) => {
+        const t = (i + 0.5) / 56;
         const p = curve.getPointAt(t);
         const tangent = curve.getTangentAt(t);
         const lateral = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
         const pos = p.clone().addScaledVector(lateral, side * half);
         return {
-          position: [pos.x, p.y + ROAD_SURFACE_LIFT + 0.014, pos.z] as [number, number, number],
+          position: [pos.x, p.y + ROAD_SURFACE_LIFT + 0.012, pos.z] as [number, number, number],
           yaw: Math.atan2(tangent.x, tangent.z),
         };
       }),
@@ -207,7 +167,7 @@ function RoadEdgeLines() {
     <group>
       {edges.map((m, i) => (
         <mesh key={i} position={m.position} rotation={[0, m.yaw, 0]} receiveShadow renderOrder={3}>
-          <boxGeometry args={[0.11, 0.012, 3.4]} />
+          <boxGeometry args={[0.1, 0.01, 3.2]} />
           <meshStandardMaterial color="#e6deca" roughness={0.7} polygonOffset polygonOffsetFactor={-4} />
         </mesh>
       ))}
@@ -223,7 +183,7 @@ function RoadMarkings() {
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const yaw = Math.atan2(tangent.x, tangent.z);
-      return { position: [p.x, p.y + ROAD_SURFACE_LIFT + 0.012, p.z] as [number, number, number], yaw };
+      return { position: [p.x, p.y + ROAD_SURFACE_LIFT + 0.01, p.z] as [number, number, number], yaw };
     });
   }, []);
 
@@ -231,7 +191,7 @@ function RoadMarkings() {
     <group>
       {marks.map((m, i) => (
         <mesh key={i} position={m.position} rotation={[0, m.yaw, 0]} receiveShadow renderOrder={3}>
-          <boxGeometry args={[0.16, 0.012, 1.85]} />
+          <boxGeometry args={[0.16, 0.01, 1.85]} />
           <meshStandardMaterial color="#efe6d0" roughness={0.68} polygonOffset polygonOffsetFactor={-4} />
         </mesh>
       ))}

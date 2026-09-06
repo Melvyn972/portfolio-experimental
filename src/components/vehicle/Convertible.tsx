@@ -77,14 +77,16 @@ export function Convertible({ color = "#c45c3e" }: Props) {
             });
           } else if (matName.includes("body blue") || mat.color.getHexString() === "c45c3e") {
             next = toPhysical(mat, {
-              color: new THREE.Color(color).lerp(new THREE.Color("#a83c28"), 0.12),
-              metalness: 0.48,
-              roughness: 0.22,
-              clearcoat: 0.88,
-              clearcoatRoughness: 0.1,
-              envMapIntensity: 1.45,
-              sheen: 0.18,
-              sheenColor: new THREE.Color("#f0c4a0"),
+              color: new THREE.Color(color).lerp(new THREE.Color("#b84430"), 0.08),
+              metalness: 0.62,
+              roughness: 0.14,
+              clearcoat: 1,
+              clearcoatRoughness: 0.045,
+              envMapIntensity: 2.15,
+              sheen: 0.28,
+              sheenRoughness: 0.35,
+              sheenColor: new THREE.Color("#f2c8a8"),
+              reflectivity: 0.9,
             });
           } else if (matName.includes("tire")) {
             next = toPhysical(mat, {
