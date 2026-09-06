@@ -5,20 +5,16 @@ import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { content } from "@/lib/content";
 import { getRoadCurve } from "@/lib/road";
+import { enableShadows, groundClone } from "@/lib/gltfFit";
 
-function useShadowClone(path: string) {
+function useShadowClone(path: string, ground = false) {
   const { scene } = useGLTF(path);
   return useMemo(() => {
     const c = scene.clone(true);
-    c.traverse((o) => {
-      const m = o as THREE.Mesh;
-      if (m.isMesh) {
-        m.castShadow = true;
-        m.receiveShadow = true;
-      }
-    });
+    enableShadows(c);
+    if (ground) groundClone(c);
     return c;
-  }, [scene]);
+  }, [scene, ground]);
 }
 
 function Placed({
@@ -77,7 +73,7 @@ export function CoastalZones() {
     });
     return c;
   }, [phareSrc]);
-  const phareRocks = useShadowClone("/models/rocks-dormin.glb");
+  const phareRocks = useShadowClone("/models/rocks-dormin.glb", true);
   const fence = useShadowClone("/models/kenney/city/fence.glb");
   const pine = useShadowClone("/models/pine.glb");
   const hedge = useShadowClone("/models/kenney/fantasy/hedge.glb");

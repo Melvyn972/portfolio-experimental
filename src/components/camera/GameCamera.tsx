@@ -23,10 +23,10 @@ const _dir = new THREE.Vector3();
 const _from = { x: 0, y: 0, z: 0 };
 const _rayDir = { x: 0, y: 0, z: 0 };
 
-const CAM_DIST_DRIVE = 11.5;
-const CAM_DIST_WALK = 8.4;
-const CAM_HEIGHT_DRIVE = 4.8;
-const CAM_HEIGHT_WALK = 4.2;
+const CAM_DIST_DRIVE = 8.6;
+const CAM_DIST_WALK = 5.8;
+const CAM_HEIGHT_DRIVE = 3.15;
+const CAM_HEIGHT_WALK = 2.55;
 
 /**
  * Modern third-person camera:
@@ -91,7 +91,7 @@ export function GameCamera() {
 
     if (state.openChapter) {
       _subject.set(state.playerPos.x, state.playerPos.y, state.playerPos.z);
-      offsetPos(_desired, _subject, state.walkYaw, 0.18, distWalk * 1.05, hWalk + 1.0, 0.4);
+      offsetPos(_desired, _subject, state.lookYaw, 0.18, distWalk * 1.05, hWalk + 1.0, 0.4);
       const gY = sampleGroundHeight(_desired.x, _desired.z);
       _desired.y = Math.max(_desired.y, gY + 2.0);
       current.current.lerp(_desired, 1 - Math.exp(-3 * dt));
@@ -105,7 +105,7 @@ export function GameCamera() {
     if (walking) _subject.set(state.playerPos.x, state.playerPos.y + 1.35, state.playerPos.z);
     else _subject.set(state.carPos.x, state.carPos.y + 0.9, state.carPos.z);
 
-    const yaw = walking ? state.walkYaw : state.carYaw;
+    const yaw = walking ? state.lookYaw : state.carYaw;
     const pitch = walking ? state.lookPitch : 0.08;
     const targetDist = walking ? distWalk : distDrive + Math.min(2.2, state.speed * 0.07);
     const height = walking ? hWalk : hDrive + Math.min(1.0, state.speed * 0.035);
@@ -127,7 +127,12 @@ export function GameCamera() {
       _rayDir.z = _dir.z;
       const ray = new rapier.Ray(_from, _rayDir);
       const hit = world.castRay(ray, fullLen, true, undefined, undefined, undefined, undefined, (collider) => {
-        return collider.isSensor() ? false : true;
+        if (collider.isSensor()) return false;
+        // Ignore the kinematic car / capsule — hitting them pulled the camera
+        // inside the vehicle (QA: "voiture incomplète / vue dans la coque").
+        const body = collider.parent();
+        if (body?.isKinematic()) return false;
+        return true;
       });
       if (hit && hit.timeOfImpact < fullLen - 0.25) {
         const pull = Math.max(walking ? 2.6 : 2.8, hit.timeOfImpact - 0.55);

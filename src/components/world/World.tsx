@@ -13,52 +13,60 @@ import { useMemo } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { getRoadCurve } from "@/lib/road";
+import { enableShadows, groundClone } from "@/lib/gltfFit";
 
 function ShoreRocks({ detailed }: { detailed: boolean }) {
   const { scene: coast } = useGLTF("/models/rock-coast-a.glb");
   const { scene: cliff } = useGLTF("/models/cliff-coast.glb");
   const { scene: dormin } = useGLTF("/models/rocks-dormin.glb");
-  const { scene: rockA } = useGLTF("/models/rock-a.glb");
-  const { scene: rockB } = useGLTF("/models/rock-b.glb");
-  const { scene: rockC } = useGLTF("/models/rock-c.glb");
 
   const rocks = useMemo(() => {
     const curve = getRoadCurve();
-    // Keep detailed rocks well clear of the 7.2m road ribbon (half ≈ 3.6)
-    const sources = detailed ? [dormin, coast, rockA, rockB, rockC] : [dormin, rockA, rockB, rockC];
-    return Array.from({ length: detailed ? 18 : 12 }, (_, i) => {
-      const t = 0.08 + (i / 18) * 0.85;
+    const count = detailed ? 10 : 6;
+    return Array.from({ length: count }, (_, i) => {
+      const t = 0.12 + (i / Math.max(1, count - 1)) * 0.72;
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-      const lateral = -13.5 - (i % 5) * 1.35;
+      // Sea-side only, well clear of the 7.2 m ribbon (half ≈ 3.6)
+      const lateral = -11.5 - (i % 3) * 1.1;
       const pos = p.clone().addScaledVector(side, lateral);
-      pos.y = -0.05 + (i % 3) * 0.08;
-      const src = sources[i % sources.length];
-      const clone = src.clone(true);
-      clone.traverse((o) => {
-        const m = o as THREE.Mesh;
-        if (m.isMesh) {
-          m.castShadow = true;
-          m.receiveShadow = true;
-          const mat = m.material as THREE.MeshStandardMaterial;
-          if (mat?.color) {
-            const c = mat.clone();
-            c.color.lerp(new THREE.Color("#c4b49a"), 0.18);
-            m.material = c;
-          }
-        }
-      });
-      const isCoast = src === coast;
-      const isDormin = src === dormin;
+      const clone = dormin.clone(true);
+      enableShadows(clone);
+      groundClone(clone);
       return {
         object: clone,
-        position: [pos.x, pos.y, pos.z] as [number, number, number],
-        scale: isCoast ? 0.22 + (i % 4) * 0.05 : isDormin ? 1.6 + (i % 3) * 0.35 : 0.75 + (i % 4) * 0.35,
-        rot: i * 0.7,
+        position: [pos.x, 0, pos.z] as [number, number, number],
+        scale: 1.35 + (i % 3) * 0.25,
+        rot: i * 0.85,
       };
     });
-  }, [coast, dormin, rockA, rockB, rockC, detailed]);
+  }, [dormin, detailed]);
+
+  const beachClusters = useMemo(() => {
+    if (!detailed) return [] as {
+      object: THREE.Object3D;
+      position: [number, number, number];
+      yaw: number;
+      scale: number;
+    }[];
+    const curve = getRoadCurve();
+    return [0.38, 0.62].map((t, i) => {
+      const p = curve.getPointAt(t);
+      const tangent = curve.getTangentAt(t);
+      const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+      const pos = p.clone().addScaledVector(side, -20);
+      const clone = coast.clone(true);
+      enableShadows(clone);
+      groundClone(clone);
+      return {
+        object: clone,
+        position: [pos.x, -0.15, pos.z] as [number, number, number],
+        yaw: i * 1.1,
+        scale: 0.11 + i * 0.02,
+      };
+    });
+  }, [coast, detailed]);
 
   const cliffs = useMemo(() => {
     if (!detailed) return [] as {
@@ -68,25 +76,19 @@ function ShoreRocks({ detailed }: { detailed: boolean }) {
       scale: number;
     }[];
     const curve = getRoadCurve();
-    return [0.22, 0.48, 0.72].map((t, i) => {
+    return [0.28, 0.7].map((t, i) => {
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-      // Far cliff faces — never overhang the driveable ribbon
-      const pos = p.clone().addScaledVector(side, -22);
+      const pos = p.clone().addScaledVector(side, -30);
       const clone = cliff.clone(true);
-      clone.traverse((o) => {
-        const m = o as THREE.Mesh;
-        if (m.isMesh) {
-          m.castShadow = true;
-          m.receiveShadow = true;
-        }
-      });
+      enableShadows(clone);
+      groundClone(clone);
       return {
         object: clone,
-        position: [pos.x, -0.6, pos.z] as [number, number, number],
+        position: [pos.x, -0.4, pos.z] as [number, number, number],
         yaw: Math.atan2(side.x, side.z) + Math.PI,
-        scale: 0.55 + i * 0.08,
+        scale: 0.18 + i * 0.03,
       };
     });
   }, [cliff, detailed]);
@@ -94,8 +96,13 @@ function ShoreRocks({ detailed }: { detailed: boolean }) {
   return (
     <group>
       {rocks.map((r, i) => (
-        <group key={`r-${i}`} position={r.position} rotation={[0.1, r.rot, 0.05]} scale={r.scale}>
+        <group key={`r-${i}`} position={r.position} rotation={[0, r.rot, 0]} scale={r.scale}>
           <primitive object={r.object} />
+        </group>
+      ))}
+      {beachClusters.map((c, i) => (
+        <group key={`bc-${i}`} position={c.position} rotation={[0, c.yaw, 0]} scale={c.scale}>
+          <primitive object={c.object} />
         </group>
       ))}
       {cliffs.map((c, i) => (

@@ -44,6 +44,8 @@ export interface GameState {
   carPos: { x: number; y: number; z: number };
   carYaw: number;
   walkYaw: number;
+  /** Camera orbit yaw while walking — never written by movement. */
+  lookYaw: number;
   lookPitch: number;
   prompt: string | null;
   /** Interactive target id when in range */
@@ -75,6 +77,7 @@ let state: GameState = {
   carPos: { x: 0, y: 0, z: 0 },
   carYaw: 0,
   walkYaw: 0,
+  lookYaw: 0,
   lookPitch: 0.12,
   prompt: null,
   interactTarget: null,
@@ -121,7 +124,7 @@ export function setGameState(partial: Partial<GameState>) {
       continue;
     }
 
-    if (key === "speed" || key === "carYaw" || key === "walkYaw" || key === "lookPitch") {
+    if (key === "speed" || key === "carYaw" || key === "walkYaw" || key === "lookYaw" || key === "lookPitch") {
       const cur = state[key] as number;
       const val = value as number;
       const eps = key === "speed" ? 0.15 : 0.02;

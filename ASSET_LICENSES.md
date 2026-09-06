@@ -6,7 +6,8 @@ All third-party assets used in this project. Remaining house-generated props are
 
 | File | Source | License | Notes |
 |------|--------|---------|-------|
-| `public/models/roadster.glb` | [Kenney Car Kit](https://kenney.nl/assets/car-kit) (`sedan-sports`) | CC0 1.0 | Recolored terracotta in-engine; wheels spin/steer by mesh name |
+| `public/models/roadster.glb` | House-authored Mediterranean convertible (`scripts/generate-assets.mjs`) | CC0 1.0 | Full body, glass, cabin, steer→spin wheels. Kenney sedan-sports was too crude on mobile (opaque colormap, no interior). |
+| `public/models/kenney/sedan-sports.glb` | [Kenney Car Kit](https://kenney.nl/assets/car-kit) | CC0 1.0 | Reference only — not the hero vehicle |
 | `public/models/kenney/*.glb` | Kenney Car Kit | CC0 1.0 | Reference copies / wheels |
 | `public/licenses/KENNEY_LICENSE.txt` | Kenney | CC0 | Full license text |
 

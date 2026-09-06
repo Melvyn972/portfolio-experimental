@@ -7,7 +7,7 @@ const SAFE = new THREE.Vector3();
 /** True if player is in void / sea / under terrain — must respawn. */
 export function isUnsafePosition(pos: THREE.Vector3): boolean {
   if (pos.y < -1.2) return true;
-  if (pos.x < -24 && pos.y < 0.35) return true;
+  if (pos.x < -29 && pos.y < 0.35) return true;
   if (pos.x > 36 || pos.x < -36) return true;
   if (pos.z > 58 || pos.z < -205) return true;
   const ground = sampleGroundHeight(pos.x, pos.z);

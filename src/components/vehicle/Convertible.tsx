@@ -10,49 +10,68 @@ type Props = {
 };
 
 /**
- * Kenney sedan-sports roadster (CC0) — wheel spin / steer by mesh name.
- * Scale/pivot normalized for the coastal road.
+ * Côte Melvyn roadster — generated Mediterranean convertible (body, glass,
+ * cabin, wheels with steer→spin hierarchy). Kenney sedan-sports is kept as
+ * a reference copy under public/models/kenney/ but is too crude (single
+ * opaque colormap, no cabin, no glass) for the hero vehicle.
  */
 export function Convertible({ color = "#c45c3e" }: Props) {
   const { scene } = useGLTF("/models/roadster.glb");
   const root = useRef<THREE.Group>(null);
   const wheelSpin = useRef(0);
   const steer = useRef(0);
-  const frontWheels = useRef<THREE.Object3D[]>([]);
-  const allWheels = useRef<THREE.Object3D[]>([]);
+  const spinNodes = useRef<THREE.Object3D[]>([]);
+  const steerNodes = useRef<THREE.Object3D[]>([]);
   const bodyMats = useRef<THREE.MeshStandardMaterial[]>([]);
 
   const model = useMemo(() => {
     const clone = scene.clone(true);
-    const fronts: THREE.Object3D[] = [];
-    const wheels: THREE.Object3D[] = [];
+    const spins: THREE.Object3D[] = [];
+    const steers: THREE.Object3D[] = [];
     const mats: THREE.MeshStandardMaterial[] = [];
 
     clone.traverse((obj) => {
       const name = obj.name.toLowerCase();
-      if (name.includes("wheel")) {
-        wheels.push(obj);
-        if (name.includes("front")) fronts.push(obj);
-      }
       const mesh = obj as THREE.Mesh;
       if (mesh.isMesh) {
         mesh.castShadow = true;
         mesh.receiveShadow = true;
-        const mat = mesh.material as THREE.MeshStandardMaterial;
-        if (mat && "color" in mat && (name.includes("body") || name.includes("spoiler"))) {
+        const raw = mesh.material;
+        const list = Array.isArray(raw) ? raw : raw ? [raw] : [];
+        list.forEach((mat, idx) => {
+          if (!(mat instanceof THREE.MeshStandardMaterial) && !(mat instanceof THREE.MeshPhysicalMaterial)) return;
           const cloned = mat.clone();
-          // Light terracotta wash — keep Kenney colormap readable
-          cloned.color.lerp(new THREE.Color(color), 0.35);
-          cloned.metalness = Math.max(cloned.metalness ?? 0, 0.2);
-          cloned.roughness = Math.min(cloned.roughness ?? 1, 0.6);
-          mats.push(cloned);
-          mesh.material = cloned;
-        }
+          const matName = `${name} ${cloned.name}`.toLowerCase();
+          const isGlass = cloned.transparent || matName.includes("glass") || (cloned.opacity < 0.95 && cloned.opacity > 0);
+          if (isGlass) {
+            cloned.transparent = true;
+            cloned.opacity = Math.min(cloned.opacity, 0.42);
+            cloned.depthWrite = false;
+            cloned.metalness = 0.35;
+            cloned.roughness = 0.08;
+            cloned.side = THREE.DoubleSide;
+          } else if (matName.includes("body") || matName.includes("terracotta") || cloned.color.getHexString() === "c45c3e") {
+            cloned.color.lerp(new THREE.Color(color), 0.15);
+            mats.push(cloned);
+          }
+          if (Array.isArray(mesh.material)) mesh.material[idx] = cloned;
+          else mesh.material = cloned;
+        });
+      }
+      if (name.endsWith("_spin") || (name.includes("wheel") && name.includes("spin"))) spins.push(obj);
+      if (name.endsWith("_steer") || (name.includes("wheel") && name.includes("front") && name.includes("steer"))) {
+        steers.push(obj);
       }
     });
 
-    frontWheels.current = fronts;
-    allWheels.current = wheels;
+    if (spins.length === 0) {
+      clone.traverse((obj) => {
+        if (obj.name.toLowerCase().includes("wheel")) spins.push(obj);
+      });
+    }
+
+    spinNodes.current = spins;
+    steerNodes.current = steers;
     bodyMats.current = mats;
     return clone;
   }, [scene, color]);
@@ -82,17 +101,17 @@ export function Convertible({ color = "#c45c3e" }: Props) {
       node.parent.userData.setWheelSpin = node.userData.setWheelSpin;
       node.parent.userData.setSteer = node.userData.setSteer;
     }
-    allWheels.current.forEach((w) => {
+    spinNodes.current.forEach((w) => {
       w.rotation.x = wheelSpin.current;
     });
-    frontWheels.current.forEach((w) => {
+    steerNodes.current.forEach((w) => {
       w.rotation.y = steer.current;
     });
   });
 
-  // Kenney cars are ~2.5m long, sit on y=0 — scale up slightly for presence
+  // Generated roadster is ~4.5 m, nose +Z, wheels on y=0 — no extra flip.
   return (
-    <group ref={root} scale={1.35} position={[0, 0, 0]} rotation={[0, Math.PI, 0]}>
+    <group ref={root} scale={1.08} position={[0, 0, 0]}>
       <primitive object={model} />
     </group>
   );

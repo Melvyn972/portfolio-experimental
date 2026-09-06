@@ -169,8 +169,11 @@ function buildConvertible() {
   // Main sculpted hull
   body.add(mesh(buildHullExtrusion(), MAT.terracotta()));
 
-  // Cabin tub (dark interior volume)
+  // Cabin tub + readable interior (floor, door cards)
   body.add(mesh(new THREE.BoxGeometry(1.55, 0.22, 1.55), MAT.cabin(), [0, 0.58, -0.15]));
+  body.add(mesh(new THREE.BoxGeometry(1.42, 0.04, 1.42), MAT.leather(), [0, 0.72, -0.12]));
+  body.add(mesh(new THREE.BoxGeometry(0.06, 0.32, 1.2), MAT.leather(), [0.72, 0.86, -0.1]));
+  body.add(mesh(new THREE.BoxGeometry(0.06, 0.32, 1.2), MAT.leather(), [-0.72, 0.86, -0.1]));
 
   // Character line / rocker
   body.add(mesh(new THREE.BoxGeometry(0.05, 0.12, 3.6), MAT.terracottaDark(), [0.9, 0.32, 0.05]));
@@ -698,7 +701,7 @@ async function exportGLB(object, filename) {
 async function main() {
   const only = process.argv.slice(2);
   const jobs = {
-    // roadster: Kenney CC0 sedan-sports — do NOT overwrite with procedural
+    roadster: () => exportGLB(buildConvertible(), "roadster.glb"),
     pine: () => exportGLB(buildStonePine(), "pine.glb"),
     cypress: () => exportGLB(buildCypress(), "cypress.glb"),
     olive: () => exportGLB(buildOlive(), "olive.glb"),
@@ -726,7 +729,7 @@ async function main() {
     }
     await jobs[key]();
   }
-  console.log("done — roadster remains Kenney CC0 (public/models/roadster.glb)");
+  console.log("done");
 }
 
 main().catch((e) => {

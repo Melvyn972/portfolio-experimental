@@ -32,11 +32,14 @@ export const inputRef: {
   current: InputState;
   touch: { x: number; y: number };
   look: { x: number; y: number };
+  /** Mouse look deltas (consumed each frame). Not a held axis. */
+  lookDelta: { x: number; y: number };
   interactPulse: number;
 } = {
   current: { ...empty },
   touch: { x: 0, y: 0 },
   look: { x: 0, y: 0 },
+  lookDelta: { x: 0, y: 0 },
   interactPulse: 0,
 };
 
@@ -58,6 +61,9 @@ export function useKeyboard() {
         inputRef.interactPulse = 1;
         inputRef.current.exit = true;
       }
+      if (k === "escape" && document.pointerLockElement) {
+        document.exitPointerLock();
+      }
     };
 
     const up = (e: KeyboardEvent) => {
@@ -74,11 +80,19 @@ export function useKeyboard() {
       }
     };
 
+    const onMouseMove = (e: MouseEvent) => {
+      if (!document.pointerLockElement) return;
+      inputRef.lookDelta.x += e.movementX * 0.0022;
+      inputRef.lookDelta.y -= e.movementY * 0.0018;
+    };
+
     window.addEventListener("keydown", down, { passive: false });
     window.addEventListener("keyup", up);
+    window.addEventListener("mousemove", onMouseMove);
     return () => {
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
+      window.removeEventListener("mousemove", onMouseMove);
       inputRef.current = { ...empty };
     };
   }, []);

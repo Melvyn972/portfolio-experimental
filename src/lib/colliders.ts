@@ -51,13 +51,11 @@ export function buildWorldColliders(): Collider[] {
   for (const zone of content.zones.zones) {
     const { x, z } = zone.marker;
     if (zone.id === "maison-atelier") {
-      // Kenney City building-type-b @ ×6.2 + atelier wing @ ×5.2
-      list.push(box("maison", x, 3.55, z, 11.4, 7.1, 7.2));
-      list.push(box("maison-wing", x + 7.5, 3.25, z + 2, 9.2, 6.5, 5.4));
+      list.push(box("maison", x, 3.2, z - 0.4, 8.8, 6.4, 5.2));
+      list.push(box("maison-wing", x + 7.5, 2.9, z + 1.4, 6.8, 5.8, 4.0));
     }
     if (zone.id === "studio") {
-      // Kenney City building-type-e @ ×6.0
-      list.push(box("studio", x, 3.45, z, 8.0, 6.9, 6.3));
+      list.push(box("studio", x, 3.1, z - 0.35, 6.4, 6.2, 4.6));
     }
     if (zone.id === "phare") {
       // Daniel Dormin lighthouse @ ×0.34 — mesh already grounded at local y=0

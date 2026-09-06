@@ -33,9 +33,15 @@ function Scene({ isMobile }: { isMobile: boolean }) {
 
 export function ExperienceCanvas() {
   useKeyboard();
-  const { quality: preset } = useGameStore();
+  const { quality: preset, openChapter, rescueOpen } = useGameStore();
   const [isMobile, setIsMobile] = useState(false);
   const quality = useMemo(() => resolveQuality(preset, isMobile), [preset, isMobile]);
+
+  useEffect(() => {
+    if ((openChapter || rescueOpen) && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+  }, [openChapter, rescueOpen]);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 768px), (pointer: coarse)");
@@ -68,6 +74,12 @@ export function ExperienceCanvas() {
       camera={{ fov: 42, near: 0.1, far: 280, position: [32, 24, 58] }}
       onCreated={({ gl }) => {
         gl.setClearColor("#c8dde8");
+      }}
+      onPointerDown={(e) => {
+        const t = e.target as HTMLElement | undefined;
+        if (t?.requestPointerLock && getGameState().phase === "playing" && !getGameState().isMobile) {
+          t.requestPointerLock();
+        }
       }}
     >
       <Suspense fallback={null}>

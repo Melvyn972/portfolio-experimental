@@ -53,6 +53,7 @@ export function PlayerSystem() {
   const velocity = useRef(0);
   const yaw = useRef(Math.atan2(START_POSE.tangent.x, START_POSE.tangent.z));
   const walkYaw = useRef(yaw.current);
+  const lookYaw = useRef(yaw.current);
   const lookPitch = useRef(0.12);
   const pos = useRef(START_POSE.position.clone());
   const playerPos = useRef(new THREE.Vector3());
@@ -120,6 +121,7 @@ export function PlayerSystem() {
       if (!detail) return;
       playerPos.current.set(detail.x, detail.y, detail.z);
       walkYaw.current = detail.yaw ?? walkYaw.current;
+      lookYaw.current = walkYaw.current;
       playerVel.current.set(0, 0, 0);
       setPlayerKinematic(playerPos.current, walkYaw.current, true);
       if (playerVisual.current) {
@@ -131,6 +133,7 @@ export function PlayerSystem() {
         mode: "walking",
         playerPos: { x: detail.x, y: detail.y, z: detail.z },
         walkYaw: walkYaw.current,
+        lookYaw: lookYaw.current,
         nearStopSpot: false,
         prompt: null,
         interactTarget: null,
@@ -155,12 +158,14 @@ export function PlayerSystem() {
       pos.current.copy(START_POSE.position);
       yaw.current = Math.atan2(START_POSE.tangent.x, START_POSE.tangent.z);
       walkYaw.current = yaw.current;
+      lookYaw.current = yaw.current;
       syncCar(pos.current, yaw.current, 0, 0);
       initialized.current = true;
       setGameState({
         carPos: { x: pos.current.x, y: pos.current.y, z: pos.current.z },
         carYaw: yaw.current,
         walkYaw: yaw.current,
+        lookYaw: yaw.current,
       });
     }
 
@@ -291,6 +296,7 @@ export function PlayerSystem() {
         };
         playerPos.current.copy(pos.current);
         walkYaw.current = Math.atan2(toward.x, toward.z);
+        lookYaw.current = walkYaw.current;
         velocity.current = 0;
         exitCooldown.current = 0.8;
         setPlayerKinematic(playerPos.current, walkYaw.current, true);
@@ -300,6 +306,7 @@ export function PlayerSystem() {
           nearStopSpot: true,
           nearCar: false,
           walkYaw: walkYaw.current,
+          lookYaw: lookYaw.current,
           prompt: null,
           engineOn: true,
           interactTarget: null,
@@ -324,21 +331,31 @@ export function PlayerSystem() {
       return;
     }
 
-    // ——— Walking with Rapier CharacterController ———
-    if (!blocked && (Math.abs(look.x) > 0.08 || Math.abs(look.y) > 0.08)) {
-      walkYaw.current -= look.x * 1.9 * dt;
-      lookPitch.current = THREE.MathUtils.clamp(lookPitch.current + look.y * 1.15 * dt, -0.28, 0.48);
+    // ——— Walking (Rapier CharacterController) ———
+    // BEFORE (QA fail): look and move both wrote walkYaw. Strafe rotated the
+    // camera basis, next frame the same stick was re-projected → yaw spin.
+    // Look used `walkYaw -= look.x` which inverted right-stick X.
+    // AFTER: lookYaw/lookPitch = camera only. Movement is lookYaw-relative.
+    // walkYaw = visual facing, never fed back into the camera.
+    const mouseX = inputRef.lookDelta.x;
+    const mouseY = inputRef.lookDelta.y;
+    inputRef.lookDelta.x = 0;
+    inputRef.lookDelta.y = 0;
+    if (!blocked && (Math.abs(look.x) > 0.08 || Math.abs(look.y) > 0.08 || Math.abs(mouseX) > 0 || Math.abs(mouseY) > 0)) {
+      lookYaw.current += look.x * 2.35 * dt + mouseX;
+      lookPitch.current = THREE.MathUtils.clamp(lookPitch.current + look.y * 1.25 * dt + mouseY, -0.28, 0.48);
     }
 
-    const moveX = (right ? 1 : 0) - (left ? 1 : 0) + (!blocked && Math.abs(touch.x) > 0.12 ? touch.x : 0);
-    const moveZ = (forward ? 1 : 0) - (back ? 1 : 0) + (!blocked && Math.abs(touch.y) > 0.12 ? touch.y : 0);
+    const analogActive = !blocked && (Math.abs(touch.x) > 0.1 || Math.abs(touch.y) > 0.1);
+    const moveX = analogActive ? touch.x : (right ? 1 : 0) - (left ? 1 : 0);
+    const moveZ = analogActive ? touch.y : (forward ? 1 : 0) - (back ? 1 : 0);
     let moving = false;
     const speed = run ? RUN_SPEED : WALK_SPEED;
 
     desired.current.set(0, -14 * dt, 0); // gravity step for controller
 
     if (Math.abs(moveX) > 0.01 || Math.abs(moveZ) > 0.01) {
-      const basis = walkYaw.current;
+      const basis = lookYaw.current;
       tmp.current.set(Math.sin(basis), 0, Math.cos(basis));
       sideTmp.current.set(tmp.current.z, 0, -tmp.current.x);
       const move = new THREE.Vector3()
@@ -348,15 +365,11 @@ export function PlayerSystem() {
         move.normalize();
         const mag = Math.min(1, Math.hypot(moveX, moveZ));
         playerVel.current.lerp(move.multiplyScalar(speed * mag), 1 - Math.exp(-12 * dt));
-        if (moveZ >= -0.05 || Math.abs(moveX) > 0.25) {
-          if (moveZ > 0.05 || Math.abs(moveX) >= Math.abs(moveZ)) {
-            const targetYaw = Math.atan2(playerVel.current.x, playerVel.current.z);
-            let dy = targetYaw - walkYaw.current;
-            while (dy > Math.PI) dy -= Math.PI * 2;
-            while (dy < -Math.PI) dy += Math.PI * 2;
-            walkYaw.current += dy * Math.min(1, 10 * dt);
-          }
-        }
+        const targetYaw = Math.atan2(playerVel.current.x, playerVel.current.z);
+        let dy = targetYaw - walkYaw.current;
+        while (dy > Math.PI) dy -= Math.PI * 2;
+        while (dy < -Math.PI) dy += Math.PI * 2;
+        walkYaw.current += dy * Math.min(1, 12 * dt);
         moving = true;
       }
     } else {
@@ -385,8 +398,8 @@ export function PlayerSystem() {
       playerPos.current.y = sampleGroundHeight(playerPos.current.x, playerPos.current.z);
     }
 
-    // Soft world bounds
-    if (playerPos.current.x < -24) playerPos.current.x = -24;
+    // Soft world bounds — leave the beach (x ≈ −22) walkable
+    if (playerPos.current.x < -28) playerPos.current.x = -28;
     if (playerPos.current.x > 32) playerPos.current.x = 32;
     if (playerPos.current.z > 50) playerPos.current.z = 50;
     if (playerPos.current.z < -195) playerPos.current.z = -195;
@@ -440,7 +453,8 @@ export function PlayerSystem() {
           to: pos.current.clone().setY(sampleGroundHeight(pos.current.x, pos.current.z)),
         };
         walkYaw.current = yaw.current;
-        setGameState({ walkYaw: yaw.current, prompt: null, interactTarget: null });
+        lookYaw.current = yaw.current;
+        setGameState({ walkYaw: yaw.current, lookYaw: yaw.current, prompt: null, interactTarget: null });
       }
     }
 
@@ -452,6 +466,7 @@ export function PlayerSystem() {
       prompt,
       interactTarget,
       walkYaw: walkYaw.current,
+      lookYaw: lookYaw.current,
       lookPitch: lookPitch.current,
       playerPos: { x: playerPos.current.x, y: playerPos.current.y, z: playerPos.current.z },
       carPos: { x: pos.current.x, y: pos.current.y, z: pos.current.z },
@@ -507,7 +522,7 @@ export function PlayerSystem() {
         position={[START_POSE.position.x, START_POSE.position.y + 0.4, START_POSE.position.z]}
         enabledRotations={[false, true, false]}
       >
-        <CuboidCollider args={[0.95, 0.45, 2.0]} friction={0.8} />
+        <CuboidCollider args={[1.05, 0.5, 2.25]} friction={0.8} />
       </RigidBody>
       <group ref={carVisual}>
         <Convertible color="#c45c3e" />

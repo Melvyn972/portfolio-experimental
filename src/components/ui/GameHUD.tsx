@@ -40,20 +40,34 @@ export function GameHUD() {
       <TopBar />
       {state.phase === "intro" && <IntroTitle />}
       {state.showExplorerHint && state.phase === "playing" && !state.openChapter && (
-        <div
-          className="absolute left-1/2 -translate-x-1/2 animate-fade-in"
-          style={{ top: "calc(3.25rem + env(safe-area-inset-top, 0px))" }}
-        >
-          <p className="rounded-sm bg-[#f3ead8]/55 px-2.5 py-1 text-center text-[10px] tracking-wide text-[#6b5a48] backdrop-blur-sm md:text-xs">
-            ZQSD · Shift · E — explorez la côte
-          </p>
-        </div>
+        <ExplorerHint />
       )}
       {state.openChapter && <ChapterPanel chapter={state.openChapter} />}
       {state.rescueOpen && <DiscoveryMenu />}
       <TouchControls />
       <InteractPrompt />
       <SpeedWhisper />
+    </div>
+  );
+}
+
+function ExplorerHint() {
+  const { isMobile, mode } = useGameStore();
+  const text = isMobile
+    ? mode === "walking"
+      ? "Stick gauche : marcher · stick droit : regard"
+      : "Stick : conduire · E : descendre au belvédère"
+    : mode === "walking"
+      ? "ZQSD · souris · Shift — marcher"
+      : "ZQSD · Shift · E — explorez la côte";
+  return (
+    <div
+      className="absolute left-1/2 -translate-x-1/2 animate-fade-in"
+      style={{ top: "calc(3.25rem + env(safe-area-inset-top, 0px))" }}
+    >
+      <p className="rounded-sm bg-[#f3ead8]/55 px-2.5 py-1 text-center text-[10px] tracking-wide text-[#6b5a48] backdrop-blur-sm md:text-xs">
+        {text}
+      </p>
     </div>
   );
 }

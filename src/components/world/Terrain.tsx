@@ -1,9 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
-import { getRoadCurve, nearestRoadSample, getBelvedereWorldAnchor } from "@/lib/road";
+import { nearestRoadSample, getBelvedereWorldAnchor } from "@/lib/road";
 
 export function Terrain() {
   const land = useMemo(() => {
@@ -102,57 +101,11 @@ export function Terrain() {
     return geo;
   }, []);
 
-  const cliffFaces = useMemo(() => {
-    const curve = getRoadCurve();
-    return Array.from({ length: 18 }, (_, i) => {
-      const t = 0.12 + i * 0.042;
-      const p = curve.getPointAt(t);
-      const tangent = curve.getTangentAt(t);
-      const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-      const pos = p.clone().addScaledVector(side, 7.4);
-      pos.y = p.y + 0.35 + (i % 3) * 0.15;
-      return {
-        pos: [pos.x, pos.y, pos.z] as [number, number, number],
-        yaw: Math.atan2(tangent.x, tangent.z) + (i % 2 === 0 ? 0.4 : -0.3),
-        scale: [1.1 + (i % 3) * 0.35, 0.9 + (i % 4) * 0.25, 1.3 + (i % 2) * 0.4] as [number, number, number],
-        variant: i % 3,
-      };
-    });
-  }, []);
-
-  const { scene: rockA } = useGLTF("/models/rock-a.glb");
-  const { scene: rockB } = useGLTF("/models/rock-b.glb");
-  const { scene: rockC } = useGLTF("/models/rock-c.glb");
-  const rockScenes = useMemo(() => [rockA, rockB, rockC], [rockA, rockB, rockC]);
-
-  const cliffRocks = useMemo(() => {
-    return cliffFaces.map((w, i) => {
-      const clone = rockScenes[w.variant].clone(true);
-      clone.traverse((o) => {
-        const m = o as THREE.Mesh;
-        if (m.isMesh) {
-          m.castShadow = true;
-          m.receiveShadow = true;
-        }
-      });
-      return { ...w, object: clone, key: i };
-    });
-  }, [cliffFaces, rockScenes]);
-
   return (
     <group>
       <mesh geometry={land} receiveShadow castShadow>
         <meshStandardMaterial vertexColors roughness={0.92} metalness={0} flatShading={false} />
       </mesh>
-      {cliffRocks.map((w) => (
-        <group key={w.key} position={w.pos} rotation={[0.1, w.yaw, 0.05]} scale={w.scale}>
-          <primitive object={w.object} />
-        </group>
-      ))}
     </group>
   );
 }
-
-useGLTF.preload("/models/rock-a.glb");
-useGLTF.preload("/models/rock-b.glb");
-useGLTF.preload("/models/rock-c.glb");
