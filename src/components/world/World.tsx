@@ -60,7 +60,8 @@ function AccessPaths() {
           const x = a.x + (b.x - a.x) * t;
           const z = a.z + (b.z - a.z) * t;
           const road = nearestRoadSample(new THREE.Vector3(x, 0, z));
-          if (Math.abs(road.lateral) < ROAD_WIDTH * 0.62) continue;
+          if (Math.abs(road.lateral) < ROAD_WIDTH * 0.7) continue;
+          if (x < -2.5) continue;
           const y = sampleGroundHeight(x, z);
           items.push({
             pos: [x, y + 0.02, z],

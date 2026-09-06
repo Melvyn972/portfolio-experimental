@@ -150,6 +150,36 @@ export function Road() {
       <RoadEdgeLines />
       <Shoulder side={1} />
       <Shoulder side={-1} />
+      <SeaCurb />
+    </group>
+  );
+}
+
+/** Extra sea-side fascia — hides remaining sky slits at the asphalt lip. */
+function SeaCurb() {
+  const blocks = useMemo(() => {
+    const curve = getRoadCurve();
+    return Array.from({ length: 40 }, (_, i) => {
+      const t = (i + 0.5) / 40;
+      const p = curve.getPointAt(t);
+      const tangent = curve.getTangentAt(t);
+      const lateral = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+      const pos = p.clone().addScaledVector(lateral, -(ROAD_HALF - 0.05));
+      return {
+        position: [pos.x, p.y + ROAD_SURFACE_LIFT - 0.55, pos.z] as [number, number, number],
+        yaw: Math.atan2(tangent.x, tangent.z),
+      };
+    });
+  }, []);
+
+  return (
+    <group>
+      {blocks.map((b, i) => (
+        <mesh key={i} position={b.position} rotation={[0, b.yaw, 0]} receiveShadow>
+          <boxGeometry args={[0.55, 1.15, 6.2]} />
+          <meshStandardMaterial color="#c4b08e" roughness={0.95} />
+        </mesh>
+      ))}
     </group>
   );
 }

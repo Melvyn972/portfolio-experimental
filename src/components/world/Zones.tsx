@@ -170,31 +170,11 @@ export function CoastalZones() {
 
       {plage && (
         <group>
-          <WoodenPier
-            position={[plage.x - 6.4, sampleGroundHeight(plage.x - 6.4, plage.z) + 0.02, plage.z]}
-            yaw={-Math.PI / 2 + 0.18}
-          />
-          <BeachApron cx={plage.x} cz={plage.z} />
-          <Placed
-            scene={pine}
-            position={[plage.x + 1.4, sampleGroundHeight(plage.x + 1.4, plage.z + 4.2), plage.z + 4.2]}
-            scale={0.38}
-          />
-          <Placed
-            scene={pine}
-            position={[plage.x + 0.6, sampleGroundHeight(plage.x + 0.6, plage.z - 3.4), plage.z - 3.4]}
-            scale={0.32}
-          />
-          <Placed
-            scene={hedge}
-            position={[plage.x + 2.2, sampleGroundHeight(plage.x + 2.2, plage.z + 5.2), plage.z + 5.2]}
-            scale={1.8}
-          />
-          <Placed
-            scene={lantern}
-            position={[plage.x - 1.2, sampleGroundHeight(plage.x - 1.2, plage.z + 1.6), plage.z + 1.6]}
-            scale={1.2}
-          />
+          <WoodenPier position={[plage.x - 5.8, 0.14, plage.z - 0.4]} yaw={-Math.PI / 2 + 0.12} />
+          <Placed scene={pine} position={[plage.x + 0.8, 0.16, plage.z + 5.4]} scale={0.36} />
+          <Placed scene={pine} position={[plage.x - 0.4, 0.16, plage.z - 5.8]} scale={0.3} />
+          <Placed scene={hedge} position={[plage.x + 2.8, 0.16, plage.z + 6.2]} scale={1.7} />
+          <Placed scene={lantern} position={[plage.x - 0.8, 0.16, plage.z + 2.2]} scale={1.15} />
         </group>
       )}
 
@@ -220,18 +200,18 @@ function WoodenPier({ position, yaw }: { position: [number, number, number]; yaw
     <group position={position} rotation={[0, yaw, 0]}>
       {piles.map((z, i) =>
         [-0.85, 0.85].map((x) => (
-          <mesh key={`p-${i}-${x}`} position={[x, -0.55, z]} castShadow receiveShadow>
-            <cylinderGeometry args={[0.09, 0.11, 1.5, 7]} />
+          <mesh key={`p-${i}-${x}`} position={[x, -0.35, z]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.1, 0.12, 1.35, 7]} />
             <meshStandardMaterial color={i % 2 ? "#6b4a30" : "#5c3f28"} roughness={0.88} />
           </mesh>
         )),
       )}
-      <mesh position={[0, 0.22, 0]} receiveShadow castShadow>
+      <mesh position={[0, 0.34, 0]} receiveShadow castShadow>
         <boxGeometry args={[2.15, 0.1, 7.4]} />
         <meshStandardMaterial color="#8a5e3c" roughness={0.78} />
       </mesh>
       {[-0.55, 0, 0.55].map((x) => (
-        <mesh key={`plank-${x}`} position={[x, 0.28, 0]} receiveShadow>
+        <mesh key={`plank-${x}`} position={[x, 0.4, 0]} receiveShadow>
           <boxGeometry args={[0.48, 0.04, 7.2]} />
           <meshStandardMaterial color="#9a6a44" roughness={0.82} />
         </mesh>
@@ -251,16 +231,6 @@ function WoodenPier({ position, yaw }: { position: [number, number, number]; yaw
         </group>
       ))}
     </group>
-  );
-}
-
-function BeachApron({ cx, cz }: { cx: number; cz: number }) {
-  const y = sampleGroundHeight(cx - 3, cz) + 0.012;
-  return (
-    <mesh position={[cx - 3.4, y, cz]} rotation={[-Math.PI / 2, 0, 0.06]} receiveShadow>
-      <planeGeometry args={[12, 15]} />
-      <meshStandardMaterial color="#e4d4b6" roughness={0.96} />
-    </mesh>
   );
 }
 
