@@ -71,6 +71,13 @@ export function PlayerSystem() {
   const exitCooldown = useRef(0);
   const suspension = useRef(0);
   const prevGround = useRef(0);
+  const prevScreenPos = useRef(new THREE.Vector3());
+  const prevCarFwd = useRef(new THREE.Vector3());
+  const prevYaw = useRef(0);
+  const holdKey = useRef<"Q" | "D" | "none">("none");
+  const holdScreenDx = useRef(0);
+  const lastScreenDx = useRef(0);
+  const lastSteerDyaw = useRef(0);
   const transition = useRef<{
     kind: "exit" | "enter" | null;
     t: number;
@@ -266,14 +273,13 @@ export function PlayerSystem() {
 
       const speedFactor = THREE.MathUtils.clamp(Math.abs(velocity.current) / MAX_SPEED, 0.42, 1);
       const turnSign = Math.sign(velocity.current || 1);
-      // Player-view: Q/A = left, D = right. Camera sits behind car yaw.
-      // Facing +Z, left is −X = −yaw (Three.js Y). 182e107 had these flipped
-      // (Q increased yaw → screen-right). Analog +x follows D.
+      // Parent GPU FAIL 601f7fc: Q turned camera-RIGHT. Flip vs that HEAD.
+      // Screen-left = −cameraRight (look × up). Q/A = left, D = right.
       if (analogSteer) {
-        yaw.current += touch.x * TURN_RATE * speedFactor * turnSign * dt;
+        yaw.current -= touch.x * TURN_RATE * speedFactor * turnSign * dt;
       } else {
-        if (left) yaw.current -= TURN_RATE * speedFactor * turnSign * dt;
-        if (right) yaw.current += TURN_RATE * speedFactor * turnSign * dt;
+        if (left) yaw.current += TURN_RATE * speedFactor * turnSign * dt;
+        if (right) yaw.current -= TURN_RATE * speedFactor * turnSign * dt;
       }
       tmp.current.set(Math.sin(yaw.current), 0, Math.cos(yaw.current));
       pos.current.addScaledVector(tmp.current, velocity.current * dt);
@@ -306,12 +312,12 @@ export function PlayerSystem() {
 
       const ahead = sampleRoad(THREE.MathUtils.clamp(sample.t + 0.012, 0, 1));
       const pitch = Math.atan2(ahead.position.y - sample.position.y, 2.2) * 0.9;
-      const roll = ((right ? 1 : 0) - (left ? 1 : 0)) * 0.06;
+      const roll = ((left ? 1 : 0) - (right ? 1 : 0)) * 0.06;
 
       syncCar(pos.current, yaw.current, suspension.current, pitch, roll);
       if (carVisual.current) {
         carVisual.current.userData.setWheelSpin?.(velocity.current * dt * 3.15);
-        const steerAmt = analogSteer ? touch.x * 0.42 : ((right ? 1 : 0) - (left ? 1 : 0)) * 0.42;
+        const steerAmt = analogSteer ? -touch.x * 0.42 : ((left ? 1 : 0) - (right ? 1 : 0)) * 0.42;
         carVisual.current.userData.setSteer?.(steerAmt);
       }
 
@@ -404,10 +410,10 @@ export function PlayerSystem() {
       // Authoritative basis = lookYaw (same as the chase rig). Camera world
       // direction is NOT used: a mid-lerp / in-front camera would invert W/stick.
       tmp.current.set(Math.sin(lookYaw.current), 0, Math.cos(lookYaw.current));
-      // Right vector = up × forward. At lookYaw=0: (+X, 0, 0) = screen-right.
-      // moveX = right − left → Q/A strafe −X (left), D strafe +X (right).
-      // 182e107 used (−fwd.z, 0, fwd.x) which sent Q to +X.
-      sideTmp.current.set(tmp.current.z, 0, -tmp.current.x);
+      // Parent GPU FAIL 601f7fc: Q strafed camera-RIGHT. Flip vs that HEAD.
+      // cameraRight = look × up = (−lookZ, 0, lookX). This basis matches it
+      // so Q (moveX < 0) goes −cameraRight = screen-left.
+      sideTmp.current.set(-tmp.current.z, 0, tmp.current.x);
       moveTmp.current
         .set(0, 0, 0)
         .addScaledVector(tmp.current, moveZ)
@@ -540,11 +546,46 @@ export function PlayerSystem() {
     camera.getWorldDirection(tmp.current);
     tmp.current.y = 0;
     if (tmp.current.lengthSq() > 1e-8) tmp.current.normalize();
+    // Three.js: cameraRight = lookDir × worldUp. +screenDeltaX = moved right on screen.
+    const camRx = -tmp.current.z;
+    const camRz = tmp.current.x;
+    const subj = mode === "driving" ? pos.current : playerPos.current;
+    const dpx = subj.x - prevScreenPos.current.x;
+    const dpz = subj.z - prevScreenPos.current.z;
+    const posDx = dpx * camRx + dpz * camRz;
+    const fwdX = Math.sin(yaw.current);
+    const fwdZ = Math.cos(yaw.current);
+    if (prevScreenPos.current.lengthSq() < 1e-8) {
+      prevScreenPos.current.copy(subj);
+      prevCarFwd.current.set(fwdX, 0, fwdZ);
+      prevYaw.current = yaw.current;
+    }
+    const headDx = (fwdX - prevCarFwd.current.x) * camRx + (fwdZ - prevCarFwd.current.z) * camRz;
+    const screenDeltaX = Math.abs(dpx) + Math.abs(dpz) > 1e-4 ? posDx : headDx;
+    let steerYawDelta = yaw.current - prevYaw.current;
+    while (steerYawDelta > Math.PI) steerYawDelta -= Math.PI * 2;
+    while (steerYawDelta < -Math.PI) steerYawDelta += Math.PI * 2;
+    const key = inputRef.current.left && !inputRef.current.right ? "Q" : inputRef.current.right && !inputRef.current.left ? "D" : "none";
+    if (key !== holdKey.current) {
+      holdKey.current = key;
+      holdScreenDx.current = 0;
+    }
+    if (key !== "none") holdScreenDx.current += screenDeltaX;
+    prevScreenPos.current.copy(subj);
+    prevCarFwd.current.set(fwdX, 0, fwdZ);
+    prevYaw.current = yaw.current;
+    lastScreenDx.current = screenDeltaX;
+    lastSteerDyaw.current = steerYawDelta;
+
     const basisYaw = mode === "driving" ? yaw.current : lookYaw.current;
     const lookFx = Math.sin(basisYaw);
     const lookFz = Math.cos(basisYaw);
     const snap = {
       mode,
+      key,
+      screenDeltaX,
+      screenDeltaXHold: holdScreenDx.current,
+      steerYawDelta,
       playerPos: { x: playerPos.current.x, y: playerPos.current.y, z: playerPos.current.z },
       carPos: { x: pos.current.x, y: pos.current.y, z: pos.current.z },
       carYaw: yaw.current,
@@ -552,6 +593,7 @@ export function PlayerSystem() {
       walkYaw: walkYaw.current,
       driveSpeed: velocity.current,
       camFwd: { x: tmp.current.x, z: tmp.current.z },
+      camRight: { x: camRx, z: camRz },
       lookFwd: { x: lookFx, z: lookFz },
       camDotLook: tmp.current.x * lookFx + tmp.current.z * lookFz,
       camPos: { x: camera.position.x, y: camera.position.y, z: camera.position.z },

@@ -49,7 +49,7 @@ export function GameHUD() {
       <TouchControls />
       <InteractPrompt />
       <SpeedWhisper />
-      {state.debugColliders && <AxesProof />}
+      <AxesProof />
     </div>
   );
 }
@@ -63,11 +63,12 @@ function AxesProof() {
       const raw = api?.live;
       const l = typeof raw === "function" ? raw() : raw;
       if (l) {
-        const keys = (l.keys as { left?: boolean; right?: boolean; forward?: boolean }) ?? {};
-        const p = (l.playerPos as { x: number; z: number }) ?? { x: 0, z: 0 };
-        const yaw = Number(l.carYaw ?? 0);
+        const key = String(l.key ?? "none");
+        const sx = Number(l.screenDeltaX ?? 0);
+        const hold = Number(l.screenDeltaXHold ?? 0);
+        const dy = Number(l.steerYawDelta ?? 0);
         setLine(
-          `${l.mode} · Q=${keys.left ? "on" : "off"} D=${keys.right ? "on" : "off"} · x=${p.x.toFixed(2)} z=${p.z.toFixed(2)} · yaw=${yaw.toFixed(3)} · look=${Number(l.lookYaw ?? 0).toFixed(2)}`,
+          `key=${key}  screenDeltaX=${sx.toFixed(3)} (+=droite écran)  hold=${hold.toFixed(2)}  steerYawDelta=${dy.toFixed(3)}  ${l.mode}`,
         );
       }
       raf = requestAnimationFrame(tick);
