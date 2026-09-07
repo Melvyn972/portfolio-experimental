@@ -18,11 +18,18 @@ function isWindow(name: string) {
  * Mutates a cloned scene. Maps are shared (do not dispose).
  */
 export function dressCoastalBuilding(root: THREE.Object3D, pbr: CoastalPbr, wallTint: string) {
+  root.updateMatrixWorld(true);
+  const house = new THREE.Box3().setFromObject(root);
+  const roofCut = house.min.y + (house.max.y - house.min.y) * 0.52;
+  const meshBox = new THREE.Box3();
+
   root.traverse((o) => {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh) return;
     const raw = mesh.material;
     const list = Array.isArray(raw) ? raw : raw ? [raw] : [];
+    meshBox.setFromObject(mesh);
+    const highMesh = meshBox.min.y >= roofCut - 0.05;
     const nextList = list.map((mat) => {
       if (!(mat instanceof THREE.MeshStandardMaterial) && !(mat instanceof THREE.MeshPhysicalMaterial)) return mat;
       const name = `${mat.name} ${mesh.name}`.toLowerCase();
@@ -34,7 +41,7 @@ export function dressCoastalBuilding(root: THREE.Object3D, pbr: CoastalPbr, wall
         next.envMapIntensity = 1.35;
         return next;
       }
-      if (isRoof(name, mat)) {
+      if (highMesh || isRoof(name, mat)) {
         next.map = pbr.roof.map;
         next.roughnessMap = pbr.roof.roughnessMap;
         next.color.set("#c45a38");
