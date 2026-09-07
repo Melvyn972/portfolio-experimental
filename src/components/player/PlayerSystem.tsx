@@ -78,6 +78,7 @@ export function PlayerSystem() {
   const holdScreenDx = useRef(0);
   const lastScreenDx = useRef(0);
   const lastSteerDyaw = useRef(0);
+  const debugMode = useRef<"walking" | "driving" | null>(null);
   const transition = useRef<{
     kind: "exit" | "enter" | null;
     t: number;
@@ -555,13 +556,17 @@ export function PlayerSystem() {
     const posDx = dpx * camRx + dpz * camRz;
     const fwdX = Math.sin(yaw.current);
     const fwdZ = Math.cos(yaw.current);
-    if (prevScreenPos.current.lengthSq() < 1e-8) {
+    if (debugMode.current !== mode || prevScreenPos.current.lengthSq() < 1e-8) {
+      debugMode.current = mode;
       prevScreenPos.current.copy(subj);
       prevCarFwd.current.set(fwdX, 0, fwdZ);
       prevYaw.current = yaw.current;
+      holdScreenDx.current = 0;
     }
     const headDx = (fwdX - prevCarFwd.current.x) * camRx + (fwdZ - prevCarFwd.current.z) * camRz;
-    const screenDeltaX = Math.abs(dpx) + Math.abs(dpz) > 1e-4 ? posDx : headDx;
+    // Walk = feet vs cameraRight. Drive = nose vs cameraRight (road curve
+    // must not drown the steer sign).
+    const screenDeltaX = mode === "driving" ? headDx : posDx;
     let steerYawDelta = yaw.current - prevYaw.current;
     while (steerYawDelta > Math.PI) steerYawDelta -= Math.PI * 2;
     while (steerYawDelta < -Math.PI) steerYawDelta += Math.PI * 2;
