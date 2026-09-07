@@ -67,6 +67,12 @@ export function HeroCoast({ lit = true }: { lit?: boolean }) {
       { kind: "cypress", x: 16.8, z: -101.2, s: 1.08, yaw: 0.5 },
       { kind: "pine", x: 9.2, z: -112.6, s: 0.4, yaw: 0.15 },
       { kind: "bougain", x: 20.2, z: -88.4, s: 0.92, yaw: 0.6 },
+      { kind: "pine", x: 15.8, z: -68.8, s: 0.42, yaw: 0.9 },
+      { kind: "pine", x: 16.4, z: -78.2, s: 0.4, yaw: 1.7 },
+      { kind: "olive", x: 17.2, z: -90.6, s: 1.04, yaw: 0.25 },
+      { kind: "pine", x: 14.8, z: -112.2, s: 0.38, yaw: 2.2 },
+      { kind: "cypress", x: 18.6, z: -74.4, s: 1.1, yaw: 0.15 },
+      { kind: "pine", x: 9.0, z: -94.8, s: 0.36, yaw: 0.45 },
     ];
     return spots.filter((s) => s.x > 8.4 && offRibbon(s.x, s.z, 4.6));
   }, []);
@@ -78,6 +84,8 @@ export function HeroCoast({ lit = true }: { lit?: boolean }) {
       { x: -11.8, z: -88.4, s: 0.36, yaw: 2.0 },
       { x: -12.6, z: -96.2, s: 0.42, yaw: 0.2 },
       { x: -11.6, z: -104.8, s: 0.33, yaw: 1.6 },
+      { x: -12.0, z: -64.8, s: 0.32, yaw: 0.8 },
+      { x: -11.2, z: -112.4, s: 0.35, yaw: 1.4 },
     ];
     return spots.filter((s) => s.x > -14.6 && s.x < -8 && offRibbon(s.x, s.z, 3.8));
   }, []);
@@ -94,8 +102,8 @@ export function HeroCoast({ lit = true }: { lit?: boolean }) {
   const steps = useMemo(() => {
     const bel = getBelvedereWorldAnchor();
     const items: { pos: [number, number, number]; yaw: number }[] = [];
-    for (let i = 0; i < 8; i++) {
-      const t = 0.32 + i * 0.08;
+    for (let i = 0; i < 11; i++) {
+      const t = 0.22 + i * 0.07;
       const x = THREE.MathUtils.lerp(bel.stop.x, bel.terrace.x, t);
       const z = THREE.MathUtils.lerp(bel.stop.z, bel.terrace.z, t);
       if (Math.abs(nearestRoadSample(new THREE.Vector3(x, 0, z)).lateral) < ROAD_WIDTH * 0.5 + 0.45) continue;
@@ -212,7 +220,8 @@ export function HeroCoast({ lit = true }: { lit?: boolean }) {
 
       {lowerFlight && (
         <group position={lowerFlight.pos} rotation={[0, lowerFlight.yaw, 0]}>
-          <primitive object={stairs.clone(true)} scale={1.65} />
+          <primitive object={stairs.clone(true)} scale={1.72} />
+          <primitive object={stairs.clone(true)} position={[0, 0.42, 1.15]} scale={1.55} />
         </group>
       )}
 
@@ -282,24 +291,28 @@ function HeroFacade({
   const y = sampleGroundHeight(x, z);
   return (
     <group position={[x, y, z]} rotation={[0, yaw, 0]}>
-      {[-1.05, 0, 1.05].map((sx) => (
-        <group key={sx} position={[sx, 1.68, 1.58]}>
+      <mesh position={[0, 0.22, 0.08]} receiveShadow>
+        <boxGeometry args={[4.55, 0.44, 2.85]} />
+        <meshStandardMaterial color="#9a8c74" roughness={0.94} />
+      </mesh>
+      {[-1.08, 0, 1.08].map((sx) => (
+        <group key={sx} position={[sx, 1.78, 1.58]}>
           <mesh>
-            <boxGeometry args={[0.58, 0.82, 0.05]} />
+            <boxGeometry args={[0.62, 0.88, 0.06]} />
             <meshStandardMaterial color="#2c221c" roughness={0.38} metalness={0.1} />
           </mesh>
-          <mesh position={[-0.26, 0, 0.035]}>
-            <boxGeometry args={[0.18, 0.76, 0.035]} />
+          <mesh position={[-0.28, 0, 0.04]}>
+            <boxGeometry args={[0.2, 0.8, 0.04]} />
             <meshStandardMaterial color="#6a3a2a" roughness={0.72} />
           </mesh>
-          <mesh position={[0.26, 0, 0.035]}>
-            <boxGeometry args={[0.18, 0.76, 0.035]} />
+          <mesh position={[0.28, 0, 0.04]}>
+            <boxGeometry args={[0.2, 0.8, 0.04]} />
             <meshStandardMaterial color="#6a3a2a" roughness={0.72} />
           </mesh>
         </group>
       ))}
-      <mesh position={[0, 1.08, 1.74]} castShadow>
-        <boxGeometry args={[0.68, 1.58, 0.07]} />
+      <mesh position={[0, 1.12, 1.76]} castShadow>
+        <boxGeometry args={[0.72, 1.68, 0.08]} />
         <meshStandardMaterial
           color="#4a3224"
           map={pbr.stucco.map}
@@ -307,29 +320,41 @@ function HeroFacade({
           roughness={0.8}
         />
       </mesh>
-      <mesh position={[0, 2.42, 1.62]} castShadow>
-        <boxGeometry args={[3.35, 0.08, 0.55]} />
+      <mesh position={[0.22, 1.18, 1.82]}>
+        <boxGeometry args={[0.06, 0.1, 0.04]} />
+        <meshStandardMaterial color="#b08d57" metalness={0.55} roughness={0.35} />
+      </mesh>
+      <mesh position={[0, 2.48, 1.64]} castShadow>
+        <boxGeometry args={[3.45, 0.1, 0.62]} />
         <meshStandardMaterial color="#c45c3e" map={pbr.roof.map} roughness={0.6} />
       </mesh>
-      <mesh position={[0, 2.96, 0.12]} receiveShadow>
-        <boxGeometry args={[4.45, 0.1, 2.6]} />
+      <mesh position={[0, 3.02, 0.12]} receiveShadow>
+        <boxGeometry args={[4.55, 0.12, 2.7]} />
         <meshStandardMaterial color={tint} map={pbr.roof.map} roughnessMap={pbr.roof.roughnessMap} roughness={0.62} />
       </mesh>
-      {[-1.15, 1.15].map((sx) => (
-        <mesh key={`box-${sx}`} position={[sx, 1.18, 1.68]}>
-          <boxGeometry args={[0.55, 0.14, 0.2]} />
+      <mesh position={[1.55, 3.62, -0.35]} castShadow>
+        <boxGeometry args={[0.46, 1.15, 0.46]} />
+        <meshStandardMaterial color="#a44c32" roughness={0.7} />
+      </mesh>
+      {[-1.18, 1.18].map((sx) => (
+        <mesh key={`box-${sx}`} position={[sx, 1.22, 1.7]}>
+          <boxGeometry args={[0.58, 0.16, 0.22]} />
           <meshStandardMaterial color="#6a4a32" roughness={0.8} />
         </mesh>
       ))}
-      <mesh position={[-0.85, 2.55, 1.55]} rotation={[0, 0, 0.04]}>
-        <boxGeometry args={[0.04, 0.55, 0.04]} />
+      <mesh position={[-0.92, 2.62, 1.56]} rotation={[0, 0, 0.05]}>
+        <boxGeometry args={[0.04, 0.62, 0.04]} />
         <meshStandardMaterial color="#d8d0c4" roughness={0.55} />
       </mesh>
-      <mesh position={[0.05, 2.42, 1.55]} rotation={[0, 0, -0.12]}>
-        <boxGeometry args={[0.36, 0.42, 0.02]} />
+      <mesh position={[0.08, 2.48, 1.56]} rotation={[0, 0, -0.14]}>
+        <boxGeometry args={[0.38, 0.46, 0.02]} />
         <meshStandardMaterial color="#c8b070" roughness={0.78} />
       </mesh>
-      <primitive object={bougain.clone(true)} position={[1.75, 0, 1.85]} scale={0.88} />
+      <mesh position={[0.42, 2.28, 1.56]} rotation={[0, 0, 0.1]}>
+        <boxGeometry args={[0.28, 0.34, 0.02]} />
+        <meshStandardMaterial color="#b8a068" roughness={0.8} />
+      </mesh>
+      <primitive object={bougain.clone(true)} position={[1.78, 0, 1.88]} scale={0.9} />
     </group>
   );
 }

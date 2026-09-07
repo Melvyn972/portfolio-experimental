@@ -95,18 +95,22 @@ export function Belvedere() {
         </mesh>
 
         {/* Stairs toward the road (+Z) + cheek walls */}
-        {[0, 1, 2, 3, 4].map((i) => (
-          <mesh key={i} position={[0, 0.18 + i * 0.16, 3.55 + i * 0.55]} receiveShadow castShadow>
-            <boxGeometry args={[2.6, 0.16, 0.58]} />
+        {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <mesh key={i} position={[0, 0.1 + i * 0.125, 3.35 + i * 0.52]} receiveShadow castShadow>
+            <boxGeometry args={[2.7, 0.14, 0.56]} />
             <meshStandardMaterial color={i % 2 ? STONE : STONE_DARK} roughness={0.92} />
           </mesh>
         ))}
         {[1, -1].map((side) => (
-          <mesh key={`cheek-${side}`} position={[side * 1.45, 0.7, 4.7]} receiveShadow castShadow>
-            <boxGeometry args={[0.22, 0.85, 2.8]} />
+          <mesh key={`cheek-${side}`} position={[side * 1.5, 0.62, 5.15]} receiveShadow castShadow>
+            <boxGeometry args={[0.24, 0.95, 3.9]} />
             <meshStandardMaterial color={LIME} roughness={0.9} />
           </mesh>
         ))}
+        <mesh position={[0, 0.08, 7.35]} receiveShadow>
+          <boxGeometry args={[3.1, 0.1, 0.85]} />
+          <meshStandardMaterial color={STONE_DARK} roughness={0.94} />
+        </mesh>
 
         <IdentityCarnetModel position={[0, 1.08, -0.4]} />
         <mesh position={[0, 1.06, -0.4]} receiveShadow>

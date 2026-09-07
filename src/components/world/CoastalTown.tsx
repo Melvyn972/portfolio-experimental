@@ -142,42 +142,36 @@ export function CoastalTown({ rich = true }: { rich?: boolean }) {
               metalness={0.04}
             />
           </mesh>
-          {rich && (
-            <primitive
-              object={(lot.id.charCodeAt(4) % 2 ? pot : ceramic).clone(true)}
-              position={[1.55, 0, 2.05]}
-              scale={1.15}
-            />
-          )}
+          <primitive
+            object={(lot.id.charCodeAt(4) % 2 ? pot : ceramic).clone(true)}
+            position={[1.55, 0, 2.05]}
+            scale={1.15}
+          />
         </group>
       ))}
 
-      {rich && (
-        <>
-          <group position={[27.6, sampleGroundHeight(27.6, -64.2), -64.2]} rotation={[0, 0.35, 0]}>
-            <primitive object={windmill.clone(true)} scale={4.5} />
-          </group>
-          <mesh position={[24.4, sampleGroundHeight(24.4, -65.2) + 0.02, -65.2]} receiveShadow>
-            <cylinderGeometry args={[3.4, 3.6, 0.05, 12]} />
-            <meshStandardMaterial
-              color="#c8a070"
-              map={pbr.terra.map}
-              roughnessMap={pbr.terra.roughnessMap}
-              roughness={0.8}
-            />
-          </mesh>
-          <group position={[21.6, sampleGroundHeight(21.6, -64.8), -64.8]} rotation={[0, 1.2, 0]}>
-            <primitive object={stairs.clone(true)} scale={1.9} />
-          </group>
-          <group position={[24.8, sampleGroundHeight(24.8, -66.4), -66.4]}>
-            <primitive object={lantern.clone(true)} scale={1.25} />
-            <pointLight position={[0, 1.8, 0]} intensity={0.45} color="#ffc888" distance={7} />
-          </group>
-          <group position={[23.4, sampleGroundHeight(23.4, -63.6), -63.6]} rotation={[0, 0.4, 0]}>
-            <primitive object={phBench.clone(true)} scale={1.05} />
-          </group>
-        </>
-      )}
+      <group position={[27.6, sampleGroundHeight(27.6, -64.2), -64.2]} rotation={[0, 0.35, 0]}>
+        <primitive object={windmill.clone(true)} scale={4.5} />
+      </group>
+      <mesh position={[24.4, sampleGroundHeight(24.4, -65.2) + 0.02, -65.2]} receiveShadow>
+        <cylinderGeometry args={[3.4, 3.6, 0.05, 12]} />
+        <meshStandardMaterial
+          color="#c8a070"
+          map={pbr.terra.map}
+          roughnessMap={pbr.terra.roughnessMap}
+          roughness={0.8}
+        />
+      </mesh>
+      <group position={[21.6, sampleGroundHeight(21.6, -64.8), -64.8]} rotation={[0, 1.2, 0]}>
+        <primitive object={stairs.clone(true)} scale={1.9} />
+      </group>
+      <group position={[24.8, sampleGroundHeight(24.8, -66.4), -66.4]}>
+        <primitive object={lantern.clone(true)} scale={1.25} />
+        {rich && <pointLight position={[0, 1.8, 0]} intensity={0.45} color="#ffc888" distance={7} />}
+      </group>
+      <group position={[23.4, sampleGroundHeight(23.4, -63.6), -63.6]} rotation={[0, 0.4, 0]}>
+        <primitive object={phBench.clone(true)} scale={1.05} />
+      </group>
 
       {parked.map((c, i) => (
         <group key={`car-${i}`} position={c.position} rotation={[0, c.yaw, 0]}>
@@ -191,7 +185,7 @@ export function CoastalTown({ rich = true }: { rich?: boolean }) {
         </group>
       ))}
 
-      {(rich ? gardens : gardens.slice(0, 14)).map((g, i) => (
+      {gardens.map((g, i) => (
         <group key={`gd-${i}`} position={[g.x, g.y, g.z]} rotation={[0, g.yaw, 0]}>
           <primitive
             object={(g.kind === "olive" ? olive : g.kind === "cypress" ? cypress : g.kind === "bougain" ? bougain : hedge).clone(true)}

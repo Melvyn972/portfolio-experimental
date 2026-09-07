@@ -217,13 +217,13 @@ export function CoastalZones() {
       {plage && (
         <group>
           <WoodenPier position={[plage.x - 2.6, 0.12, plage.z]} yaw={-Math.PI / 2 + 0.08} />
-          {[0, 1, 2].map((i) => (
+          {[0, 1, 2, 3, 4].map((i) => (
             <mesh
               key={`jet-step-${i}`}
-              position={[plage.x - 0.4 + i * 0.55, sampleGroundHeight(plage.x - 0.4 + i * 0.55, plage.z) + 0.04, plage.z]}
+              position={[plage.x - 0.15 + i * 0.48, sampleGroundHeight(plage.x - 0.15 + i * 0.48, plage.z) + 0.03 + i * 0.035, plage.z]}
               receiveShadow
             >
-              <boxGeometry args={[0.7, 0.08, 1.15]} />
+              <boxGeometry args={[0.62, 0.08, 1.22]} />
               <meshStandardMaterial color={i % 2 ? "#8a6a48" : "#7a5a3c"} roughness={0.88} />
             </mesh>
           ))}

@@ -287,10 +287,9 @@ function offsetPos(
 
 function maxGroundAt(x: number, z: number) {
   let m = -Infinity;
-  const offs = [0, 0.85, -0.85];
+  const offs = [0, 0.7, -0.7, 1.2, -1.2];
   for (const dx of offs) {
     for (const dz of offs) {
-      if (dx !== 0 && dz !== 0) continue;
       const v = computeTerrainHeight(x + dx, z + dz);
       const s = sampleGroundHeight(x + dx, z + dz);
       if (Number.isFinite(v)) m = Math.max(m, v);
@@ -304,9 +303,9 @@ function maxGroundAt(x: number, z: number) {
 function liftAboveGround(pos: THREE.Vector3, subjectY: number, walking: boolean) {
   if (!Number.isFinite(pos.x) || !Number.isFinite(pos.z)) return;
   const floor = Math.max(
-    maxGroundAt(pos.x, pos.z) + (walking ? 1.95 : 2.25),
-    Number.isFinite(subjectY) ? subjectY + 1.35 : 1.9,
-    1.9,
+    maxGroundAt(pos.x, pos.z) + (walking ? 2.15 : 2.48),
+    Number.isFinite(subjectY) ? subjectY + 1.55 : 2.05,
+    2.05,
   );
   if (!Number.isFinite(pos.y) || pos.y < floor) pos.y = floor;
 }

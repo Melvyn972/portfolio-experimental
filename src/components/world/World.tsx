@@ -170,7 +170,7 @@ export function World({ quality }: { quality: QualitySettings }) {
       <Belvedere />
       <CoastalZones />
       <DiscoveryRelics />
-      <LivingWorld rich={quality.dust} />
+      <LivingWorld />
       <DebugColliders />
     </group>
   );

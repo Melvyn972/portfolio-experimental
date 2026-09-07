@@ -7,17 +7,17 @@ import { content } from "@/lib/content";
 import { sampleGroundHeight } from "@/lib/ground";
 import { getGameState } from "@/lib/gameStore";
 
-/** Idle life: clouds, birds, boats, foam, lighthouse beam, chimney smoke, road dust. */
-export function LivingWorld({ rich = true }: { rich?: boolean }) {
+/** Idle life — readable on Éco: foam, beam, birds, dust, boats. */
+export function LivingWorld() {
   return (
     <group>
-      <Clouds count={rich ? 9 : 6} />
-      <BirdFlock count={rich ? 8 : 7} />
-      <DistantBoats count={rich ? 3 : 2} />
+      <Clouds count={7} />
+      <BirdFlock count={8} />
+      <DistantBoats count={2} />
       <ShoreFoam />
       <LighthouseBeam />
-      <RoadDust count={rich ? 42 : 24} />
-      {rich && <ChimneySmoke />}
+      <RoadDust count={28} />
+      <ChimneySmoke />
     </group>
   );
 }
@@ -81,13 +81,13 @@ function BirdFlock({ count }: { count: number }) {
     <group ref={ref}>
       {birds.map((_, i) => (
         <group key={i}>
-          <mesh position={[-0.28, 0, 0]} rotation={[0, 0, 0.48]}>
-            <boxGeometry args={[0.62, 0.045, 0.14]} />
-            <meshStandardMaterial color="#4a4036" emissive="#2c261e" emissiveIntensity={0.22} roughness={0.7} />
+          <mesh position={[-0.34, 0, 0]} rotation={[0, 0, 0.48]}>
+            <boxGeometry args={[0.78, 0.05, 0.16]} />
+            <meshStandardMaterial color="#3a3228" emissive="#1c1812" emissiveIntensity={0.28} roughness={0.7} />
           </mesh>
-          <mesh position={[0.28, 0, 0]} rotation={[0, 0, -0.48]}>
-            <boxGeometry args={[0.62, 0.045, 0.14]} />
-            <meshStandardMaterial color="#5a4e42" emissive="#2c261e" emissiveIntensity={0.22} roughness={0.7} />
+          <mesh position={[0.34, 0, 0]} rotation={[0, 0, -0.48]}>
+            <boxGeometry args={[0.78, 0.05, 0.16]} />
+            <meshStandardMaterial color="#4a4034" emissive="#1c1812" emissiveIntensity={0.28} roughness={0.7} />
           </mesh>
         </group>
       ))}
@@ -137,29 +137,29 @@ function ShoreFoam() {
   const b = useRef<THREE.MeshStandardMaterial>(null);
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
-    if (a.current) a.current.opacity = 0.38 + Math.sin(t * 1.35) * 0.14;
-    if (b.current) b.current.opacity = 0.22 + Math.cos(t * 1.05) * 0.1;
+    if (a.current) a.current.opacity = 0.52 + Math.sin(t * 1.35) * 0.16;
+    if (b.current) b.current.opacity = 0.32 + Math.cos(t * 1.05) * 0.12;
   });
   return (
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-17.15, -0.155, -60]} renderOrder={1}>
-        <planeGeometry args={[2.55, 230]} />
+        <planeGeometry args={[3.05, 230]} />
         <meshStandardMaterial
           ref={a}
-          color="#efe8dc"
+          color="#f4eee4"
           transparent
-          opacity={0.4}
+          opacity={0.52}
           roughness={1}
           depthWrite={false}
         />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-16.55, -0.12, -60]} renderOrder={1}>
-        <planeGeometry args={[1.15, 230]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-16.45, -0.12, -60]} renderOrder={1}>
+        <planeGeometry args={[1.45, 230]} />
         <meshStandardMaterial
           ref={b}
-          color="#d8d0c4"
+          color="#e4d8c8"
           transparent
-          opacity={0.22}
+          opacity={0.32}
           roughness={1}
           depthWrite={false}
         />
@@ -176,8 +176,8 @@ function LighthouseBeam() {
   useFrame(({ clock }, dt) => {
     if (ref.current) ref.current.rotation.y += dt * 0.38;
     const pulse = 0.55 + 0.45 * Math.sin(clock.elapsedTime * 1.85);
-    if (cone.current) cone.current.opacity = 0.07 + pulse * 0.13;
-    if (light.current) light.current.intensity = 0.7 + pulse * 1.55;
+    if (cone.current) cone.current.opacity = 0.18 + pulse * 0.22;
+    if (light.current) light.current.intensity = 1.15 + pulse * 1.85;
   });
   if (!phare) return null;
   const y = sampleGroundHeight(phare.x, phare.z) + 7.2;
@@ -185,7 +185,7 @@ function LighthouseBeam() {
     <group ref={ref} position={[phare.x, y, phare.z]}>
       <mesh rotation={[0, 0, Math.PI / 2]} position={[7.2, 0, 0]}>
         <coneGeometry args={[1.85, 16, 8, 1, true]} />
-        <meshBasicMaterial ref={cone} color="#ffe6b0" transparent opacity={0.12} depthWrite={false} side={THREE.DoubleSide} />
+        <meshBasicMaterial ref={cone} color="#ffe6b0" transparent opacity={0.28} depthWrite={false} side={THREE.DoubleSide} />
       </mesh>
       <pointLight ref={light} color="#ffd090" intensity={1.4} distance={34} />
     </group>
@@ -206,7 +206,7 @@ function RoadDust({ count }: { count: number }) {
     if (!pts || !pos) return;
     const s = getGameState();
     const driving = s.mode === "driving" && s.phase === "playing";
-    const emit = driving && s.speed > 4.2;
+    const emit = driving && s.speed > 1.35;
     const yaw = s.carYaw;
     const backX = -Math.sin(yaw);
     const backZ = -Math.cos(yaw);
@@ -230,14 +230,14 @@ function RoadDust({ count }: { count: number }) {
     }
     pos.needsUpdate = true;
     const mat = pts.material as THREE.PointsMaterial;
-    mat.opacity = emit ? 0.42 : 0.08;
+    mat.opacity = emit ? 0.55 : 0.14;
   });
   return (
     <points ref={ref} frustumCulled={false}>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial color="#c4a878" size={0.22} transparent opacity={0.12} depthWrite={false} sizeAttenuation />
+      <pointsMaterial color="#c4a878" size={0.28} transparent opacity={0.18} depthWrite={false} sizeAttenuation />
     </points>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useGLTF } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { getInteractables } from "@/lib/interaction";
 import { sampleGroundHeight } from "@/lib/ground";
@@ -9,6 +10,7 @@ import { enableShadows, groundClone } from "@/lib/gltfFit";
 
 /**
  * Physical discovery rewards — objects you find, not UI icons.
+ * Identity lives on the belvedere carnet mesh; other chapters have a relic here.
  */
 export function DiscoveryRelics() {
   const { scene: lantern } = useGLTF("/models/lantern.glb");
@@ -16,7 +18,8 @@ export function DiscoveryRelics() {
 
   const items = useMemo(() => {
     return getInteractables().map((it) => {
-      const y = sampleGroundHeight(it.position.x, it.position.z);
+      const ground = sampleGroundHeight(it.position.x, it.position.z);
+      const y = it.chapter === "identity" ? it.position.y - 0.12 : ground;
       return { ...it, y };
     });
   }, []);
@@ -34,13 +37,29 @@ export function DiscoveryRelics() {
           {it.chapter === "activite" && <primitive object={lamp.clone(true)} scale={1.1} />}
           {it.chapter === "cv" && <EnvelopeRelic />}
           {it.chapter === "contact" && <BrassPlaque />}
-          <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-            <circleGeometry args={[0.42, 16]} />
-            <meshStandardMaterial color="#8a6a38" emissive="#6a4a20" emissiveIntensity={0.22} roughness={0.7} />
-          </mesh>
+          <RelicPad />
         </group>
       ))}
     </group>
+  );
+}
+
+function RelicPad() {
+  const mat = useRef<THREE.MeshStandardMaterial>(null);
+  useFrame(({ clock }) => {
+    if (mat.current) mat.current.emissiveIntensity = 0.28 + Math.sin(clock.elapsedTime * 2.1) * 0.16;
+  });
+  return (
+    <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <circleGeometry args={[0.48, 16]} />
+      <meshStandardMaterial
+        ref={mat}
+        color="#8a6a38"
+        emissive="#6a4a20"
+        emissiveIntensity={0.32}
+        roughness={0.7}
+      />
+    </mesh>
   );
 }
 

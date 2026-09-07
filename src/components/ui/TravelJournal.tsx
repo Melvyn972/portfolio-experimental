@@ -58,6 +58,9 @@ function JournalShell({
         <span className="journal-brass-corner journal-brass-corner--bl" />
         <span className="journal-brass-corner journal-brass-corner--br" />
         <span className="journal-binding" />
+        <span className="journal-rivet journal-rivet--t" />
+        <span className="journal-rivet journal-rivet--m" />
+        <span className="journal-rivet journal-rivet--b" />
         <div className="journal-brass" />
         <div className="flex items-center justify-between px-6 pt-4 md:px-8">
           <p className="font-display text-[11px] tracking-[0.28em] text-[#c4a46a] uppercase">{title}</p>
@@ -73,9 +76,7 @@ function JournalShell({
             </p>
             <div className="mt-6 h-px w-12 bg-[#8a6a3e]/50" />
             <p className="mt-6 text-xs leading-relaxed text-[#5c4a32]">{title}</p>
-            <div className="mt-8 flex justify-center">
-              <span className="inline-block h-10 w-10 rounded-full border-2 border-[#b08d57] bg-[#8a6a38]/40 shadow-[inset_0_0_0_3px_#3a2414]" />
-            </div>
+            <span className="journal-stamp">Côte<br />Melvyn</span>
           </div>
           <div className="journal-gutter" />
           <div className="journal-page min-w-0 flex-1 overflow-y-auto px-5 pb-5 pt-3 md:px-6">
@@ -101,7 +102,7 @@ function JournalIndex() {
         Pages trouvées {done}/{total}. Le monde reste la voie — ce carnet n’est qu’un index.
       </p>
       <p className="mt-2 text-[10px] leading-relaxed tracking-[0.04em] text-[#6a5438]">
-        Identité · Parcours · Compétences · Projets · Freelance · Contact — reliques sur la côte.
+        Reliques sur la côte : identité au belvédère, parcours à la maison, projets au studio, passions à la crique, freelance au phare.
       </p>
       <nav className="mt-4 flex flex-col">
         {CHAPTERS.map((c) => {
