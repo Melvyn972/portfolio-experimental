@@ -29,7 +29,7 @@ export function sanitizeWalkSpawn(raw: { x?: unknown; y?: unknown; z?: unknown; 
 }
 
 /** Porch in front of the maison — Menu → Parcours must land inside the interact radius. */
-export const MAISON_PORCH = { x: 16.15, z: -36.2 };
+export const MAISON_PORCH = { x: 16.15, z: -34.15 };
 
 export function zoneWalkSpawns(): Record<"belvedere" | "maison" | "studio" | "plage" | "phare", WalkSpawn> {
   const bel = getBelvedereWorldAnchor();

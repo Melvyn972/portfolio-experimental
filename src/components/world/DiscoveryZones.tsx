@@ -59,10 +59,18 @@ function MaisonParcours() {
           <meshStandardMaterial color="#e4d8c4" roughness={0.84} />
         </mesh>
       ))}
-      <mesh position={[0, 2.08, -0.2]} castShadow>
-        <boxGeometry args={[7.5, 0.1, 3.5]} />
-        <meshStandardMaterial color="#c45c3e" roughness={0.68} />
-      </mesh>
+      {[-1.2, -0.4, 0.4, 1.2].map((z) => (
+        <mesh key={`beam-${z}`} position={[0, 2.12, z]} castShadow>
+          <boxGeometry args={[7.35, 0.07, 0.14]} />
+          <meshStandardMaterial color="#c45c3e" roughness={0.68} />
+        </mesh>
+      ))}
+      {[-3.1, 0, 3.1].map((x) => (
+        <mesh key={`rafter-${x}`} position={[x, 2.18, 0]} castShadow>
+          <boxGeometry args={[0.12, 0.07, 3.35]} />
+          <meshStandardMaterial color="#a44c32" roughness={0.7} />
+        </mesh>
+      ))}
       {[
         [-3.5, -1.4],
         [3.5, -1.4],
@@ -210,8 +218,8 @@ function PlageNook() {
   const bench = useGrounded("/models/ph/painted_wooden_bench/painted_wooden_bench_1k.gltf");
   const pot = useGrounded("/models/ph/ceramic_pot/ceramic_pot_1k.gltf");
   if (!marker) return null;
-  const x = marker.x + 1.15;
-  const z = marker.z - 2.15;
+  const x = marker.x + 2.05;
+  const z = marker.z + 0.15;
   const y = sampleGroundHeight(x, z);
   const passion = content.passions[0];
 
