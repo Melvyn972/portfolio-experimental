@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { getBelvedereWorldAnchor } from "@/lib/road";
 import { content } from "@/lib/content";
-import { TOWN_FOOTPRINT, TOWN_LOTS } from "@/lib/town";
+import { TOWN_FOOTPRINT, TOWN_LOTS, VILLAGE_SQUARE } from "@/lib/town";
 
 export type Collider = {
   id: string;
@@ -63,6 +63,9 @@ export function buildWorldColliders(): Collider[] {
     list.push(box(`town-${lot.id}`, lot.x, 3.6, lot.z, fp.sx, fp.sy, fp.sz));
   }
 
+  list.push(box("village-campanile", VILLAGE_SQUARE.x + 3.15, 2.6, VILLAGE_SQUARE.z - 2.05, 1.7, 5.2, 1.6));
+  list.push(box("village-cafe", VILLAGE_SQUARE.x - 2.85, 1.4, VILLAGE_SQUARE.z + 1.55, 2.9, 2.4, 2.1));
+
   void yaw;
   return list;
 }
@@ -95,6 +98,8 @@ export function buildCameraOccluders(): Collider[] {
     const fp = TOWN_FOOTPRINT[lot.kind];
     list.push(box(`cam-${lot.id}`, lot.x, 5.6, lot.z, fp.sx + 1.4, 10.2, fp.sz + 1.6));
   }
+  list.push(box("cam-campanile", VILLAGE_SQUARE.x + 3.15, 4.2, VILLAGE_SQUARE.z - 2.05, 2.4, 8.4, 2.2));
+  list.push(box("cam-cafe", VILLAGE_SQUARE.x - 2.85, 2.6, VILLAGE_SQUARE.z + 1.55, 3.4, 5.2, 2.6));
   return list;
 }
 

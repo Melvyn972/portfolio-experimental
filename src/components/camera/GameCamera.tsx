@@ -112,14 +112,14 @@ export function GameCamera() {
 
     if (state.openChapter && state.relicFocus) {
       _subject.set(state.relicFocus.x, state.relicFocus.y, state.relicFocus.z);
-      _desired.copy(_subject).add(_a.set(4.6, 2.85, 4.9));
+      _desired.copy(_subject).add(_a.set(3.35, 2.15, 3.55));
       liftAboveGround(_desired, _subject.y, true);
       pushCameraOut(_desired, 0.7);
       liftAboveGround(_desired, _subject.y, true);
-      current.current.lerp(_desired, 1 - Math.exp(-2.6 * dt));
+      current.current.lerp(_desired, 1 - Math.exp(-2.15 * dt));
       pushCameraOut(current.current, 0.7);
       liftAboveGround(current.current, _subject.y, true);
-      look.current.lerp(_subject.clone().add(_lookA.set(0, 0.42, 0)), 1 - Math.exp(-3.4 * dt));
+      look.current.lerp(_subject.clone().add(_lookA.set(0, 0.32, 0)), 1 - Math.exp(-2.8 * dt));
       camera.position.copy(current.current);
       camera.lookAt(look.current);
       return;

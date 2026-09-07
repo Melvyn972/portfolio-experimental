@@ -23,3 +23,9 @@ export const TOWN_FOOTPRINT: Record<(typeof TOWN_LOTS)[number]["kind"], { sx: nu
 
 /** Cobbled lane inland of the coastal road — never overlaps the asphalt ribbon. */
 export const TOWN_LANE_X = 19.35;
+
+/**
+ * Place du village — inland of the ribbon, in the chase-cam windshield
+ * on the southbound stretch (right of the road). Not the deep Kenney lots.
+ */
+export const VILLAGE_SQUARE = { x: 11.15, z: -72.4 };

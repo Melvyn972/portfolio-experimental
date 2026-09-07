@@ -38,17 +38,19 @@ varying float vDeep;
 #include <fog_pars_fragment>
 
 void main() {
-  vec3 deep = vec3(0.07, 0.28, 0.40);
-  vec3 mid = vec3(0.12, 0.46, 0.50);
-  vec3 shore = vec3(0.28, 0.56, 0.54);
-  vec3 col = mix(deep, mid, smoothstep(0.0, 0.68, vUv.x));
-  col = mix(col, shore, smoothstep(0.78, 1.0, vUv.x));
-  float sparkle = pow(max(0.0, sin(vUv.y * 28.0 + uTime * 0.8) * cos(vUv.x * 18.0)), 16.0);
-  col += vec3(0.08, 0.10, 0.09) * sparkle * vDeep * 0.32;
-  float foamBand = smoothstep(0.78, 1.0, vUv.x);
-  float foam = foamBand * (0.58 + 0.38 * sin(vUv.y * 52.0 + uTime * 2.4));
-  col = mix(col, vec3(0.90, 0.91, 0.86), foam * 0.72);
-  col *= 0.94 + 0.06 * (1.0 - vDeep);
+  vec3 deep = vec3(0.04, 0.20, 0.34);
+  vec3 mid = vec3(0.10, 0.42, 0.50);
+  vec3 shore = vec3(0.34, 0.60, 0.56);
+  vec3 col = mix(deep, mid, smoothstep(0.0, 0.58, vUv.x));
+  col = mix(col, shore, smoothstep(0.70, 1.0, vUv.x));
+  float sparkle = pow(max(0.0, sin(vUv.y * 28.0 + uTime * 0.8) * cos(vUv.x * 18.0)), 14.0);
+  col += vec3(0.10, 0.12, 0.10) * sparkle * vDeep * 0.42;
+  float foamBand = smoothstep(0.70, 1.0, vUv.x);
+  float foam = foamBand * (0.62 + 0.36 * sin(vUv.y * 46.0 + uTime * 2.2));
+  float crest = smoothstep(0.88, 1.0, vUv.x) * (0.55 + 0.45 * sin(vUv.y * 70.0 + uTime * 3.1));
+  col = mix(col, vec3(0.93, 0.94, 0.88), foam * 0.78);
+  col = mix(col, vec3(0.96, 0.96, 0.92), crest * 0.55);
+  col *= 0.90 + 0.10 * (1.0 - vDeep);
   gl_FragColor = vec4(col, 1.0);
   #include <fog_fragment>
 }

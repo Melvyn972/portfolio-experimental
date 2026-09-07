@@ -7,7 +7,7 @@ import { getBelvedereWorldAnchor, nearestRoadSample, ROAD_WIDTH } from "@/lib/ro
 import { sampleGroundHeight } from "@/lib/ground";
 import { enableShadows, groundClone } from "@/lib/gltfFit";
 import { useCoastalPbr } from "@/lib/pbrTextures";
-import { TOWN_LOTS } from "@/lib/town";
+import { TOWN_LOTS, VILLAGE_SQUARE } from "@/lib/town";
 
 function useGrounded(path: string) {
   const { scene } = useGLTF(path);
@@ -74,7 +74,10 @@ export function HeroCoast({ lit = true }: { lit?: boolean }) {
       { kind: "cypress", x: 18.6, z: -74.4, s: 1.1, yaw: 0.15 },
       { kind: "pine", x: 9.0, z: -94.8, s: 0.36, yaw: 0.45 },
     ];
-    return spots.filter((s) => s.x > 8.4 && offRibbon(s.x, s.z, 4.6));
+    return spots.filter((s) => {
+      if (s.x <= 8.4 || !offRibbon(s.x, s.z, 4.6)) return false;
+      return Math.hypot(s.x - VILLAGE_SQUARE.x, s.z - VILLAGE_SQUARE.z) > 6.8;
+    });
   }, []);
 
   const seaPines = useMemo(() => {
@@ -119,8 +122,10 @@ export function HeroCoast({ lit = true }: { lit?: boolean }) {
     () =>
       [
         [3.7, -36.4],
+        [4.15, -72.2],
         [3.8, -88.8],
-        [3.5, -153.6],
+        [3.55, -153.6],
+        [4.05, -158.2],
       ]
         .filter(([x, z]) => Math.abs(nearestRoadSample(new THREE.Vector3(x, 0, z)).lateral) > ROAD_WIDTH * 0.5 + 0.35)
         .map(([x, z]) => ({
@@ -128,6 +133,20 @@ export function HeroCoast({ lit = true }: { lit?: boolean }) {
         })),
     [],
   );
+
+  const phareWalk = useMemo(() => {
+    const pts = [
+      [-7.4, -162.4],
+      [-9.6, -166.2],
+      [-12.2, -169.4],
+      [-14.4, -171.2],
+    ];
+    return pts
+      .filter(([x, z]) => Math.abs(nearestRoadSample(new THREE.Vector3(x, 0, z)).lateral) > ROAD_WIDTH * 0.5 + 0.55)
+      .map(([x, z]) => ({
+        pos: [x, sampleGroundHeight(x, z) + 0.03, z] as [number, number, number],
+      }));
+  }, []);
 
   const lamps = useMemo(
     () =>
@@ -137,7 +156,7 @@ export function HeroCoast({ lit = true }: { lit?: boolean }) {
         [5.3, -106.8],
         [5.5, -82.0],
       ]
-        .filter(([x, z]) => offRibbon(x, z, 4.2))
+        .filter(([x, z]) => offRibbon(x, z, 4.2) && Math.hypot(x - VILLAGE_SQUARE.x, z - VILLAGE_SQUARE.z) > 5.2)
         .map(([x, z]) => ({
           pos: [x, sampleGroundHeight(x, z), z] as [number, number, number],
         })),
@@ -151,7 +170,7 @@ export function HeroCoast({ lit = true }: { lit?: boolean }) {
         [6.0, -98.2, -0.15],
         [6.4, -74.8, 0.35],
       ]
-        .filter(([x, z]) => offRibbon(x, z, 4.6))
+        .filter(([x, z]) => offRibbon(x, z, 4.6) && Math.hypot(x - VILLAGE_SQUARE.x, z - VILLAGE_SQUARE.z) > 5.2)
         .map(([x, z, yaw]) => ({
           pos: [x, sampleGroundHeight(x, z), z] as [number, number, number],
           yaw,
@@ -166,7 +185,7 @@ export function HeroCoast({ lit = true }: { lit?: boolean }) {
         [8.8, -92.2, -0.1],
         [8.5, -104.6, 0.15],
       ]
-        .filter(([x, z]) => offRibbon(x, z, 4.8))
+        .filter(([x, z]) => offRibbon(x, z, 4.8) && Math.hypot(x - VILLAGE_SQUARE.x, z - VILLAGE_SQUARE.z) > 5.8)
         .map(([x, z, yaw]) => ({
           pos: [x, sampleGroundHeight(x, z), z] as [number, number, number],
           yaw,
@@ -230,6 +249,18 @@ export function HeroCoast({ lit = true }: { lit?: boolean }) {
           <boxGeometry args={[3.15, 0.055, 2.35]} />
           <meshStandardMaterial
             color="#9a8460"
+            map={pbr.terra.map}
+            roughnessMap={pbr.terra.roughnessMap}
+            roughness={0.9}
+          />
+        </mesh>
+      ))}
+
+      {phareWalk.map((p, i) => (
+        <mesh key={`pw-${i}`} position={p.pos} receiveShadow>
+          <boxGeometry args={[1.55, 0.045, 1.65]} />
+          <meshStandardMaterial
+            color="#b89a70"
             map={pbr.terra.map}
             roughnessMap={pbr.terra.roughnessMap}
             roughness={0.9}

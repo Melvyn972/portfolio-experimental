@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { nearestRoadSample, getBelvedereWorldAnchor, ROAD_WIDTH, ROAD_SURFACE_LIFT } from "@/lib/road";
 import { content } from "@/lib/content";
+import { VILLAGE_SQUARE } from "@/lib/town";
 import { SEA_BED_Y, SEA_INLAND_X, SEA_SURFACE_Y } from "@/lib/sea";
 
 /** Visual bounds — seaward cells drop under the sea sheet (never cover it). */
@@ -233,6 +234,14 @@ export function accessCorridors(): { width: number; pts: { x: number; z: number;
         { x: -5.8, z: -165, y: 0.36 },
         { x: -11.5, z: -170, y: 0.32 },
         { x: -16, z: -172, y: 0.36 },
+      ],
+    },
+    {
+      width: 3.8,
+      pts: [
+        { x: 4.2, z: VILLAGE_SQUARE.z, y: 0.22 },
+        { x: 7.6, z: VILLAGE_SQUARE.z, y: 0.38 },
+        { x: VILLAGE_SQUARE.x, z: VILLAGE_SQUARE.z, y: 0.55 },
       ],
     },
     {
