@@ -24,9 +24,9 @@ const _dir = new THREE.Vector3();
 const _from = { x: 0, y: 0, z: 0 };
 const _rayDir = { x: 0, y: 0, z: 0 };
 
-const CAM_DIST_DRIVE = 7.8;
+const CAM_DIST_DRIVE = 8.6;
 const CAM_DIST_WALK = 5.6;
-const CAM_HEIGHT_DRIVE = 2.85;
+const CAM_HEIGHT_DRIVE = 3.25;
 const CAM_HEIGHT_WALK = 3.05;
 
 /**
@@ -219,9 +219,9 @@ export function GameCamera() {
       );
     } else {
       _lookTarget.set(
-        _subject.x + Math.sin(yaw) * 14,
-        _subject.y + 0.55,
-        _subject.z + Math.cos(yaw) * 14,
+        _subject.x + Math.sin(yaw) * 22,
+        _subject.y + 1.05,
+        _subject.z + Math.cos(yaw) * 22,
       );
     }
 

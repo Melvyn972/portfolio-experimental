@@ -412,7 +412,7 @@ if (typeof window !== "undefined") {
       };
     },
     sampleHeights: (x: number, z: number) => {
-      const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 160);
+      const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 280);
       const visual = computeTerrainHeight(x, z);
       const liftRoad = sample.position.y + ROAD_SURFACE_LIFT;
       return {

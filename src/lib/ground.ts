@@ -22,7 +22,7 @@ function sandBedY(roadY: number) {
 }
 
 function scenicHeight(x: number, z: number): { y: number; roadDist: number; roadY: number; onAccess: boolean } {
-  const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 160);
+  const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 280);
   const lat = sample.lateral;
   const roadDist = Math.min(Math.abs(lat), sample.dist);
   const roadY = sample.position.y;
