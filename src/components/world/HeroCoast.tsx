@@ -37,6 +37,11 @@ export function HeroCoast({ rich = true }: { rich?: boolean }) {
 
   const grove = useMemo(() => {
     const spots: { kind: "pine" | "olive" | "cypress" | "bougain"; x: number; z: number; s: number; yaw: number }[] = [
+      { kind: "pine", x: 9.4, z: -70.8, s: 0.4, yaw: 0.05 },
+      { kind: "pine", x: 10.2, z: -75.6, s: 0.46, yaw: 0.9 },
+      { kind: "olive", x: 9.8, z: -84.2, s: 0.96, yaw: 1.3 },
+      { kind: "pine", x: 10.6, z: -92.8, s: 0.42, yaw: 0.55 },
+      { kind: "pine", x: 9.6, z: -100.4, s: 0.38, yaw: 2.0 },
       { kind: "pine", x: 11.4, z: -71.5, s: 0.44, yaw: 0.2 },
       { kind: "olive", x: 13.2, z: -76.8, s: 1.05, yaw: 0.8 },
       { kind: "pine", x: 12.1, z: -82.4, s: 0.5, yaw: 1.4 },
