@@ -25,9 +25,9 @@ export function Sea({ segments = 8 }: { segments?: number }) {
       >
         <planeGeometry args={[width, depth, 1, 1]} />
         <meshStandardMaterial
-          color="#1c5f72"
-          roughness={0.34}
-          metalness={0.08}
+        color="#157a8a"
+        roughness={0.32}
+        metalness={0.06}
           envMapIntensity={0.7}
           depthWrite
           side={THREE.FrontSide}
@@ -41,8 +41,8 @@ export function Sea({ segments = 8 }: { segments?: number }) {
       >
         <planeGeometry args={[18.4, depth]} />
         <meshStandardMaterial
-          color="#2f7f86"
-          roughness={0.42}
+        color="#2a9aa4"
+        roughness={0.4}
           metalness={0.04}
           depthWrite
           side={THREE.FrontSide}

@@ -11,6 +11,7 @@ import {
   TERRAIN_MIN_Z,
   roadClearance,
 } from "@/lib/ground";
+import { ROAD_WIDTH } from "@/lib/road";
 import { SEA_BED_Y, SEA_INLAND_X } from "@/lib/sea";
 
 /** Warm earth — pale beige + ACES read as a white slab in Melvyn's FAIL shot. */
@@ -20,6 +21,7 @@ const APRON = new THREE.Color("#b8945c");
 const DIRT = new THREE.Color("#8f6e42");
 const GRASS = new THREE.Color("#4e5c32");
 const ROCK = new THREE.Color("#7a6a52");
+const GRAVEL = new THREE.Color("#6a655c");
 
 function makeSandTexture() {
   const s = 128;
@@ -47,7 +49,7 @@ function makeSandTexture() {
  * Continuous coastal heightfield. Sand stays above the water sheet.
  * Colors lerp — no hard white / cyan biome seams.
  */
-export function Terrain() {
+export function Terrain({ segmentsX = 140, segmentsZ = 220 }: { segmentsX?: number; segmentsZ?: number }) {
   const sandFallback = useMemo(() => makeSandTexture(), []);
   const underlayTex = useMemo(() => {
     const t = sandFallback.clone();
@@ -60,7 +62,7 @@ export function Terrain() {
     const sizeZ = TERRAIN_MAX_Z - TERRAIN_MIN_Z;
     const midX = (TERRAIN_MIN_X + TERRAIN_MAX_X) / 2;
     const midZ = (TERRAIN_MIN_Z + TERRAIN_MAX_Z) / 2;
-    const geo = new THREE.PlaneGeometry(sizeX, sizeZ, 140, 220);
+    const geo = new THREE.PlaneGeometry(sizeX, sizeZ, segmentsX, segmentsZ);
     geo.rotateX(-Math.PI / 2);
     const pos = geo.attributes.position as THREE.BufferAttribute;
     const uv = geo.attributes.uv as THREE.BufferAttribute;
@@ -85,9 +87,13 @@ export function Terrain() {
       const rockMix = THREE.MathUtils.smoothstep(3.2, 5.2, y);
 
       c.copy(DIRT);
-      c.lerp(SAND, Math.max(sandMix, apronMix * 0.85));
-      c.lerp(WET, wetMix * 0.62);
-      c.lerp(APRON, apronMix * (1 - sandMix) * 0.55);
+      if (roadDist < ROAD_WIDTH * 0.5 + 1.8) {
+        c.copy(GRAVEL);
+      } else {
+        c.lerp(SAND, Math.max(sandMix, apronMix * 0.85));
+        c.lerp(WET, wetMix * 0.62);
+        c.lerp(APRON, apronMix * (1 - sandMix) * 0.55);
+      }
       c.lerp(GRASS, grassMix * 0.72);
       c.lerp(ROCK, rockMix);
       c.offsetHSL(0, -0.02, Math.sin(x * 1.4 + z * 1.1) * 0.01);
@@ -102,7 +108,7 @@ export function Terrain() {
     geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
     geo.computeVertexNormals();
     return geo;
-  }, []);
+  }, [segmentsX, segmentsZ]);
 
   const midZ = (TERRAIN_MIN_Z + TERRAIN_MAX_Z) / 2;
   const sizeZ = TERRAIN_MAX_Z - TERRAIN_MIN_Z;

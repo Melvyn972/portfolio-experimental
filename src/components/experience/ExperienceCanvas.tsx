@@ -13,8 +13,41 @@ import { PostFX } from "@/components/experience/PostFX";
 import { ProgressiveLoader } from "@/components/experience/ProgressiveLoader";
 import { useGameStore } from "@/hooks/useGameStore";
 import { resolveQuality } from "@/lib/quality";
+import { detectSoftGL, setSoftGL } from "@/lib/softgl";
 import { getGameState, setGameState } from "@/lib/gameStore";
 import { useKeyboard } from "@/hooks/useKeyboard";
+
+function Scene({ isMobile }: { isMobile: boolean }) {
+  const { quality: preset, phase } = useGameStore();
+  const quality = useMemo(() => resolveQuality(preset, isMobile), [preset, isMobile]);
+
+  return (
+    <PhysicsWorld interpolate={!quality.lite}>
+      {/* Camera / physics / player stay mounted while World GLBs suspend.
+          A shared Suspense remounted chase-cam + PlayerSystem on origin
+          and dropped the first teleport* after skipToPlay. */}
+      <GameCamera />
+      <WorldColliders />
+      {(phase === "playing" || phase === "intro" || phase === "title") && <PlayerSystem />}
+      <Suspense fallback={null}>
+        <World quality={quality} />
+        <PostFX enabled={quality.postfx} ao={quality.shadows && !isMobile} />
+        <ProgressiveLoader />
+      </Suspense>
+    </PhysicsWorld>
+  );
+}
+
+export function ExperienceCanvas() {
+  useKeyboard();
+  const { quality: preset, openChapter, rescueOpen } = useGameStore();
+  const [isMobile, setIsMobile] = useState(false);
+  const [softGL] = useState(() => {
+    const soft = detectSoftGL();
+    setSoftGL(soft);
+    return soft;
+  });
+  const quality = useMemo(() => resolveQuality(preset, isMobile), [preset, isMobile, softGL]);
 
 function Scene({ isMobile }: { isMobile: boolean }) {
   const { quality: preset, phase } = useGameStore();
@@ -80,15 +113,24 @@ export function ExperienceCanvas() {
       dpr={quality.dpr}
       gl={{
         antialias: quality.aa,
-        powerPreference: "high-performance",
+        powerPreference: quality.lite ? "low-power" : "default",
         toneMapping: THREE.ACESFilmicToneMapping,
         toneMappingExposure: 0.96,
+        failIfMajorPerformanceCaveat: false,
       }}
       camera={{ fov: 42, near: 0.22, far: 360, position: [32, 24, 58] }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = 0.96;
         gl.setClearColor("#7e9aa0");
+        const canvas = gl.domElement;
+        canvas.addEventListener(
+          "webglcontextlost",
+          (e) => {
+            e.preventDefault();
+          },
+          false,
+        );
       }}
       onPointerDown={(e) => {
         const t = e.target as HTMLElement | undefined;

@@ -51,6 +51,7 @@ export function GameCamera() {
   const lastTeleportGen = useRef(-1);
 
   useFrame((_, rawDt) => {
+    try {
     const dt = Math.min(rawDt, 0.18);
     const state = getGameState();
     const mobile = state.isMobile;
@@ -322,6 +323,9 @@ export function GameCamera() {
     const targetFov = walking ? (mobile ? 48 : 46) : THREE.MathUtils.lerp(50, 54, Math.min(1, state.speed / 20));
     persp.fov = THREE.MathUtils.lerp(persp.fov, targetFov, 0.07);
     persp.updateProjectionMatrix();
+    } catch {
+      /* Soft-GL: a camera frame must never kill the tab. */
+    }
   });
 
   return null;

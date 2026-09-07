@@ -15,10 +15,10 @@ function makeAsphaltTexture() {
   for (let y = 0; y < s; y++) {
     for (let x = 0; x < s; x++) {
       const i = (y * s + x) * 4;
-      const n = 52 + ((x * 13 + y * 7) % 18);
+      const n = 38 + ((x * 13 + y * 7) % 14);
       data[i] = n;
       data[i + 1] = n;
-      data[i + 2] = n - 3;
+      data[i + 2] = n - 2;
       data[i + 3] = 255;
     }
   }
@@ -47,7 +47,6 @@ function buildOverlay() {
     uvs.push(0, t * 36, 1, t * 36);
     if (i < SEGMENTS) {
       const a = i * 2;
-      // left0, right0, left1 / right0, right1, left1 — upward normal from above
       indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
     }
   }
@@ -60,14 +59,55 @@ function buildOverlay() {
   return geo;
 }
 
-export function Road() {
+export function Road({ simple = false }: { simple?: boolean }) {
   const overlay = useMemo(() => buildOverlay(), []);
   const fallback = useMemo(() => makeAsphaltTexture(), []);
-  const pbr = useCoastalPbr(6);
+  return simple ? (
+    <RoadMesh overlay={overlay} fallback={fallback} />
+  ) : (
+    <RoadPbr overlay={overlay} fallback={fallback} />
+  );
+}
 
+function RoadMesh({
+  overlay,
+  fallback,
+}: {
+  overlay: THREE.BufferGeometry;
+  fallback: THREE.DataTexture;
+}) {
   return (
     <group>
-      <mesh geometry={overlay} receiveShadow renderOrder={2}>
+      <mesh geometry={overlay} receiveShadow renderOrder={6}>
+        <meshStandardMaterial
+          color="#2a2926"
+          map={fallback}
+          roughness={0.94}
+          metalness={0.02}
+          envMapIntensity={0.12}
+          depthWrite
+          polygonOffset
+          polygonOffsetFactor={-8}
+          polygonOffsetUnits={-8}
+        />
+      </mesh>
+      <RoadMarkings />
+      <RoadEdgeLines />
+    </group>
+  );
+}
+
+function RoadPbr({
+  overlay,
+  fallback,
+}: {
+  overlay: THREE.BufferGeometry;
+  fallback: THREE.DataTexture;
+}) {
+  const pbr = useCoastalPbr(6);
+  return (
+    <group>
+      <mesh geometry={overlay} receiveShadow renderOrder={6}>
         <meshStandardMaterial
           color="#3f3a34"
           map={pbr.asphalt.map ?? fallback}
@@ -77,8 +117,8 @@ export function Road() {
           envMapIntensity={0.18}
           depthWrite
           polygonOffset
-          polygonOffsetFactor={-3}
-          polygonOffsetUnits={-3}
+          polygonOffsetFactor={-6}
+          polygonOffsetUnits={-6}
         />
       </mesh>
       <RoadMarkings />
@@ -109,9 +149,9 @@ function RoadEdgeLines() {
   return (
     <group>
       {edges.map((m, i) => (
-        <mesh key={i} position={m.position} rotation={[0, m.yaw, 0]} receiveShadow renderOrder={3}>
+        <mesh key={i} position={m.position} rotation={[0, m.yaw, 0]} receiveShadow renderOrder={7}>
           <boxGeometry args={[0.1, 0.01, 3.2]} />
-          <meshStandardMaterial color="#e6deca" roughness={0.7} polygonOffset polygonOffsetFactor={-4} />
+          <meshStandardMaterial color="#e6deca" roughness={0.7} polygonOffset polygonOffsetFactor={-9} />
         </mesh>
       ))}
     </group>
@@ -133,9 +173,9 @@ function RoadMarkings() {
   return (
     <group>
       {marks.map((m, i) => (
-        <mesh key={i} position={m.position} rotation={[0, m.yaw, 0]} receiveShadow renderOrder={3}>
+        <mesh key={i} position={m.position} rotation={[0, m.yaw, 0]} receiveShadow renderOrder={7}>
           <boxGeometry args={[0.16, 0.01, 1.85]} />
-          <meshStandardMaterial color="#efe6d0" roughness={0.68} polygonOffset polygonOffsetFactor={-4} />
+          <meshStandardMaterial color="#efe6d0" roughness={0.68} polygonOffset polygonOffsetFactor={-9} />
         </mesh>
       ))}
     </group>

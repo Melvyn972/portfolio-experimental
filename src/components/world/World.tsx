@@ -157,26 +157,27 @@ useGLTF.preload("/models/rock-coast-a.glb");
 useGLTF.preload("/models/rocks-dormin.glb");
 
 export function World({ quality }: { quality: QualitySettings }) {
+  const lite = quality.lite;
   return (
     <group>
-      <Atmosphere dust={quality.dust} shadows={quality.shadows} shadowMapSize={quality.shadowMapSize} />
+      <Atmosphere dust={!lite && quality.dust} shadows={quality.shadows} shadowMapSize={quality.shadowMapSize} />
       <Sea segments={quality.seaSegments} />
-      <Terrain />
-      <Road />
-      <RoadAccentProps />
-      <ShoreRocks count={quality.shadows ? 7 : 5} />
-      <BeachScatter />
+      <Terrain segmentsX={lite ? 56 : 140} segmentsZ={lite ? 88 : 220} />
+      <Road simple={lite} />
+      {!lite && <RoadAccentProps />}
+      <ShoreRocks count={lite ? 2 : quality.shadows ? 7 : 5} />
+      {!lite && <BeachScatter />}
       <Vegetation count={quality.treeCount} />
       <AccessPaths />
-      <CoastalTown rich={quality.shadows} />
-      <HeroCoast lit={quality.shadows} />
+      <CoastalTown rich={!lite && quality.shadows} />
+      <HeroCoast lit={!lite && quality.shadows} />
       <VillageHeart />
-      <CoastCliffs />
+      {!lite && <CoastCliffs />}
       <Belvedere />
       <CoastalZones />
       <DiscoveryZones />
       <DiscoveryRelics />
-      <LivingWorld />
+      {!lite && <LivingWorld />}
       <DebugColliders />
     </group>
   );

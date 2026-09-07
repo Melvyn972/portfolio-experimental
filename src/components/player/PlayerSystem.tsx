@@ -307,6 +307,7 @@ export function PlayerSystem() {
   }, []);
 
   useFrame((_, rawDt) => {
+    try {
     const dt = Math.min(rawDt, 0.18);
     const state = getGameState();
     if (state.phase === "boot") return;
@@ -661,6 +662,9 @@ export function PlayerSystem() {
     }
 
     void rapier;
+    } catch {
+      /* Soft-GL: never let a frame throw take down the tab. */
+    }
   });
 
   function writeAxesDebug(mode: "walking" | "driving") {
