@@ -6,6 +6,8 @@ import * as THREE from "three";
 import { content } from "@/lib/content";
 import { getRoadCurve } from "@/lib/road";
 import { enableShadows, groundClone } from "@/lib/gltfFit";
+import { dressCoastalBuilding } from "@/lib/coastalDress";
+import { useCoastalPbr } from "@/lib/pbrTextures";
 import { sampleGroundHeight } from "@/lib/ground";
 
 function useShadowClone(path: string, ground = false) {
@@ -42,9 +44,25 @@ function Placed({
  * Scales calibrated from GLB bounding boxes (Kenney ~2m tall → ×6; phare ~29u → ×0.32).
  */
 export function CoastalZones() {
-  const maison = useShadowClone("/models/maison.glb");
-  const studio = useShadowClone("/models/studio.glb");
-  const atelier = useShadowClone("/models/kenney/city/atelier.glb");
+  const pbr = useCoastalPbr(4);
+  const maisonSrc = useShadowClone("/models/maison.glb");
+  const studioSrc = useShadowClone("/models/studio.glb");
+  const atelierSrc = useShadowClone("/models/kenney/city/atelier.glb");
+  const maison = useMemo(() => {
+    const c = maisonSrc.clone(true);
+    dressCoastalBuilding(c, pbr, "#f3eee4");
+    return c;
+  }, [maisonSrc, pbr]);
+  const studio = useMemo(() => {
+    const c = studioSrc.clone(true);
+    dressCoastalBuilding(c, pbr, "#efe4d2");
+    return c;
+  }, [studioSrc, pbr]);
+  const atelier = useMemo(() => {
+    const c = atelierSrc.clone(true);
+    dressCoastalBuilding(c, pbr, "#ead4c6");
+    return c;
+  }, [atelierSrc, pbr]);
   const { scene: phareSrc } = useGLTF("/models/phare.glb");
   const phare = useMemo(() => {
     const c = phareSrc.clone(true);

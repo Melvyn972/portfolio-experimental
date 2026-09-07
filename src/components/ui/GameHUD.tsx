@@ -55,8 +55,14 @@ export function GameHUD() {
 }
 
 function AxesProof() {
+  const [enabled, setEnabled] = useState(false);
   const [line, setLine] = useState("axes…");
   useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    setEnabled(q.get("debug") === "1" || q.get("debug") === "axes");
+  }, []);
+  useEffect(() => {
+    if (!enabled) return;
     let raf = 0;
     const tick = () => {
       const api = (window as unknown as { __coteMelvyn?: { live?: (() => Record<string, unknown>) | Record<string, unknown> } }).__coteMelvyn;
@@ -75,7 +81,8 @@ function AxesProof() {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [enabled]);
+  if (!enabled) return null;
   return (
     <div className="absolute left-1/2 top-[4.6rem] z-30 -translate-x-1/2 rounded-sm bg-[#1c1610]/70 px-2 py-1 font-mono text-[10px] text-[#f3ead8]">
       {line}

@@ -61,28 +61,28 @@ export function Convertible({ color = "#c45c3e" }: Props) {
 
           if (matName.includes("window")) {
             next = toPhysical(mat, {
-              color: new THREE.Color("#8ec8d4"),
+              color: new THREE.Color("#9ad4de"),
               transparent: true,
-              opacity: 0.38,
-              roughness: 0.04,
-              metalness: 0.05,
-              transmission: 0.62,
-              thickness: 0.35,
-              ior: 1.45,
+              opacity: 0.26,
+              roughness: 0.025,
+              metalness: 0.04,
+              transmission: 0.78,
+              thickness: 0.42,
+              ior: 1.5,
               depthWrite: false,
               side: THREE.DoubleSide,
-              envMapIntensity: 1.4,
+              envMapIntensity: 1.85,
               clearcoat: 1,
-              clearcoatRoughness: 0.04,
+              clearcoatRoughness: 0.03,
             });
           } else if (matName.includes("body blue") || mat.color.getHexString() === "c45c3e") {
             next = toPhysical(mat, {
               color: new THREE.Color(color).lerp(new THREE.Color("#b84430"), 0.08),
-              metalness: 0.68,
-              roughness: 0.11,
+              metalness: 0.62,
+              roughness: 0.09,
               clearcoat: 1,
-              clearcoatRoughness: 0.035,
-              envMapIntensity: 2.45,
+              clearcoatRoughness: 0.022,
+              envMapIntensity: 2.85,
               sheen: 0.28,
               sheenRoughness: 0.35,
               sheenColor: new THREE.Color("#f2c8a8"),
@@ -222,12 +222,12 @@ export function Convertible({ color = "#c45c3e" }: Props) {
           color="#8ecad6"
           transparent
           opacity={0.32}
-          roughness={0.03}
-          metalness={0.04}
-          transmission={0.7}
-          thickness={0.25}
+          roughness={0.02}
+          metalness={0.03}
+          transmission={0.82}
+          thickness={0.3}
           ior={1.5}
-          envMapIntensity={1.5}
+          envMapIntensity={1.85}
           depthWrite={false}
         />
       </mesh>

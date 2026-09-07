@@ -31,7 +31,7 @@ export function resolveQuality(preset: QualityPreset, isMobile: boolean): Qualit
     aa: !isMobile,
     postfx: true,
     seaSegments: isMobile ? 72 : 110,
-    treeCount: isMobile ? 40 : 70,
+    treeCount: isMobile ? 40 : 78,
     dust: !isMobile,
     anisotropic: 8,
   };

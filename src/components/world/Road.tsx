@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import * as THREE from "three";
 import { getRoadCurve, ROAD_SURFACE_LIFT, ROAD_WIDTH } from "@/lib/road";
+import { useCoastalPbr } from "@/lib/pbrTextures";
 
 /** Top-face overlay only — sits on the sand bed. No slab, no walls, no berms. */
 const ASPHALT_HALF = ROAD_WIDTH / 2 + 0.12;
@@ -61,17 +62,19 @@ function buildOverlay() {
 
 export function Road() {
   const overlay = useMemo(() => buildOverlay(), []);
-  const asphalt = useMemo(() => makeAsphaltTexture(), []);
+  const fallback = useMemo(() => makeAsphaltTexture(), []);
+  const pbr = useCoastalPbr(6);
 
   return (
     <group>
       <mesh geometry={overlay} receiveShadow renderOrder={2}>
         <meshStandardMaterial
-          color="#5a5346"
-          map={asphalt}
-          roughness={0.9}
-          metalness={0.02}
-          envMapIntensity={0.18}
+          color="#6a6254"
+          map={pbr.asphalt.map ?? fallback}
+          roughnessMap={pbr.asphalt.roughnessMap}
+          roughness={0.86}
+          metalness={0.04}
+          envMapIntensity={0.28}
           depthWrite
           polygonOffset
           polygonOffsetFactor={-3}

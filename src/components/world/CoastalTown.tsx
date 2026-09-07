@@ -4,6 +4,8 @@ import { useMemo } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { enableShadows, groundClone } from "@/lib/gltfFit";
+import { dressCoastalBuilding } from "@/lib/coastalDress";
+import { useCoastalPbr } from "@/lib/pbrTextures";
 import { sampleGroundHeight } from "@/lib/ground";
 import { getRoadCurve, nearestRoadSample, ROAD_WIDTH } from "@/lib/road";
 import { TOWN_LANE_X, TOWN_LOTS } from "@/lib/town";
@@ -19,10 +21,11 @@ function useGrounded(path: string) {
 }
 
 /**
- * Inland hamlet — Kenney / Quaternius / in-repo CC0 only.
- * Lane stays east of the asphalt ribbon; porch at (16.15, −36.2) stays open.
+ * Inland hamlet — Kenney kits dressed with Poly Haven PBR (stucco / clay roof)
+ * plus CC0 pots & bench. Lane stays east of the asphalt; porch stays open.
  */
 export function CoastalTown({ rich = true }: { rich?: boolean }) {
+  const pbr = useCoastalPbr(rich ? 6 : 2);
   const maison = useGrounded("/models/maison.glb");
   const studio = useGrounded("/models/studio.glb");
   const atelier = useGrounded("/models/kenney/city/atelier.glb");
@@ -30,6 +33,9 @@ export function CoastalTown({ rich = true }: { rich?: boolean }) {
   const sedan = useGrounded("/models/kenney/sedan-sports.glb");
   const hatch = useGrounded("/models/kenney/hatchback-sports.glb");
   const bench = useGrounded("/models/bench.glb");
+  const phBench = useGrounded("/models/ph/painted_wooden_bench/painted_wooden_bench_1k.gltf");
+  const pot = useGrounded("/models/ph/planter_pot_clay/planter_pot_clay_1k.gltf");
+  const ceramic = useGrounded("/models/ph/ceramic_pot/ceramic_pot_1k.gltf");
   const lamp = useGrounded("/models/lamp.glb");
   const wall = useGrounded("/models/stone-wall.glb");
   const hedge = useGrounded("/models/kenney/fantasy/hedge.glb");
@@ -43,23 +49,24 @@ export function CoastalTown({ rich = true }: { rich?: boolean }) {
 
   const lots = useMemo(
     () =>
-      TOWN_LOTS.map((lot) => ({
-        ...lot,
-        building: (lot.kind === "maison" ? maison : lot.kind === "studio" ? studio : atelier).clone(true),
-      })),
-    [maison, studio, atelier],
+      TOWN_LOTS.map((lot) => {
+        const src = lot.kind === "maison" ? maison : lot.kind === "studio" ? studio : atelier;
+        const building = src.clone(true);
+        dressCoastalBuilding(building, pbr, lot.tint);
+        return { ...lot, building };
+      }),
+    [maison, studio, atelier, pbr],
   );
 
   const lane = useMemo(() => {
-    const items: { pos: [number, number, number]; yaw: number; tint: number }[] = [];
-    for (let z = -6; z > -148; z -= 4.6) {
+    const items: { pos: [number, number, number]; yaw: number }[] = [];
+    for (let z = -6; z > -148; z -= 4.4) {
       const x = TOWN_LANE_X;
       const road = nearestRoadSample(new THREE.Vector3(x, 0, z));
       if (Math.abs(road.lateral) < ROAD_WIDTH * 0.62) continue;
       items.push({
-        pos: [x, sampleGroundHeight(x, z) + 0.012, z],
-        yaw: 0.02 * Math.sin(z * 0.08),
-        tint: Math.abs(z) % 13 < 6 ? 0 : 1,
+        pos: [x, sampleGroundHeight(x, z) + 0.014, z],
+        yaw: 0.015 * Math.sin(z * 0.07),
       });
     }
     return items;
@@ -108,29 +115,40 @@ export function CoastalTown({ rich = true }: { rich?: boolean }) {
   return (
     <group>
       {lane.map((s, i) => (
-        <group key={`ln-${i}`} position={s.pos} rotation={[0, s.yaw, 0]}>
-          <mesh receiveShadow>
-            <boxGeometry args={[2.55, 0.035, 4.7]} />
-            <meshStandardMaterial
-              color={s.tint ? "#b79a74" : "#c4ae86"}
-              roughness={0.92}
-              metalness={0.04}
-            />
-          </mesh>
-          <mesh position={[0, 0.01, 0]} receiveShadow>
-            <boxGeometry args={[0.08, 0.02, 4.5]} />
-            <meshStandardMaterial color="#9a7d55" roughness={0.95} />
-          </mesh>
-        </group>
+        <mesh key={`ln-${i}`} position={s.pos} rotation={[0, s.yaw, 0]} receiveShadow>
+          <boxGeometry args={[2.7, 0.04, 4.5]} />
+          <meshStandardMaterial
+            color="#c8b090"
+            map={pbr.cobble.map}
+            normalMap={pbr.cobble.normalMap}
+            roughnessMap={pbr.cobble.roughnessMap}
+            roughness={0.88}
+            metalness={0.03}
+            envMapIntensity={0.35}
+          />
+        </mesh>
       ))}
 
       {lots.map((lot) => (
         <group key={lot.id} position={[lot.x, sampleGroundHeight(lot.x, lot.z), lot.z]} rotation={[0, lot.yaw, 0]}>
           <primitive object={lot.building} scale={lot.kind === "atelier" ? 5.05 : 5.7} />
-          <mesh position={[0, 0.02, 1.8]} receiveShadow>
-            <boxGeometry args={[4.2, 0.04, 2.4]} />
-            <meshStandardMaterial color="#c8b48c" roughness={0.9} />
+          <mesh position={[0, 0.018, 1.85]} receiveShadow>
+            <boxGeometry args={[4.4, 0.035, 2.6]} />
+            <meshStandardMaterial
+              color="#c4a078"
+              map={pbr.terra.map}
+              roughnessMap={pbr.terra.roughnessMap}
+              roughness={0.84}
+              metalness={0.04}
+            />
           </mesh>
+          {rich && (
+            <primitive
+              object={(lot.id.charCodeAt(4) % 2 ? pot : ceramic).clone(true)}
+              position={[1.55, 0, 2.05]}
+              scale={1.15}
+            />
+          )}
         </group>
       ))}
 
@@ -139,12 +157,24 @@ export function CoastalTown({ rich = true }: { rich?: boolean }) {
           <group position={[27.6, sampleGroundHeight(27.6, -64.2), -64.2]} rotation={[0, 0.35, 0]}>
             <primitive object={windmill.clone(true)} scale={4.5} />
           </group>
+          <mesh position={[24.4, sampleGroundHeight(24.4, -65.2) + 0.02, -65.2]} receiveShadow>
+            <cylinderGeometry args={[3.4, 3.6, 0.05, 12]} />
+            <meshStandardMaterial
+              color="#c8a070"
+              map={pbr.terra.map}
+              roughnessMap={pbr.terra.roughnessMap}
+              roughness={0.8}
+            />
+          </mesh>
           <group position={[21.6, sampleGroundHeight(21.6, -64.8), -64.8]} rotation={[0, 1.2, 0]}>
             <primitive object={stairs.clone(true)} scale={1.9} />
           </group>
           <group position={[24.8, sampleGroundHeight(24.8, -66.4), -66.4]}>
             <primitive object={lantern.clone(true)} scale={1.25} />
-            <pointLight position={[0, 1.8, 0]} intensity={0.55} color="#ffc888" distance={8} />
+            <pointLight position={[0, 1.8, 0]} intensity={0.45} color="#ffc888" distance={7} />
+          </group>
+          <group position={[23.4, sampleGroundHeight(23.4, -63.6), -63.6]} rotation={[0, 0.4, 0]}>
+            <primitive object={phBench.clone(true)} scale={1.05} />
           </group>
         </>
       )}
@@ -179,7 +209,7 @@ export function CoastalTown({ rich = true }: { rich?: boolean }) {
         [20.6, -136, 0.2],
       ].map(([x, z, yaw], i) => (
         <group key={`bn-${i}`} position={[x, sampleGroundHeight(x, z), z]} rotation={[0, yaw, 0]}>
-          <primitive object={bench.clone(true)} scale={1.32} />
+          <primitive object={(rich && i % 2 === 0 ? phBench : bench).clone(true)} scale={rich && i % 2 === 0 ? 1.0 : 1.32} />
         </group>
       ))}
 
@@ -201,6 +231,7 @@ export function CoastalTown({ rich = true }: { rich?: boolean }) {
           [22.2, -14],
           [22.4, -72],
           [22.0, -124],
+          [27.8, -88],
         ].map(([x, z], i) => (
           <group key={`cy-${i}`} position={[x, sampleGroundHeight(x, z), z]}>
             <primitive object={cypress.clone(true)} scale={1.15} />
@@ -228,3 +259,6 @@ useGLTF.preload("/models/bougainvillea.glb");
 useGLTF.preload("/models/kenney/city/fence.glb");
 useGLTF.preload("/models/lantern.glb");
 useGLTF.preload("/models/kenney/fantasy/stairs-stone.glb");
+useGLTF.preload("/models/ph/planter_pot_clay/planter_pot_clay_1k.gltf");
+useGLTF.preload("/models/ph/ceramic_pot/ceramic_pot_1k.gltf");
+useGLTF.preload("/models/ph/painted_wooden_bench/painted_wooden_bench_1k.gltf");
