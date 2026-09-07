@@ -8,15 +8,25 @@ import * as THREE from "three";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import { Convertible } from "@/components/vehicle/Convertible";
 import { inputRef, consumeInteractPulse } from "@/hooks/useKeyboard";
-import { getGameState, setGameState, openChapter, menusBlockInput, type ChapterId } from "@/lib/gameStore";
+import {
+  getGameState,
+  setGameState,
+  openChapter,
+  menusBlockInput,
+  consumePendingTeleport,
+  type ChapterId,
+} from "@/lib/gameStore";
 import {
   nearestRoadSample,
   roadCorrectionForce,
   clampToRoad,
   sampleRoad,
   START_POSE,
+  START_T,
   ROAD_WIDTH,
   ROAD_SURFACE_LIFT,
+  ribbonPose,
+  isNullIsland,
 } from "@/lib/road";
 import { computeTerrainHeight, sampleGroundHeight, sampleWalkHeight, PLAYER_RADIUS, PLAYER_HEIGHT } from "@/lib/ground";
 import { findNearestInteractable } from "@/lib/interaction";
@@ -86,6 +96,85 @@ export function PlayerSystem() {
     to: THREE.Vector3;
   }>({ kind: null, t: 0, from: new THREE.Vector3(), to: new THREE.Vector3() });
 
+  function applyDriveTeleport(t: number) {
+    const pose = ribbonPose(t);
+    pos.current.set(pose.x, pose.roadY, pose.z);
+    yaw.current = pose.yaw;
+    velocity.current = 0;
+    lookYaw.current = pose.yaw;
+    lookPitch.current = 0.08;
+    walkYaw.current = pose.yaw;
+    playerPos.current.set(pose.x, pose.y, pose.z);
+    playerVel.current.set(0, 0, 0);
+    transition.current.kind = null;
+    skipUntil.current = performance.now() + 220;
+    syncCar(pos.current, yaw.current, 0, 0);
+    setGameState({
+      phase: "playing",
+      mode: "driving",
+      engineOn: true,
+      openChapter: null,
+      rescueOpen: false,
+      showExplorerHint: false,
+      carPos: { x: pose.x, y: pose.y, z: pose.z },
+      playerPos: { x: pose.x, y: pose.y, z: pose.z },
+      carYaw: pose.yaw,
+      lookYaw: pose.yaw,
+      walkYaw: pose.yaw,
+      lookPitch: 0.08,
+      speed: 0,
+      nearStopSpot: false,
+      prompt: null,
+      interactTarget: null,
+    });
+  }
+
+  function applyWalkTeleportLocal(detail: { x?: number; y?: number; z?: number; yaw?: number; focusChapter?: ChapterId | null }) {
+    const pose = sanitizeWalkSpawn(detail ?? {});
+    if (!pose) return false;
+    playerPos.current.set(pose.x, pose.y, pose.z);
+    walkYaw.current = pose.yaw;
+    lookYaw.current = pose.yaw;
+    lookPitch.current = 0.12;
+    playerVel.current.set(0, 0, 0);
+    transition.current.kind = null;
+    skipUntil.current = performance.now() + 200;
+    setPlayerKinematic(playerPos.current, walkYaw.current, true);
+    if (playerVisual.current) {
+      playerVisual.current.visible = true;
+      playerVisual.current.rotation.y = walkYaw.current;
+    }
+    const focus = detail?.focusChapter ?? getGameState().focusChapter;
+    const landed = findNearestInteractable(playerPos.current, "walking", focus);
+    setGameState({
+      phase: "playing",
+      mode: "walking",
+      openChapter: null,
+      rescueOpen: false,
+      playerPos: { x: pose.x, y: pose.y, z: pose.z },
+      walkYaw: walkYaw.current,
+      lookYaw: lookYaw.current,
+      lookPitch: lookPitch.current,
+      nearStopSpot: false,
+      focusChapter: focus,
+      prompt: landed?.label ?? getGameState().prompt,
+      interactTarget: landed?.id ?? getGameState().interactTarget,
+      showExplorerHint: false,
+    });
+    return true;
+  }
+
+  function consumeGate() {
+    const pending = consumePendingTeleport();
+    if (!pending) return false;
+    if (pending.kind === "drive") {
+      applyDriveTeleport(pending.t);
+      return true;
+    }
+    applyWalkTeleportLocal(pending);
+    return true;
+  }
+
   useEffect(() => {
     const c = world.createCharacterController(0.08);
     c.setApplyImpulsesToDynamicBodies(false);
@@ -132,73 +221,14 @@ export function PlayerSystem() {
 
     const onTeleportWalk = (ev: Event) => {
       const detail = (ev as CustomEvent<{ x: number; y: number; z: number; yaw?: number; focusChapter?: ChapterId | null }>).detail;
-      const pose = sanitizeWalkSpawn(detail ?? {});
-      if (!pose) return;
-      playerPos.current.set(pose.x, pose.y, pose.z);
-      walkYaw.current = pose.yaw;
-      lookYaw.current = pose.yaw;
-      lookPitch.current = 0.12;
-      playerVel.current.set(0, 0, 0);
-      transition.current.kind = null;
-      skipUntil.current = performance.now() + 200;
-      setPlayerKinematic(playerPos.current, walkYaw.current, true);
-      if (playerVisual.current) {
-        playerVisual.current.visible = true;
-        playerVisual.current.rotation.y = walkYaw.current;
-      }
-      const focus = detail?.focusChapter ?? getGameState().focusChapter;
-      const landed = findNearestInteractable(playerPos.current, "walking", focus);
-      setGameState({
-        phase: "playing",
-        mode: "walking",
-        openChapter: null,
-        rescueOpen: false,
-        playerPos: { x: pose.x, y: pose.y, z: pose.z },
-        walkYaw: walkYaw.current,
-        lookYaw: lookYaw.current,
-        lookPitch: lookPitch.current,
-        nearStopSpot: false,
-        focusChapter: focus,
-        prompt: landed?.label ?? getGameState().prompt,
-        interactTarget: landed?.id ?? getGameState().interactTarget,
-        showExplorerHint: false,
-      });
+      applyWalkTeleportLocal(detail ?? {});
+      consumePendingTeleport();
     };
 
     const onTeleportDrive = (ev: Event) => {
       const t = (ev as CustomEvent<{ t?: number }>).detail?.t;
-      const sample = sampleRoad(typeof t === "number" ? t : 0.08);
-      pos.current.copy(sample.position);
-      yaw.current = Math.atan2(sample.tangent.x, sample.tangent.z);
-      velocity.current = 0;
-      const yPos = pos.current.y + ROAD_SURFACE_LIFT;
-      if (carBody.current) {
-        carBody.current.setNextKinematicTranslation({ x: pos.current.x, y: yPos + 0.35, z: pos.current.z });
-        const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw.current, 0, "YXZ"));
-        carBody.current.setNextKinematicRotation({ x: q.x, y: q.y, z: q.z, w: q.w });
-      }
-      if (carVisual.current) {
-        carVisual.current.position.set(pos.current.x, yPos, pos.current.z);
-        carVisual.current.rotation.set(0, yaw.current, 0);
-      }
-      lookYaw.current = yaw.current;
-      lookPitch.current = 0.08;
-      setGameState({
-        phase: "playing",
-        mode: "driving",
-        engineOn: true,
-        openChapter: null,
-        rescueOpen: false,
-        showExplorerHint: false,
-        carPos: { x: pos.current.x, y: pos.current.y, z: pos.current.z },
-        carYaw: yaw.current,
-        lookYaw: yaw.current,
-        lookPitch: 0.08,
-        speed: 0,
-        nearStopSpot: false,
-        prompt: null,
-        interactTarget: null,
-      });
+      applyDriveTeleport(typeof t === "number" && Number.isFinite(t) ? t : START_T);
+      consumePendingTeleport();
     };
 
     window.addEventListener("cote:teleport-belvedere", onTeleport);
@@ -217,27 +247,27 @@ export function PlayerSystem() {
     if (state.phase === "boot") return;
 
     if (!initialized.current) {
-      pos.current.copy(START_POSE.position);
-      yaw.current = Math.atan2(START_POSE.tangent.x, START_POSE.tangent.z);
-      // Do not clobber a teleport that landed before the first frame.
-      if (state.mode === "walking" && Number.isFinite(state.lookYaw)) {
-        walkYaw.current = state.walkYaw;
-        lookYaw.current = state.lookYaw;
-        if (Number.isFinite(state.playerPos.x)) {
+      if (!consumeGate()) {
+        if (state.mode === "walking" && !isNullIsland(state.playerPos.x, state.playerPos.y, state.playerPos.z)) {
+          walkYaw.current = state.walkYaw;
+          lookYaw.current = state.lookYaw;
           playerPos.current.set(state.playerPos.x, state.playerPos.y, state.playerPos.z);
+          const ribbon = ribbonPose(START_T);
+          pos.current.set(ribbon.x, ribbon.roadY, ribbon.z);
+          yaw.current = ribbon.yaw;
+          syncCar(pos.current, yaw.current, 0, 0);
+        } else {
+          applyDriveTeleport(START_T);
         }
-      } else {
-        walkYaw.current = yaw.current;
-        lookYaw.current = yaw.current;
       }
-      syncCar(pos.current, yaw.current, 0, 0);
       initialized.current = true;
-      setGameState({
-        carPos: { x: pos.current.x, y: pos.current.y, z: pos.current.z },
-        carYaw: yaw.current,
-        walkYaw: walkYaw.current,
-        lookYaw: lookYaw.current,
-      });
+    } else {
+      consumeGate();
+      if (state.mode === "driving" && isNullIsland(pos.current.x, pos.current.y, pos.current.z)) {
+        applyDriveTeleport(START_T);
+      } else if (state.mode === "walking" && isNullIsland(playerPos.current.x, playerPos.current.y, playerPos.current.z)) {
+        applyDriveTeleport(START_T);
+      }
     }
 
     if (state.phase === "intro" || state.phase === "title" || state.openChapter !== null) {

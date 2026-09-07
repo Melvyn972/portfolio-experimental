@@ -128,9 +128,29 @@ export function clampToRoad(world: THREE.Vector3, maxLateral = ROAD_WIDTH * 0.42
 }
 
 export const BELVEDERE_T = tClosest(-3.4, -90);
-export const START_POSE = sampleRoad(tClosest(-3.3, 26));
+export const START_T = tClosest(-3.3, 26);
+export const START_POSE = sampleRoad(START_T);
 export const BELVEDERE = sampleRoad(BELVEDERE_T);
 export const PHARE_ROAD_T = tClosest(-3.0, -154);
+
+/** Drive/walk pose on the closed lollipop — asphalt Y, never (0,0,0). */
+export function ribbonPose(t: number = START_T) {
+  const sample = sampleRoad(t);
+  const yaw = Math.atan2(sample.tangent.x, sample.tangent.z);
+  return {
+    t: sample.t,
+    x: sample.position.x,
+    y: sample.position.y + ROAD_SURFACE_LIFT,
+    z: sample.position.z,
+    roadY: sample.position.y,
+    yaw,
+  };
+}
+
+export function isNullIsland(x: number, y: number, z: number) {
+  if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) return true;
+  return Math.hypot(x, z) < 0.85 && y < 0.55;
+}
 
 export function getBelvedereWorldAnchor() {
   const { position, tangent } = BELVEDERE;

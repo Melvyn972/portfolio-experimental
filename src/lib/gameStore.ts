@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { computeTerrainHeight, sampleGroundHeight } from "@/lib/ground";
-import { getBelvedereWorldAnchor, nearestRoadSample, ROAD_SURFACE_LIFT } from "@/lib/road";
+import { getBelvedereWorldAnchor, nearestRoadSample, ROAD_SURFACE_LIFT, ribbonPose, START_T, isNullIsland } from "@/lib/road";
 import { SEA_INLAND_X, SEA_SURFACE_Y } from "@/lib/sea";
 import { isFinitePos, sanitizeWalkSpawn, zoneWalkSpawns } from "@/lib/spawn";
 import { chapterForInteractableId, interactableForChapter } from "@/lib/interaction";
@@ -76,6 +76,28 @@ type Listener = () => void;
 
 const listeners = new Set<Listener>();
 
+const BOOT_RIBBON = ribbonPose(START_T);
+
+export type PendingTeleport =
+  | { kind: "drive"; t: number }
+  | { kind: "walk"; x: number; y: number; z: number; yaw: number; focusChapter?: ChapterId | null };
+
+let pendingTeleport: PendingTeleport | null = null;
+
+export function queuePendingTeleport(next: PendingTeleport) {
+  pendingTeleport = next;
+}
+
+export function consumePendingTeleport() {
+  const next = pendingTeleport;
+  pendingTeleport = null;
+  return next;
+}
+
+export function peekPendingTeleport() {
+  return pendingTeleport;
+}
+
 let state: GameState = {
   phase: "boot",
   mode: "driving",
@@ -89,11 +111,11 @@ let state: GameState = {
   showExplorerHint: false,
   rescueOpen: false,
   engineOn: false,
-  playerPos: { x: 0, y: 0, z: 0 },
-  carPos: { x: 0, y: 0, z: 0 },
-  carYaw: 0,
-  walkYaw: 0,
-  lookYaw: 0,
+  playerPos: { x: BOOT_RIBBON.x, y: BOOT_RIBBON.y, z: BOOT_RIBBON.z },
+  carPos: { x: BOOT_RIBBON.x, y: BOOT_RIBBON.y, z: BOOT_RIBBON.z },
+  carYaw: BOOT_RIBBON.yaw,
+  walkYaw: BOOT_RIBBON.yaw,
+  lookYaw: BOOT_RIBBON.yaw,
   lookPitch: 0.12,
   prompt: null,
   interactTarget: null,
@@ -132,6 +154,7 @@ export function setGameState(partial: Partial<GameState>) {
       const cur = state[key];
       const val = value as { x: number; y: number; z: number };
       if (!isFinitePos(val)) continue;
+      if (isNullIsland(val.x, val.y, val.z)) continue;
       if (!shallowEqualPos(cur, val)) {
         next[key] = { x: val.x, y: val.y, z: val.z };
         changed = true;
@@ -233,18 +256,70 @@ export function startJourney() {
   });
 }
 
-/** Escape / Passer — never soft-locks a returning visitor. */
-export function skipToPlay() {
-  markVoyaged();
+/** Snap store + physics queue onto the ribbon above asphalt. Never (0,0,0). */
+export function applyRibbonDrive(t: number = START_T) {
+  const pose = ribbonPose(t);
+  queuePendingTeleport({ kind: "drive", t: pose.t });
   setGameState({
     phase: "playing",
+    mode: "driving",
     engineOn: true,
-    showExplorerHint: true,
     openChapter: null,
     rescueOpen: false,
     relicFocus: null,
     lastFound: null,
+    carPos: { x: pose.x, y: pose.y, z: pose.z },
+    playerPos: { x: pose.x, y: pose.y, z: pose.z },
+    carYaw: pose.yaw,
+    walkYaw: pose.yaw,
+    lookYaw: pose.yaw,
+    lookPitch: 0.08,
+    speed: 0,
+    prompt: null,
+    interactTarget: null,
+    nearStopSpot: false,
   });
+  if (typeof window === "undefined") return pose;
+  window.dispatchEvent(new CustomEvent("cote:teleport-drive", { detail: { t: pose.t } }));
+  return pose;
+}
+
+export function applyWalkTeleport(raw: { x?: number; y?: number; z?: number; yaw?: number; focusChapter?: ChapterId | null }) {
+  const pose = sanitizeWalkSpawn(raw);
+  if (!pose) return null;
+  queuePendingTeleport({
+    kind: "walk",
+    x: pose.x,
+    y: pose.y,
+    z: pose.z,
+    yaw: pose.yaw,
+    focusChapter: raw.focusChapter ?? null,
+  });
+  setGameState({
+    phase: "playing",
+    mode: "walking",
+    openChapter: null,
+    rescueOpen: false,
+    relicFocus: null,
+    showExplorerHint: false,
+    playerPos: { x: pose.x, y: pose.y, z: pose.z },
+    walkYaw: pose.yaw,
+    lookYaw: pose.yaw,
+    lookPitch: 0.12,
+    focusChapter: raw.focusChapter ?? state.focusChapter,
+  });
+  if (typeof window === "undefined") return pose;
+  window.dispatchEvent(
+    new CustomEvent("cote:teleport-walk", { detail: { ...pose, focusChapter: raw.focusChapter ?? null } }),
+  );
+  return pose;
+}
+
+/** Escape / Passer / fin d’intro — ruban valide, jamais (0,0,0). */
+export function skipToPlay() {
+  markVoyaged();
+  applyRibbonDrive(START_T);
+  setGameState({ showExplorerHint: true });
 }
 
 /** Open the in-range chapter now — do not wait for the physics frame (1 fps / SwiftShader). */
@@ -299,8 +374,7 @@ export function travelToChapterZone(id: ChapterId) {
     walkYaw: pose.yaw,
     lookYaw: pose.yaw,
   });
-  if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: { ...pose, focusChapter: id } }));
+  applyWalkTeleport({ ...pose, focusChapter: id });
 }
 
 /** Dev helper for Playwright / QA */
@@ -356,29 +430,22 @@ if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("cote:teleport-belvedere"));
     },
     teleportWalk: (x, y, z, yaw) => {
-      const pose = sanitizeWalkSpawn({ x, y, z, yaw });
-      if (!pose) return;
-      window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: pose }));
+      applyWalkTeleport({ x, y, z, yaw });
     },
     teleportMaison: () => {
-      const p = zoneWalkSpawns().maison;
-      window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: p }));
+      applyWalkTeleport(zoneWalkSpawns().maison);
     },
     teleportStudio: () => {
-      const p = zoneWalkSpawns().studio;
-      window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: p }));
+      applyWalkTeleport(zoneWalkSpawns().studio);
     },
     teleportPlage: () => {
-      const p = zoneWalkSpawns().plage;
-      window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: p }));
+      applyWalkTeleport(zoneWalkSpawns().plage);
     },
     teleportPhare: () => {
-      const p = zoneWalkSpawns().phare;
-      window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: p }));
+      applyWalkTeleport(zoneWalkSpawns().phare);
     },
     teleportBelvedereWalk: () => {
-      const p = zoneWalkSpawns().belvedere;
-      window.dispatchEvent(new CustomEvent("cote:teleport-walk", { detail: p }));
+      applyWalkTeleport(zoneWalkSpawns().belvedere);
     },
     travelToChapterZone,
     setWalkStick: (x, y) => {
@@ -403,8 +470,8 @@ if (typeof window !== "undefined") {
         showExplorerHint: false,
       });
     },
-    teleportDrive: (t = 0.08) => {
-      window.dispatchEvent(new CustomEvent("cote:teleport-drive", { detail: { t } }));
+    teleportDrive: (t = START_T) => {
+      applyRibbonDrive(typeof t === "number" && Number.isFinite(t) ? t : START_T);
     },
     startJourney,
     skipToPlay,

@@ -5,7 +5,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useRapier } from "@react-three/rapier";
 import * as THREE from "three";
 import { getGameState } from "@/lib/gameStore";
-import { START_POSE } from "@/lib/road";
+import { START_POSE, START_T, ribbonPose, isNullIsland } from "@/lib/road";
 import { computeTerrainHeight, sampleGroundHeight } from "@/lib/ground";
 import { getBelvedereInteractPosition } from "@/components/world/Belvedere";
 import { pushCameraOut } from "@/lib/colliders";
@@ -145,9 +145,16 @@ export function GameCamera() {
       lastMode.current = state.mode;
       snapFrames.current = 8;
     }
-    const subject = walking ? state.playerPos : state.carPos;
-    if (!Number.isFinite(subject.x) || !Number.isFinite(subject.y) || !Number.isFinite(subject.z)) {
-      return;
+    let subject = walking ? state.playerPos : state.carPos;
+    if (
+      !Number.isFinite(subject.x) ||
+      !Number.isFinite(subject.y) ||
+      !Number.isFinite(subject.z) ||
+      isNullIsland(subject.x, subject.y, subject.z)
+    ) {
+      const fallback = ribbonPose(START_T);
+      subject = { x: fallback.x, y: fallback.y, z: fallback.z };
+      snapFrames.current = 12;
     }
     if (walking) _subject.set(subject.x, subject.y + 1.35, subject.z);
     else _subject.set(subject.x, subject.y + 0.9, subject.z);
@@ -162,7 +169,14 @@ export function GameCamera() {
     const side = walking ? 0.08 : 0.16;
 
     dist.current = THREE.MathUtils.lerp(dist.current, targetDist, 1 - Math.exp(-3.2 * dt));
-    offsetPos(_desired, _subject, yaw, pitch, dist.current, height, side);
+    let followDist = dist.current;
+    offsetPos(_desired, _subject, yaw, pitch, followDist, height, side);
+    for (let i = 0; i < 5; i++) {
+      const g = maxGroundAt(_desired.x, _desired.z);
+      if (g <= _subject.y + 2.15) break;
+      followDist = Math.max(walking ? 2.5 : 3.5, followDist * 0.7);
+      offsetPos(_desired, _subject, yaw, pitch, followDist, height, side);
+    }
     // Hard rule: camera stays behind the look/car yaw. Obstacle pull must
     // never flip in front — that reads as "controls inverted" mid-session.
 
@@ -236,7 +250,17 @@ export function GameCamera() {
     camera.getWorldDirection(_dir);
     _dir.y = 0;
     const camDot = _dir.lengthSq() < 1e-8 ? 1 : _dir.normalize().dot(_a.set(fwdX, 0, fwdZ));
-    if (snapFrames.current > 0 || inFront || camDot < 0.25 || current.current.distanceTo(_desired) > 3.2) {
+    const camGround = maxGroundAt(current.current.x, current.current.z);
+    const perched = camGround > _subject.y + 2.55;
+    const buried = current.current.y < camGround + 1.2;
+    if (
+      snapFrames.current > 0 ||
+      inFront ||
+      camDot < 0.25 ||
+      current.current.distanceTo(_desired) > 3.2 ||
+      perched ||
+      buried
+    ) {
       current.current.copy(_desired);
       look.current.copy(_lookTarget);
       if (snapFrames.current > 0) snapFrames.current -= 1;
@@ -244,15 +268,23 @@ export function GameCamera() {
       current.current.lerp(_desired, 1 - Math.exp(-follow * dt));
       look.current.lerp(_lookTarget, 1 - Math.exp(-11 * dt));
     }
-    const maxAbove = _subject.y + (walking ? 3.4 : 4.6);
-    if (Number.isFinite(maxAbove) && current.current.y > maxAbove) {
-      current.current.y = maxAbove;
+    const groundNow = maxGroundAt(current.current.x, current.current.z);
+    // Never slam Y into a hillside. Cap only when the cam is over the ribbon.
+    if (groundNow <= _subject.y + 1.85) {
+      const maxAbove = _subject.y + (walking ? 4.2 : 5.2);
+      if (Number.isFinite(maxAbove) && current.current.y > maxAbove) {
+        current.current.y = maxAbove;
+      }
     }
     pushCameraOut(_desired, 0.62);
     pushCameraOut(current.current, 0.62);
     // Last: stay above the visual sand + asphalt. Occluder eject must not win.
     liftAboveGround(_desired, _subject.y, walking);
     liftAboveGround(current.current, _subject.y, walking);
+    if (current.current.y < maxGroundAt(current.current.x, current.current.z) + 1.25) {
+      current.current.copy(_desired);
+      liftAboveGround(current.current, _subject.y, walking);
+    }
     camera.position.copy(current.current);
     camera.lookAt(look.current);
     camera.updateMatrixWorld(true);
@@ -303,9 +335,9 @@ function maxGroundAt(x: number, z: number) {
 function liftAboveGround(pos: THREE.Vector3, subjectY: number, walking: boolean) {
   if (!Number.isFinite(pos.x) || !Number.isFinite(pos.z)) return;
   const floor = Math.max(
-    maxGroundAt(pos.x, pos.z) + (walking ? 2.15 : 2.48),
-    Number.isFinite(subjectY) ? subjectY + 1.55 : 2.05,
-    2.05,
+    maxGroundAt(pos.x, pos.z) + (walking ? 2.35 : 2.72),
+    Number.isFinite(subjectY) ? subjectY + 1.7 : 2.2,
+    2.2,
   );
   if (!Number.isFinite(pos.y) || pos.y < floor) pos.y = floor;
 }

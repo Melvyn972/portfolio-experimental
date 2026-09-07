@@ -236,7 +236,7 @@ export function IntroDirector() {
     const engineAt = window.setTimeout(() => setGameState({ engineOn: true }), 6200);
     const playAt = window.setTimeout(() => {
       done.current = true;
-      setGameState({ phase: "playing", engineOn: true, showExplorerHint: true });
+      skipToPlay();
       window.setTimeout(() => setGameState({ showExplorerHint: false }), 4200);
     }, 9200);
     const skipAt = window.setTimeout(() => {
