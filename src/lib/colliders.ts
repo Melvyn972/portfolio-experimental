@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { getBelvedereWorldAnchor } from "@/lib/road";
 import { content } from "@/lib/content";
+import { TOWN_FOOTPRINT, TOWN_LOTS, VILLAGE_SQUARE } from "@/lib/town";
 
 export type Collider = {
   id: string;
@@ -35,50 +36,134 @@ export function buildWorldColliders(): Collider[] {
   const along = bel.tangent;
   const t = bel.terrace;
 
-  // Parapet wall
   {
-    const p = t.clone().addScaledVector(side, -4.95);
-    list.push(box("bel-parapet", p.x, 1.3, p.z, 1.2, 1.6, 7.5));
+    const p = t.clone().addScaledVector(side, -3.5);
+    list.push(box("bel-parapet", p.x, 1.35, p.z, 0.55, 1.1, 6.2));
   }
-  // Side rails
-  {
-    const p1 = t.clone().addScaledVector(along, -3.75);
-    const p2 = t.clone().addScaledVector(along, 3.75);
-    list.push(box("bel-rail-n", p1.x, 1.2, p1.z, 9, 1.2, 0.6));
-    list.push(box("bel-rail-s", p2.x, 1.15, p2.z, 9, 1.0, 0.6));
-  }
+  void along;
 
   for (const zone of content.zones.zones) {
     const { x, z } = zone.marker;
     if (zone.id === "maison-atelier") {
-      // Kenney City building-type-b @ ×6.2 + atelier wing @ ×5.2
-      list.push(box("maison", x, 3.55, z, 11.4, 7.1, 7.2));
-      list.push(box("maison-wing", x + 7.5, 3.25, z + 2, 9.2, 6.5, 5.4));
+      list.push(box("maison", x, 4.0, z - 1.4, 4.4, 4.8, 2.6));
+      list.push(box("maison-wing", x + 7.5, 3.7, z + 1.4, 3.4, 4.2, 2.2));
     }
     if (zone.id === "studio") {
-      // Kenney City building-type-e @ ×6.0
-      list.push(box("studio", x, 3.45, z, 8.0, 6.9, 6.3));
+      list.push(box("studio", x, 4.1, z - 1.0, 3.6, 4.6, 2.5));
     }
     if (zone.id === "phare") {
       // Daniel Dormin lighthouse @ ×0.34 — mesh already grounded at local y=0
-      list.push(box("phare", x, 5.5, z, 3.8, 9.9, 3.8));
-      list.push(box("phare-base", x, 0.55, z, 8.4, 1.1, 8.0));
+      list.push(box("phare", x, 5.2, z, 2.4, 9.4, 2.4));
+      list.push(box("phare-base", x, 0.4, z, 4.2, 0.8, 4.0));
     }
   }
+
+  for (const lot of TOWN_LOTS) {
+    const fp = TOWN_FOOTPRINT[lot.kind];
+    list.push(box(`town-${lot.id}`, lot.x, 3.6, lot.z, fp.sx, fp.sy, fp.sz));
+  }
+
+  list.push(box("village-campanile", VILLAGE_SQUARE.x + 3.15, 2.6, VILLAGE_SQUARE.z - 2.05, 1.7, 5.2, 1.6));
+  list.push(box("village-cafe", VILLAGE_SQUARE.x - 2.85, 1.4, VILLAGE_SQUARE.z + 1.55, 2.9, 2.4, 2.1));
 
   void yaw;
   return list;
 }
 
 let cached: Collider[] | null = null;
+let cachedCam: Collider[] | null = null;
 
 export function getColliders() {
   if (!cached) cached = buildWorldColliders();
   return cached;
 }
 
+/** Taller / wider volumes for the chase cam — walk AABBs stay porch-open. */
+export function buildCameraOccluders(): Collider[] {
+  const list: Collider[] = [];
+  for (const zone of content.zones.zones) {
+    const { x, z } = zone.marker;
+    if (zone.id === "maison-atelier") {
+      list.push(box("cam-maison", x, 5.4, z - 1.2, 6.8, 10.4, 5.2));
+      list.push(box("cam-atelier", x + 7.5, 4.8, z + 1.5, 5.2, 9.2, 4.4));
+    }
+    if (zone.id === "studio") {
+      list.push(box("cam-studio", x, 5.2, z - 0.8, 5.8, 10.0, 4.8));
+    }
+    if (zone.id === "phare") {
+      list.push(box("cam-phare", x, 6.4, z, 3.2, 12.4, 3.2));
+    }
+  }
+  for (const lot of TOWN_LOTS) {
+    const fp = TOWN_FOOTPRINT[lot.kind];
+    list.push(box(`cam-${lot.id}`, lot.x, 5.6, lot.z, fp.sx + 1.4, 10.2, fp.sz + 1.6));
+  }
+  list.push(box("cam-campanile", VILLAGE_SQUARE.x + 3.15, 4.2, VILLAGE_SQUARE.z - 2.05, 2.4, 8.4, 2.2));
+  list.push(box("cam-cafe", VILLAGE_SQUARE.x - 2.85, 2.6, VILLAGE_SQUARE.z + 1.55, 3.4, 5.2, 2.6));
+  return list;
+}
+
+export function getCameraOccluders() {
+  if (!cachedCam) cachedCam = buildCameraOccluders();
+  return cachedCam;
+}
+
 export function resetColliders() {
   cached = null;
+  cachedCam = null;
+}
+
+/**
+ * Push a camera point out of building volumes (roofs included).
+ * Mutates `pos`. Returns true if the camera was inside a house.
+ */
+export function isInsideCameraOccluder(pos: THREE.Vector3, pad = 0.05): boolean {
+  for (const c of getCameraOccluders()) {
+    if (
+      pos.x > c.min.x + pad &&
+      pos.x < c.max.x - pad &&
+      pos.y > c.min.y + pad &&
+      pos.y < c.max.y - pad &&
+      pos.z > c.min.z + pad &&
+      pos.z < c.max.z - pad
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function pushCameraOut(pos: THREE.Vector3, radius = 0.55): boolean {
+  const boxes = getCameraOccluders();
+  let hit = false;
+  for (const c of boxes) {
+    const inside =
+      pos.x > c.min.x - radius &&
+      pos.x < c.max.x + radius &&
+      pos.y > c.min.y - radius &&
+      pos.y < c.max.y + radius &&
+      pos.z > c.min.z - radius &&
+      pos.z < c.max.z + radius;
+    if (!inside) continue;
+
+    const penL = pos.x - (c.min.x - radius);
+    const penR = c.max.x + radius - pos.x;
+    const penU = c.max.y + radius - pos.y;
+    const penN = pos.z - (c.min.z - radius);
+    const penS = c.max.z + radius - pos.z;
+    // Never eject downward — that clips the chase cam under the sand mesh
+    // (parent Eco QA: camera under jagged backfaces, « Ralentissez… »).
+    const minPen = Math.min(penL, penR, penU, penN, penS);
+    if (minPen < 0) continue;
+
+    if (minPen === penL) pos.x -= penL;
+    else if (minPen === penR) pos.x += penR;
+    else if (minPen === penU) pos.y += penU;
+    else if (minPen === penN) pos.z -= penN;
+    else pos.z += penS;
+    hit = true;
+  }
+  return hit;
 }
 
 /**

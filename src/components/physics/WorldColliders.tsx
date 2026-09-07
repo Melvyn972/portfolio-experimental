@@ -2,184 +2,100 @@
 
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import { useMemo } from "react";
-import * as THREE from "three";
 import { content } from "@/lib/content";
-import { getBelvedereWorldAnchor, getRoadCurve, ROAD_WIDTH } from "@/lib/road";
+import { getBelvedereWorldAnchor } from "@/lib/road";
+import { sampleGroundHeight } from "@/lib/ground";
 
 /**
- * Static Rapier colliders for the coastal slice.
- * Visual meshes stay separate — these are invisible physics proxies.
+ * Physics = heightfield that matches the visible ground, plus tight building
+ * footprints. Extra road / path / rock cuboids were invisible walls.
  */
 export function WorldColliders() {
   const bel = useMemo(() => getBelvedereWorldAnchor(), []);
-  const roadBoxes = useMemo(() => buildRoadColliders(), []);
-  const rockBoxes = useMemo(() => buildRockColliders(), []);
-
   const maison = content.zones.zones.find((z) => z.id === "maison-atelier")?.marker;
   const studio = content.zones.zones.find((z) => z.id === "studio")?.marker;
   const phare = content.zones.zones.find((z) => z.id === "phare")?.marker;
+  const maisonY = maison ? sampleGroundHeight(maison.x, maison.z) : 1.6;
+  const studioY = studio ? sampleGroundHeight(studio.x, studio.z) : 1.8;
 
   return (
     <group>
-      {/* Ground slabs — keep player from falling under map */}
-      <RigidBody type="fixed" colliders={false} position={[0, -0.5, -70]}>
-        <CuboidCollider args={[80, 0.5, 140]} friction={1.2} restitution={0} />
+      {/* Catch-all far below the mesh — never intersects walking */}
+      <RigidBody type="fixed" colliders={false} position={[0, -2.2, -70]}>
+        <CuboidCollider args={[90, 0.4, 150]} friction={1.1} restitution={0} />
       </RigidBody>
 
-      {/* Sea wall — cannot walk into the water */}
-      <RigidBody type="fixed" colliders={false} position={[-26, 2, -70]}>
-        <CuboidCollider args={[1.2, 6, 140]} friction={0.4} />
+      {/* Sea wall at the water sheet — no swim-off. Beach (x ≳ −16.5) stays open. */}
+      <RigidBody type="fixed" colliders={false} position={[-18.15, 2.2, -70]}>
+        <CuboidCollider args={[0.55, 6, 140]} friction={0.35} />
       </RigidBody>
-      {/* Deep sea kill volume sensor handled in character; soft barrier further out */}
-      <RigidBody type="fixed" colliders={false} position={[-32, -2, -70]}>
-        <CuboidCollider args={[4, 8, 140]} />
+      <RigidBody type="fixed" colliders={false} position={[-34, 2, -70]}>
+        <CuboidCollider args={[1, 8, 140]} friction={0.4} />
       </RigidBody>
-
-      {/* Map bounds */}
-      <RigidBody type="fixed" colliders={false} position={[34, 4, -70]}>
+      <RigidBody type="fixed" colliders={false} position={[38, 4, -70]}>
         <CuboidCollider args={[1, 10, 140]} />
       </RigidBody>
-      <RigidBody type="fixed" colliders={false} position={[0, 4, 55]}>
+      <RigidBody type="fixed" colliders={false} position={[0, 4, 74]}>
         <CuboidCollider args={[50, 10, 1]} />
       </RigidBody>
-      <RigidBody type="fixed" colliders={false} position={[0, 4, -200]}>
+      <RigidBody type="fixed" colliders={false} position={[0, 4, -204]}>
         <CuboidCollider args={[50, 10, 1]} />
       </RigidBody>
 
-      {/* Road ribbon — driveable / walkable surface with grip */}
-      {roadBoxes.map((b, i) => (
-        <RigidBody key={`road-${i}`} type="fixed" colliders={false} position={b.pos} rotation={[0, b.yaw, 0]}>
-          <CuboidCollider args={b.half} friction={1.4} restitution={0} />
-        </RigidBody>
-      ))}
-
-      {/* Belvedere terrace + parapets */}
-      <RigidBody type="fixed" colliders={false} position={[bel.terrace.x, 0.55, bel.terrace.z]} rotation={[0, bel.yaw, 0]}>
-        <CuboidCollider args={[5.2, 0.55, 4.2]} friction={1.3} />
+      {/* Belvedere floor + sea parapet only — stairs stay open toward the road */}
+      <RigidBody type="fixed" colliders={false} position={[bel.terrace.x, 0.88, bel.terrace.z]} rotation={[0, bel.yaw, 0]}>
+        <CuboidCollider args={[3.6, 0.16, 3.1]} friction={1.35} />
       </RigidBody>
       <RigidBody
         type="fixed"
         colliders={false}
-        position={[
-          bel.terrace.x + bel.side.x * -4.9,
-          1.35,
-          bel.terrace.z + bel.side.z * -4.9,
-        ]}
+        position={[bel.terrace.x - bel.side.x * 3.4, 1.35, bel.terrace.z - bel.side.z * 3.4]}
         rotation={[0, bel.yaw, 0]}
       >
-        <CuboidCollider args={[0.45, 0.85, 4.0]} />
-      </RigidBody>
-      <RigidBody
-        type="fixed"
-        colliders={false}
-        position={[
-          bel.terrace.x + bel.tangent.x * -3.7,
-          1.2,
-          bel.terrace.z + bel.tangent.z * -3.7,
-        ]}
-        rotation={[0, bel.yaw, 0]}
-      >
-        <CuboidCollider args={[4.8, 0.7, 0.35]} />
-      </RigidBody>
-      <RigidBody
-        type="fixed"
-        colliders={false}
-        position={[
-          bel.terrace.x + bel.tangent.x * 3.7,
-          1.2,
-          bel.terrace.z + bel.tangent.z * 3.7,
-        ]}
-        rotation={[0, bel.yaw, 0]}
-      >
-        <CuboidCollider args={[4.8, 0.7, 0.35]} />
+        <CuboidCollider args={[3.5, 0.32, 0.16]} />
       </RigidBody>
 
-      {/* Buildings — Kenney City ×6.x footprints + Dormin phare ×0.34 */}
       {maison && (
         <>
-          <RigidBody type="fixed" colliders={false} position={[maison.x, 3.55, maison.z]} rotation={[0, -0.35, 0]}>
-            <CuboidCollider args={[5.7, 3.55, 3.6]} />
+          {/* Walls only — porch at +Z (z ≈ −37) stays open */}
+          <RigidBody
+            type="fixed"
+            colliders={false}
+            position={[maison.x, maisonY + 5.2, maison.z - 1.4]}
+            rotation={[0, -0.35, 0]}
+          >
+            <CuboidCollider args={[2.4, 5.2, 1.45]} />
           </RigidBody>
-          <RigidBody type="fixed" colliders={false} position={[maison.x + 7.5, 3.25, maison.z + 2]} rotation={[0, 0.2, 0]}>
-            <CuboidCollider args={[4.6, 3.25, 2.7]} />
+          <RigidBody
+            type="fixed"
+            colliders={false}
+            position={[maison.x + 7.5, maisonY + 4.6, maison.z + 1.6]}
+            rotation={[0, 0.2, 0]}
+          >
+            <CuboidCollider args={[2.15, 4.6, 1.5]} />
           </RigidBody>
         </>
       )}
       {studio && (
-        <RigidBody type="fixed" colliders={false} position={[studio.x, 3.45, studio.z]} rotation={[0, 0.4, 0]}>
-          <CuboidCollider args={[4.0, 3.45, 3.15]} />
+        <RigidBody
+          type="fixed"
+          colliders={false}
+          position={[studio.x, studioY + 5.0, studio.z - 1.0]}
+          rotation={[0, 0.4, 0]}
+        >
+          <CuboidCollider args={[2.0, 5.0, 1.4]} />
         </RigidBody>
       )}
       {phare && (
         <>
-          <RigidBody type="fixed" colliders={false} position={[phare.x, 5.5, phare.z]}>
-            <CuboidCollider args={[1.9, 4.95, 1.9]} />
+          <RigidBody type="fixed" colliders={false} position={[phare.x, 5.2, phare.z]}>
+            <CuboidCollider args={[1.15, 4.6, 1.15]} />
           </RigidBody>
-          {/* Rock skirt around lighthouse base */}
-          <RigidBody type="fixed" colliders={false} position={[phare.x, 0.55, phare.z]}>
-            <CuboidCollider args={[4.2, 0.55, 4.0]} friction={0.95} />
+          <RigidBody type="fixed" colliders={false} position={[phare.x, 0.28, phare.z]}>
+            <CuboidCollider args={[2.1, 0.28, 2.0]} friction={0.95} />
           </RigidBody>
         </>
       )}
-
-      {/* Shore / cliff rock proxies */}
-      {rockBoxes.map((r, i) => (
-        <RigidBody key={`rock-${i}`} type="fixed" colliders={false} position={r.pos}>
-          <CuboidCollider args={r.half} friction={0.9} />
-        </RigidBody>
-      ))}
     </group>
   );
-}
-
-function buildRoadColliders() {
-  const curve = getRoadCurve();
-  const boxes: { pos: [number, number, number]; yaw: number; half: [number, number, number] }[] = [];
-  const n = 48;
-  for (let i = 0; i < n; i++) {
-    const t0 = i / n;
-    const t1 = (i + 1) / n;
-    const a = curve.getPointAt(t0);
-    const b = curve.getPointAt(t1);
-    const mid = a.clone().lerp(b, 0.5);
-    const tangent = b.clone().sub(a);
-    const len = Math.max(0.5, tangent.length() * 0.55);
-    const yaw = Math.atan2(tangent.x, tangent.z);
-    boxes.push({
-      pos: [mid.x, mid.y + 0.08, mid.z],
-      yaw,
-      half: [ROAD_WIDTH * 0.52, 0.12, len],
-    });
-  }
-  return boxes;
-}
-
-function buildRockColliders() {
-  const curve = getRoadCurve();
-  const rocks: { pos: [number, number, number]; half: [number, number, number] }[] = [];
-  for (let i = 0; i < 22; i++) {
-    const t = 0.08 + (i / 22) * 0.85;
-    const p = curve.getPointAt(t);
-    const tangent = curve.getTangentAt(t);
-    const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-    const pos = p.clone().addScaledVector(side, -13.5 - (i % 5) * 1.35);
-    const s = 0.7 + (i % 4) * 0.35;
-    rocks.push({
-      pos: [pos.x, 0.4 * s, pos.z],
-      half: [1.1 * s, 0.9 * s, 1.0 * s],
-    });
-  }
-  // Extra cliff blockers on sea side
-  for (let i = 0; i < 12; i++) {
-    const t = 0.1 + (i / 12) * 0.8;
-    const p = curve.getPointAt(t);
-    const tangent = curve.getTangentAt(t);
-    const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-    const pos = p.clone().addScaledVector(side, -22);
-    rocks.push({
-      pos: [pos.x, 1.2, pos.z],
-      half: [2.4, 2.2, 2.4],
-    });
-  }
-  return rocks;
 }

@@ -2,19 +2,21 @@
 
 import { useEffect, useRef } from "react";
 import { useGameStore } from "@/hooks/useGameStore";
-import { setGameState, getGameState } from "@/lib/gameStore";
+import { setGameState, getGameState, skipToPlay } from "@/lib/gameStore";
 
 /**
  * Procedural ambient audio via Web Audio API —
  * waves, wind, birds chirps, idle engine, tire hiss.
  */
 export function AmbientAudio() {
-  const { muted, phase } = useGameStore();
+  const muted = useGameStore((s) => s.muted);
+  const phase = useGameStore((s) => s.phase);
   const ctxRef = useRef<AudioContext | null>(null);
   const nodes = useRef<{
     master: GainNode;
     waves: GainNode;
     wind: GainNode;
+    place: GainNode;
     engine: GainNode;
     tires: GainNode;
     engineOsc?: OscillatorNode;
@@ -72,13 +74,21 @@ export function AmbientAudio() {
     tires.connect(master);
     createNoiseLoop(ctx, tires, "tires");
 
-    // Occasional bird chirps
+    const place = ctx.createGain();
+    place.gain.value = 0;
+    place.connect(master);
+    createNoiseLoop(ctx, place, "place");
+
+    // Occasional bird / gull chirps — only after user gesture (master > 0)
     const birdTimer = window.setInterval(() => {
       if (ctx.state === "closed" || master.gain.value < 0.01) return;
-      if (Math.random() > 0.55) chirp(ctx, master);
+      const pos = getGameState().playerPos;
+      const bySea = pos.x < -6;
+      if (bySea && Math.random() > 0.45) gull(ctx, master);
+      else if (Math.random() > 0.55) chirp(ctx, master);
     }, 3200);
 
-    nodes.current = { master, waves, wind, engine, tires, engineOsc, engineOsc2 };
+    nodes.current = { master, waves, wind, place, engine, tires, engineOsc, engineOsc2 };
 
     return () => {
       clearInterval(birdTimer);
@@ -99,8 +109,13 @@ export function AmbientAudio() {
     window.addEventListener("pointerdown", resume);
     window.addEventListener("keydown", resume);
 
-    const target = muted ? 0 : phase === "boot" ? 0 : 0.55;
-    n.master.gain.setTargetAtTime(target, ctx.currentTime, 0.4);
+    n.master.gain.cancelScheduledValues(ctx.currentTime);
+    if (muted) {
+      n.master.gain.setValueAtTime(0, ctx.currentTime);
+    } else {
+      const target = phase === "boot" ? 0 : phase === "title" ? 0.38 : 0.55;
+      n.master.gain.setTargetAtTime(target, ctx.currentTime, 0.4);
+    }
 
     return () => {
       window.removeEventListener("pointerdown", resume);
@@ -115,12 +130,23 @@ export function AmbientAudio() {
 
     let raf = 0;
     const tick = () => {
-      const { mode, phase, speed, engineOn } = getGameState();
+      const { mode, phase, speed, engineOn, muted } = getGameState();
+      if (muted) {
+        n.engine.gain.setValueAtTime(0, ctx.currentTime);
+        n.tires.gain.setValueAtTime(0, ctx.currentTime);
+        raf = requestAnimationFrame(tick);
+        return;
+      }
       const driving = mode === "driving" && phase === "playing";
       const engineLevel = engineOn || driving ? (driving ? 0.7 + Math.min(1, speed / 22) * 0.5 : 0.35) : 0;
       n.engine.gain.setTargetAtTime(engineLevel * 0.5, ctx.currentTime, 0.25);
       n.tires.gain.setTargetAtTime(driving ? Math.min(0.35, speed * 0.02) : 0, ctx.currentTime, 0.2);
       n.wind.gain.setTargetAtTime(0.08 + (driving ? speed * 0.004 : 0.02), ctx.currentTime, 0.3);
+      const pos = getGameState().playerPos;
+      const sea = Math.max(0, Math.min(1, (-6 - pos.x) / 10));
+      n.waves.gain.setTargetAtTime(0.16 + sea * 0.16 + (driving ? 0.04 : 0), ctx.currentTime, 0.45);
+      const village = Math.max(0, 1 - Math.hypot(pos.x - 11.15, pos.z + 72.4) / 42);
+      n.place.gain.setTargetAtTime(phase === "playing" ? village * 0.11 : 0, ctx.currentTime, 0.55);
       if (n.engineOsc) n.engineOsc.frequency.setTargetAtTime(48 + speed * 3.2, ctx.currentTime, 0.15);
       if (n.engineOsc2) n.engineOsc2.frequency.setTargetAtTime(72 + speed * 4.5, ctx.currentTime, 0.15);
       raf = requestAnimationFrame(tick);
@@ -132,7 +158,7 @@ export function AmbientAudio() {
   return null;
 }
 
-function createNoiseLoop(ctx: AudioContext, dest: AudioNode, kind: "waves" | "wind" | "tires") {
+function createNoiseLoop(ctx: AudioContext, dest: AudioNode, kind: "waves" | "wind" | "tires" | "place") {
   const bufferSize = ctx.sampleRate * 3;
   const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
   const data = buffer.getChannelData(0);
@@ -145,6 +171,9 @@ function createNoiseLoop(ctx: AudioContext, dest: AudioNode, kind: "waves" | "wi
     } else if (kind === "wind") {
       last = (last + 0.05 * white) / 1.05;
       data[i] = last * 2.2;
+    } else if (kind === "place") {
+      last = (last + 0.08 * white) / 1.08;
+      data[i] = last * 1.6 + (i % 97 === 0 ? white * 0.35 : 0);
     } else {
       data[i] = white * 0.35;
     }
@@ -154,10 +183,26 @@ function createNoiseLoop(ctx: AudioContext, dest: AudioNode, kind: "waves" | "wi
   src.loop = true;
   const filter = ctx.createBiquadFilter();
   filter.type = kind === "tires" ? "bandpass" : "lowpass";
-  filter.frequency.value = kind === "waves" ? 420 : kind === "wind" ? 900 : 1200;
+  filter.frequency.value = kind === "waves" ? 420 : kind === "wind" ? 900 : kind === "place" ? 2100 : 1200;
   src.connect(filter);
   filter.connect(dest);
   src.start();
+}
+
+function gull(ctx: AudioContext, dest: AudioNode) {
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = "triangle";
+  osc.frequency.value = 620 + Math.random() * 180;
+  g.gain.value = 0.0001;
+  osc.connect(g);
+  g.connect(dest);
+  const t = ctx.currentTime;
+  g.gain.exponentialRampToValueAtTime(0.035, t + 0.04);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.42);
+  osc.frequency.exponentialRampToValueAtTime(osc.frequency.value * 0.72, t + 0.38);
+  osc.start(t);
+  osc.stop(t + 0.45);
 }
 
 function chirp(ctx: AudioContext, dest: AudioNode) {
@@ -178,20 +223,32 @@ function chirp(ctx: AudioContext, dest: AudioNode) {
 
 /** Drives intro → playing handoff + explorer hint. */
 export function IntroDirector() {
-  const { phase } = useGameStore();
+  const phase = useGameStore((s) => s.phase);
   const done = useRef(false);
 
   useEffect(() => {
     if (phase !== "intro" || done.current) return;
-    const engineAt = window.setTimeout(() => setGameState({ engineOn: true }), 4200);
+    let skipBound = false;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      done.current = true;
+      skipToPlay();
+    };
+    const engineAt = window.setTimeout(() => setGameState({ engineOn: true }), 6200);
     const playAt = window.setTimeout(() => {
       done.current = true;
-      setGameState({ phase: "playing", engineOn: true, showExplorerHint: true });
-      window.setTimeout(() => setGameState({ showExplorerHint: false }), 3800);
-    }, 5600);
+      skipToPlay();
+      window.setTimeout(() => setGameState({ showExplorerHint: false }), 4200);
+    }, 9200);
+    const skipAt = window.setTimeout(() => {
+      skipBound = true;
+      window.addEventListener("keydown", onKey);
+    }, 500);
     return () => {
       clearTimeout(engineAt);
       clearTimeout(playAt);
+      clearTimeout(skipAt);
+      if (skipBound) window.removeEventListener("keydown", onKey);
     };
   }, [phase]);
 

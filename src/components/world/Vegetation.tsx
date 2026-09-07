@@ -4,7 +4,9 @@ import { useMemo, useRef } from "react";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { getRoadCurve, getBelvedereWorldAnchor } from "@/lib/road";
+import { getRoadCurve, getBelvedereWorldAnchor, nearestRoadSample, ROAD_WIDTH } from "@/lib/road";
+import { sampleGroundHeight } from "@/lib/ground";
+import { groundClone } from "@/lib/gltfFit";
 
 type TreeType = "pine" | "olive" | "bougainvillea" | "cypress";
 
@@ -19,6 +21,7 @@ function useClonedScene(path: string) {
         m.receiveShadow = true;
       }
     });
+    groundClone(c);
     return c;
   }, [scene]);
 }
@@ -76,9 +79,12 @@ export function Vegetation({ count = 60 }: { count?: number }) {
       const tangent = curve.getTangentAt(t);
       const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
       const cliffSide = i % 5 !== 1;
-      const dist = cliffSide ? 8 + (i % 6) * 1.6 + (i % 3) * 0.4 : -9 - (i % 4) * 1.5;
+      const dist = cliffSide ? 8 + (i % 6) * 1.6 + (i % 3) * 0.4 : -7.2 - (i % 3) * 0.8;
       const pos = p.clone().addScaledVector(side, dist);
-      pos.y = cliffSide ? 0.05 + (i % 5) * 0.12 : 0.02;
+      // Never plant in the sea ( Melvyn QA: floating pink shards over water )
+      if (pos.x < -8.5) continue;
+      if (Math.abs(nearestRoadSample(pos).lateral) < ROAD_WIDTH * 0.5 + 8.4) continue;
+      pos.y = sampleGroundHeight(pos.x, pos.z);
       let type: TreeType = "pine";
       if (!cliffSide) type = i % 3 === 0 ? "bougainvillea" : "pine";
       else if (i % 7 === 0) type = "cypress";
@@ -98,12 +104,19 @@ export function Vegetation({ count = 60 }: { count?: number }) {
       });
     }
 
-    // Belvedere cluster — follows terrace anchor
-    for (let i = 0; i < 10; i++) {
+    // Belvedere cluster — seaward of the terrace, never on the ribbon
+    const bel = getBelvedereWorldAnchor();
+    for (let i = 0; i < 5; i++) {
+      const pos = terrace
+        .clone()
+        .addScaledVector(bel.side, -4.2 - (i % 2) * 1.1)
+        .addScaledVector(bel.tangent, (i - 2) * 1.8);
+      if (pos.x < -9.5) continue;
+      if (Math.abs(nearestRoadSample(pos).lateral) < ROAD_WIDTH * 0.5 + 8.4) continue;
       items.push({
-        type: i % 3 === 0 ? "bougainvillea" : i % 3 === 1 ? "cypress" : "pine",
-        position: [terrace.x - 3 + i * 0.9, 0.95, terrace.z - 2 - (i % 4) * 1.1],
-        scale: i % 3 === 2 ? 0.32 + (i % 3) * 0.04 : 1 + (i % 3) * 0.12,
+        type: i % 2 === 0 ? "bougainvillea" : "pine",
+        position: [pos.x, sampleGroundHeight(pos.x, pos.z), pos.z],
+        scale: i % 2 === 0 ? 0.9 : 0.32,
         rot: i * 0.9,
         sway: 200 + i,
       });

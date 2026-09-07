@@ -39,21 +39,21 @@
       "name": "La Plage",
       "status": "playable",
       "role": "Passions",
-      "marker": { "x": -22, "y": 0.15, "z": -95 }
+      "marker": { "x": -11, "y": 0.18, "z": -95 }
     },
     {
       "id": "phare",
       "name": "Le Phare",
       "status": "playable",
       "role": "Activité, CV & contact — destination finale",
-      "marker": { "x": -8, "y": 0.4, "z": -168 }
+      "marker": { "x": -16, "y": 0.35, "z": -172 }
     },
     {
       "id": "wow",
       "name": "WOW Overlook",
       "status": "playable",
       "role": "Panorama final au-delà du phare",
-      "marker": { "x": 6, "y": 4.5, "z": -185 }
+      "marker": { "x": 22, "y": 2.6, "z": -185 }
     }
   ]
 }

@@ -5,20 +5,19 @@ import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { content } from "@/lib/content";
 import { getRoadCurve } from "@/lib/road";
+import { enableShadows, groundClone } from "@/lib/gltfFit";
+import { dressCoastalBuilding } from "@/lib/coastalDress";
+import { useCoastalPbr } from "@/lib/pbrTextures";
+import { sampleGroundHeight } from "@/lib/ground";
 
-function useShadowClone(path: string) {
+function useShadowClone(path: string, ground = false) {
   const { scene } = useGLTF(path);
   return useMemo(() => {
     const c = scene.clone(true);
-    c.traverse((o) => {
-      const m = o as THREE.Mesh;
-      if (m.isMesh) {
-        m.castShadow = true;
-        m.receiveShadow = true;
-      }
-    });
+    enableShadows(c);
+    if (ground) groundClone(c);
     return c;
-  }, [scene]);
+  }, [scene, ground]);
 }
 
 function Placed({
@@ -45,9 +44,25 @@ function Placed({
  * Scales calibrated from GLB bounding boxes (Kenney ~2m tall → ×6; phare ~29u → ×0.32).
  */
 export function CoastalZones() {
-  const maison = useShadowClone("/models/maison.glb");
-  const studio = useShadowClone("/models/studio.glb");
-  const atelier = useShadowClone("/models/kenney/city/atelier.glb");
+  const pbr = useCoastalPbr(4);
+  const maisonSrc = useShadowClone("/models/maison.glb");
+  const studioSrc = useShadowClone("/models/studio.glb");
+  const atelierSrc = useShadowClone("/models/kenney/city/atelier.glb");
+  const maison = useMemo(() => {
+    const c = maisonSrc.clone(true);
+    dressCoastalBuilding(c, pbr, "#f3eee4");
+    return c;
+  }, [maisonSrc, pbr]);
+  const studio = useMemo(() => {
+    const c = studioSrc.clone(true);
+    dressCoastalBuilding(c, pbr, "#efe4d2");
+    return c;
+  }, [studioSrc, pbr]);
+  const atelier = useMemo(() => {
+    const c = atelierSrc.clone(true);
+    dressCoastalBuilding(c, pbr, "#ead4c6");
+    return c;
+  }, [atelierSrc, pbr]);
   const { scene: phareSrc } = useGLTF("/models/phare.glb");
   const phare = useMemo(() => {
     const c = phareSrc.clone(true);
@@ -77,11 +92,9 @@ export function CoastalZones() {
     });
     return c;
   }, [phareSrc]);
-  const phareRocks = useShadowClone("/models/rocks-dormin.glb");
   const fence = useShadowClone("/models/kenney/city/fence.glb");
   const pine = useShadowClone("/models/pine.glb");
   const hedge = useShadowClone("/models/kenney/fantasy/hedge.glb");
-  const pier = useShadowClone("/models/pier.glb");
   const stairs = useShadowClone("/models/kenney/fantasy/stairs-stone.glb");
   const lantern = useShadowClone("/models/lantern.glb");
   /** Dormin lighthouse sits on y=0 locally (≈29u tall) — do NOT double-lift. */
@@ -96,13 +109,13 @@ export function CoastalZones() {
 
   const fences = useMemo(() => {
     const curve = getRoadCurve();
-    return [0.28, 0.45, 0.72].map((t, i) => {
+    return [0.12, 0.2, 0.28].map((t, i) => {
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
       const pos = p.clone().addScaledVector(side, 6.8);
       return {
-        position: [pos.x, 0, pos.z] as [number, number, number],
+        position: [pos.x, sampleGroundHeight(pos.x, pos.z), pos.z] as [number, number, number],
         yaw: Math.atan2(tangent.x, tangent.z) + Math.PI / 2,
         key: i,
       };
@@ -119,24 +132,48 @@ export function CoastalZones() {
     <group>
       {m && (
         <group>
-          {/* Kenney City building-type-b — maison */}
-          <Placed scene={maison} position={[m.x, 0, m.z]} rotation={[0, -0.35, 0]} scale={6.2} />
-          {/* Wing / atelier */}
-          <Placed scene={atelier} position={[m.x + 7.5, 0, m.z + 2]} rotation={[0, 0.2, 0]} scale={5.2} />
-          <Placed scene={pine} position={[m.x - 6, 0, m.z + 4]} scale={0.5} />
-          <Placed scene={pine} position={[m.x + 10, 0, m.z - 3]} scale={0.42} />
-          <Placed scene={hedge} position={[m.x + 3, 0, m.z + 6]} rotation={[0, 0.4, 0]} scale={2.2} />
-          <Placed scene={stairs} position={[m.x - 1, 0, m.z + 5.5]} rotation={[0, Math.PI, 0]} scale={1.8} />
+          {/* Kenney City building-type-b — sit on the plaza, not buried at y=0 */}
+          <Placed
+            scene={maison}
+            position={[m.x, sampleGroundHeight(m.x, m.z), m.z]}
+            rotation={[0, -0.35, 0]}
+            scale={6.2}
+          />
+          <Placed
+            scene={atelier}
+            position={[m.x + 7.5, sampleGroundHeight(m.x + 7.5, m.z + 2), m.z + 2]}
+            rotation={[0, 0.2, 0]}
+            scale={5.2}
+          />
+          <Placed scene={pine} position={[m.x - 6, sampleGroundHeight(m.x - 6, m.z + 4), m.z + 4]} scale={0.5} />
+          <Placed scene={pine} position={[m.x + 10, sampleGroundHeight(m.x + 10, m.z - 3), m.z - 3]} scale={0.42} />
+          <Placed
+            scene={hedge}
+            position={[m.x + 4.2, sampleGroundHeight(m.x + 4.2, m.z + 3.4), m.z + 3.4]}
+            rotation={[0, 0.4, 0]}
+            scale={2.2}
+          />
+          <Placed
+            scene={stairs}
+            position={[m.x - 3.6, sampleGroundHeight(m.x - 3.6, m.z + 3.8), m.z + 3.8]}
+            rotation={[0, Math.PI, 0]}
+            scale={1.8}
+          />
         </group>
       )}
 
       {s && (
         <group>
           {/* Kenney City building-type-e — studio */}
-          <Placed scene={studio} position={[s.x, 0, s.z]} rotation={[0, 0.4, 0]} scale={6.0} />
-          <Placed scene={pine} position={[s.x - 5, 0, s.z + 3]} scale={0.48} />
-          <Placed scene={hedge} position={[s.x + 4, 0, s.z + 4]} scale={2.0} />
-          <Placed scene={pine} position={[s.x + 6, 0, s.z - 4]} scale={0.4} />
+          <Placed
+            scene={studio}
+            position={[s.x, sampleGroundHeight(s.x, s.z), s.z]}
+            rotation={[0, 0.4, 0]}
+            scale={6.0}
+          />
+          <Placed scene={pine} position={[s.x - 7.5, sampleGroundHeight(s.x - 7.5, s.z + 5), s.z + 5]} scale={0.48} />
+          <Placed scene={hedge} position={[s.x + 4, sampleGroundHeight(s.x + 4, s.z + 4), s.z + 4]} scale={2.0} />
+          <Placed scene={pine} position={[s.x + 6, sampleGroundHeight(s.x + 6, s.z - 4), s.z - 4]} scale={0.4} />
         </group>
       )}
 
@@ -145,17 +182,28 @@ export function CoastalZones() {
           {/* Daniel Dormin lighthouse — sit base on ground */}
           <Placed scene={phare} position={[p.x, PHARE_Y, p.z]} scale={PHARE_SCALE} />
           {/* Rocky skirt so the tower reads anchored */}
-          <Placed scene={phareRocks} position={[p.x + 2.2, 0.35, p.z - 1.2]} scale={2.6} />
-          <Placed scene={phareRocks} position={[p.x - 2.8, 0.3, p.z + 1.8]} rotation={[0, 1.1, 0]} scale={2.2} />
-          <Placed scene={phareRocks} position={[p.x + 0.5, 0.25, p.z + 3.2]} rotation={[0, -0.6, 0]} scale={2.0} />
-          <Placed scene={phareRocks} position={[p.x - 1.2, 0.4, p.z - 2.8]} rotation={[0, 2.1, 0]} scale={2.4} />
-          <mesh position={[p.x, 0.2, p.z]} receiveShadow castShadow>
-            <cylinderGeometry args={[4.6, 5.4, 0.55, 10]} />
+          {[
+            [p.x + 1.6, 0.32, p.z - 1.8, 0.85],
+            [p.x - 1.8, 0.3, p.z + 1.2, 0.8],
+            [p.x + 0.4, 0.28, p.z + 2.2, 0.7],
+            [p.x - 1.0, 0.34, p.z - 2.2, 0.78],
+          ].map(([x, y, z, s], i) => (
+            <mesh key={`pr-${i}`} position={[x, y, z]} scale={[s, s * 0.55, s * 0.9]} castShadow receiveShadow>
+              <sphereGeometry args={[0.85, 7, 5]} />
+              <meshStandardMaterial color={i % 2 ? "#c2b49a" : "#b4a488"} roughness={0.95} />
+            </mesh>
+          ))}
+          <mesh position={[p.x, 0.18, p.z]} receiveShadow castShadow>
+            <cylinderGeometry args={[2.8, 3.2, 0.45, 10]} />
             <meshStandardMaterial color="#b9a888" roughness={0.95} />
           </mesh>
-          <Placed scene={pine} position={[p.x + 6, 0, p.z + 4]} scale={0.55} />
-          <Placed scene={pine} position={[p.x - 5, 0, p.z - 3]} scale={0.45} />
-          <Placed scene={lantern} position={[p.x + 3.2, 0.55, p.z + 2.4]} scale={1.4} />
+          <Placed scene={pine} position={[p.x + 5.5, sampleGroundHeight(p.x + 5.5, p.z + 6), p.z + 6]} scale={0.5} />
+          <Placed scene={pine} position={[p.x - 4.5, sampleGroundHeight(p.x - 4.5, p.z - 5), p.z - 5]} scale={0.42} />
+          <Placed
+            scene={lantern}
+            position={[p.x + 2.4, sampleGroundHeight(p.x + 2.4, p.z + 3.2), p.z + 3.2]}
+            scale={1.3}
+          />
           <pointLight
             position={[p.x, 0.55 + 28.95 * PHARE_SCALE * 0.92, p.z]}
             intensity={2.4}
@@ -167,17 +215,51 @@ export function CoastalZones() {
       )}
 
       {plage && (
-        <group position={[plage.x, 0, plage.z]}>
-          <Placed scene={pier} position={[0, 0.9, -2]} rotation={[0, 0.3, 0]} scale={0.42} />
-          <Placed scene={pine} position={[4, 0, 3]} scale={0.42} />
-          <Placed scene={pine} position={[-3, 0, -1]} scale={0.38} />
-          <Placed scene={hedge} position={[1, 0, 5]} scale={1.8} />
-          <Placed scene={lantern} position={[-2, 0, 2]} scale={1.2} />
+        <group>
+          <WoodenPier position={[plage.x - 2.6, 0.12, plage.z]} yaw={-Math.PI / 2 + 0.08} />
+          {[0, 1, 2, 3, 4].map((i) => (
+            <mesh
+              key={`jet-step-${i}`}
+              position={[plage.x - 0.15 + i * 0.48, sampleGroundHeight(plage.x - 0.15 + i * 0.48, plage.z) + 0.03 + i * 0.035, plage.z]}
+              receiveShadow
+            >
+              <boxGeometry args={[0.62, 0.08, 1.22]} />
+              <meshStandardMaterial color={i % 2 ? "#8a6a48" : "#7a5a3c"} roughness={0.88} />
+            </mesh>
+          ))}
+          <MooredBoat position={[plage.x - 5.4, -0.04, plage.z + 1.6]} yaw={-1.35} />
+          <MooredBoat position={[plage.x - 4.8, -0.02, plage.z - 2.2]} yaw={-1.72} />
+          <Placed
+            scene={lantern}
+            position={[plage.x - 3.4, 0.52, plage.z + 0.2]}
+            scale={1.05}
+          />
+          <Placed
+            scene={pine}
+            position={[plage.x + 0.8, sampleGroundHeight(plage.x + 0.8, plage.z + 5.4), plage.z + 5.4]}
+            scale={0.36}
+          />
+          <Placed
+            scene={pine}
+            position={[plage.x - 0.4, sampleGroundHeight(plage.x - 0.4, plage.z - 5.8), plage.z - 5.8]}
+            scale={0.3}
+          />
+          <Placed
+            scene={hedge}
+            position={[plage.x + 2.8, sampleGroundHeight(plage.x + 2.8, plage.z + 6.2), plage.z + 6.2]}
+            scale={1.7}
+          />
+          <Placed
+            scene={lantern}
+            position={[plage.x - 0.8, sampleGroundHeight(plage.x - 0.8, plage.z + 2.2), plage.z + 2.2]}
+            scale={1.15}
+          />
+          <FishingQuarter x={plage.x + 1.6} z={plage.z + 3.2} />
         </group>
       )}
 
       {wow && (
-        <group position={[wow.x, Math.max(0, wow.y - 2), wow.z]}>
+        <group position={[wow.x, sampleGroundHeight(wow.x, wow.z), wow.z]}>
           <Placed scene={stairs} position={[0, 0, 0]} scale={2.4} />
           <Placed scene={fence} position={[0, 0, 2]} scale={3.5} />
           <Placed scene={pine} position={[3, 0, -2]} scale={0.48} />
@@ -191,13 +273,105 @@ export function CoastalZones() {
   );
 }
 
+/** Authored jetty — the modular pier GLB is a kit with planks at y=2.6 and loose poles. */
+function WoodenPier({ position, yaw }: { position: [number, number, number]; yaw: number }) {
+  const piles = [-3.2, -1.6, 0, 1.6, 3.2];
+  return (
+    <group position={position} rotation={[0, yaw, 0]}>
+      {piles.map((z, i) =>
+        [-0.85, 0.85].map((x) => (
+          <mesh key={`p-${i}-${x}`} position={[x, -0.35, z]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.1, 0.12, 1.35, 7]} />
+            <meshStandardMaterial color={i % 2 ? "#6b4a30" : "#5c3f28"} roughness={0.88} />
+          </mesh>
+        )),
+      )}
+      <mesh position={[0, 0.34, 0]} receiveShadow castShadow>
+        <boxGeometry args={[2.15, 0.1, 7.4]} />
+        <meshStandardMaterial color="#7a5234" roughness={0.82} metalness={0.04} />
+      </mesh>
+      {[-0.55, 0, 0.55].map((x) => (
+        <mesh key={`plank-${x}`} position={[x, 0.4, 0]} receiveShadow>
+          <boxGeometry args={[0.48, 0.04, 7.2]} />
+          <meshStandardMaterial color="#a06e46" roughness={0.74} />
+        </mesh>
+      ))}
+      <mesh position={[0, 0.86, 3.45]} castShadow>
+        <boxGeometry args={[1.6, 0.06, 0.06]} />
+        <meshStandardMaterial color="#5c3f28" roughness={0.8} />
+      </mesh>
+      <mesh position={[0.15, 0.52, 2.35]} rotation={[0.04, 0.1, 0]} castShadow>
+        <boxGeometry args={[0.55, 0.16, 1.15]} />
+        <meshStandardMaterial color="#6a4a32" roughness={0.74} />
+      </mesh>
+      {[-1, 1].map((side) => (
+        <group key={`rail-${side}`}>
+          <mesh position={[side * 1.02, 0.72, 0]}>
+            <boxGeometry args={[0.06, 0.06, 7.1]} />
+            <meshStandardMaterial color="#6e4a30" roughness={0.8} />
+          </mesh>
+          {piles.map((z) => (
+            <mesh key={`rp-${side}-${z}`} position={[side * 1.02, 0.5, z]}>
+              <boxGeometry args={[0.07, 0.55, 0.07]} />
+              <meshStandardMaterial color="#5c3f28" roughness={0.85} />
+            </mesh>
+          ))}
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function FishingQuarter({ x, z }: { x: number; z: number }) {
+  const y = sampleGroundHeight(x, z);
+  return (
+    <group position={[x, y, z]}>
+      {[
+        [0, 0, 0.55, 0.22, 0.38],
+        [0.62, 0.08, 0.42, 0.18, 0.32],
+        [-0.55, -0.12, 0.38, 0.16, 0.28],
+      ].map(([ox, oz, sx, sy, sz], i) => (
+        <mesh key={i} position={[ox, sy / 2, oz]} castShadow receiveShadow>
+          <boxGeometry args={[sx, sy, sz]} />
+          <meshStandardMaterial color={i % 2 ? "#6a4a30" : "#8a5a38"} roughness={0.82} />
+        </mesh>
+      ))}
+      <mesh position={[0.15, 0.92, -0.35]} rotation={[0, 0.4, 0.15]} castShadow>
+        <boxGeometry args={[1.15, 0.04, 0.85]} />
+        <meshStandardMaterial color="#4a5c48" roughness={0.78} />
+      </mesh>
+    </group>
+  );
+}
+
+function MooredBoat({ position, yaw }: { position: [number, number, number]; yaw: number }) {
+  return (
+    <group position={position} rotation={[0, yaw, 0]}>
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[2.05, 0.32, 0.72]} />
+        <meshStandardMaterial color="#6e4a30" roughness={0.72} />
+      </mesh>
+      <mesh position={[0, 0.22, 0]} castShadow>
+        <boxGeometry args={[1.45, 0.16, 0.48]} />
+        <meshStandardMaterial color="#8a5a38" roughness={0.7} />
+      </mesh>
+      <mesh position={[0.15, 0.95, 0]} castShadow>
+        <boxGeometry args={[0.07, 1.15, 0.07]} />
+        <meshStandardMaterial color="#d4ccc0" roughness={0.55} />
+      </mesh>
+      <mesh position={[0.22, 1.15, 0.02]} rotation={[0, 0, 0.4]} castShadow>
+        <boxGeometry args={[0.02, 0.7, 0.42]} />
+        <meshStandardMaterial color="#c8b898" roughness={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
 useGLTF.preload("/models/maison.glb");
 useGLTF.preload("/models/studio.glb");
 useGLTF.preload("/models/kenney/city/atelier.glb");
 useGLTF.preload("/models/phare.glb");
-useGLTF.preload("/models/rocks-dormin.glb");
 useGLTF.preload("/models/pine.glb");
-useGLTF.preload("/models/pier.glb");
 useGLTF.preload("/models/lantern.glb");
 useGLTF.preload("/models/kenney/city/fence.glb");
 useGLTF.preload("/models/kenney/fantasy/hedge.glb");

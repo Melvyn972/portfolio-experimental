@@ -2,6 +2,8 @@ import * as THREE from "three";
 import type { ChapterId } from "@/lib/gameStore";
 import { getBelvedereWorldAnchor } from "@/lib/road";
 import { content } from "@/lib/content";
+import { MAISON_PORCH } from "@/lib/spawn";
+import { lighthouseClimbStep, PHARE_CLIMB } from "@/lib/lighthouseClimb";
 
 export type Interactable = {
   id: string;
@@ -21,7 +23,7 @@ export function getInteractables(): Interactable[] {
     {
       id: "carnet",
       chapter: "identity",
-      label: "Consulter le carnet",
+      label: "Ouvrir le carnet",
       position: bel.terrace.clone().setY(1.2),
       radius: 3.8,
       walkingOnly: true,
@@ -34,15 +36,15 @@ export function getInteractables(): Interactable[] {
       {
         id: "maison-parcours",
         chapter: "parcours",
-        label: "Parcours & formations",
-        position: new THREE.Vector3(maison.x + 0.5, maison.y + 1, maison.z + 4.2),
-        radius: 3.2,
+        label: "Plans de carrière",
+        position: new THREE.Vector3(MAISON_PORCH.x, maison.y + 0.15, MAISON_PORCH.z),
+        radius: 7.2,
         walkingOnly: true,
       },
       {
         id: "maison-xp",
         chapter: "experiences",
-        label: "Expériences",
+        label: "Montre — le temps",
         position: new THREE.Vector3(maison.x - 2, maison.y + 1, maison.z + 4.0),
         radius: 3.0,
         walkingOnly: true,
@@ -50,7 +52,7 @@ export function getInteractables(): Interactable[] {
       {
         id: "maison-skills",
         chapter: "competences",
-        label: "Compétences",
+        label: "Ouvrir l’ordinateur",
         position: new THREE.Vector3(maison.x + 5, maison.y + 1, maison.z + 3.5),
         radius: 3.0,
         walkingOnly: true,
@@ -63,7 +65,7 @@ export function getInteractables(): Interactable[] {
     list.push({
       id: "studio-projets",
       chapter: "projets",
-      label: "Voir les projets",
+      label: "Feuilleter le carnet de croquis",
       position: new THREE.Vector3(studio.x, studio.y + 1, studio.z + 3.8),
       radius: 3.5,
       walkingOnly: true,
@@ -75,9 +77,17 @@ export function getInteractables(): Interactable[] {
     list.push({
       id: "plage-passions",
       chapter: "passions",
-      label: "Passions",
+      label: "Appareil photo",
       position: new THREE.Vector3(plage.x, 0.4, plage.z),
-      radius: 5,
+      radius: 4.2,
+      walkingOnly: true,
+    });
+    list.push({
+      id: "plage-helmet",
+      chapter: "passions",
+      label: "Casque moto",
+      position: new THREE.Vector3(plage.x + 2.4, 0.35, plage.z + 1.6),
+      radius: 3.4,
       walkingOnly: true,
     });
   }
@@ -88,7 +98,7 @@ export function getInteractables(): Interactable[] {
       {
         id: "phare-activite",
         chapter: "activite",
-        label: "Activité",
+        label: "Lanternes — freelance",
         position: new THREE.Vector3(phare.x + 2.5, phare.y + 0.5, phare.z + 2),
         radius: 3.5,
         walkingOnly: true,
@@ -96,7 +106,7 @@ export function getInteractables(): Interactable[] {
       {
         id: "phare-cv",
         chapter: "cv",
-        label: "CV",
+        label: "Enveloppe du CV",
         position: new THREE.Vector3(phare.x, phare.y + 0.5, phare.z + 2.2),
         radius: 3.2,
         walkingOnly: true,
@@ -104,26 +114,55 @@ export function getInteractables(): Interactable[] {
       {
         id: "phare-contact",
         chapter: "contact",
-        label: "Contact",
+        label: "Lire la plaque",
         position: new THREE.Vector3(phare.x - 2.2, phare.y + 0.5, phare.z + 1.8),
         radius: 3.2,
         walkingOnly: true,
       },
     );
+    const summit = lighthouseClimbStep(PHARE_CLIMB.steps - 1);
+    list.push({
+      id: "phare-sommet",
+      chapter: "activite",
+      label: "Lanterne — le sommet",
+      position: new THREE.Vector3(summit.x, summit.y + 0.35, summit.z),
+      radius: 2.2,
+      walkingOnly: true,
+    });
   }
 
   return list;
 }
 
+function xzDistance(pos: THREE.Vector3, target: THREE.Vector3) {
+  return Math.hypot(pos.x - target.x, pos.z - target.z);
+}
+
+export function interactableForChapter(chapter: ChapterId): Interactable | null {
+  return getInteractables().find((it) => it.chapter === chapter) ?? null;
+}
+
+export function chapterForInteractableId(id: string | null | undefined): ChapterId | null {
+  if (!id) return null;
+  return getInteractables().find((it) => it.id === id)?.chapter ?? null;
+}
+
 export function findNearestInteractable(
   pos: THREE.Vector3,
   mode: "driving" | "walking",
+  preferChapter?: ChapterId | null,
 ): Interactable | null {
+  if (preferChapter) {
+    const preferred = interactableForChapter(preferChapter);
+    if (preferred && (!preferred.walkingOnly || mode === "walking")) {
+      if (xzDistance(pos, preferred.position) <= preferred.radius) return preferred;
+    }
+  }
   let best: Interactable | null = null;
   let bestD = Infinity;
   for (const it of getInteractables()) {
     if (it.walkingOnly && mode !== "walking") continue;
-    const d = pos.distanceTo(it.position);
+    const d = xzDistance(pos, it.position);
     if (d <= it.radius && d < bestD) {
       best = it;
       bestD = d;

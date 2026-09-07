@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { GameHUD } from "@/components/ui/GameHUD";
 import { AmbientAudio, IntroDirector } from "@/components/audio/AmbientAudio";
@@ -13,9 +13,9 @@ const ExperienceCanvas = dynamic(
 
 function LoaderScreen() {
   return (
-    <div className="flex h-full w-full items-center justify-center bg-[#d8e6ef]">
+    <div className="flex h-full w-full items-center justify-center bg-[#070604]">
       <div className="text-center">
-        <p className="font-display text-2xl text-[#2f281f]">Côte Melvyn</p>
+        <p className="font-display text-2xl text-[#e4d2b0]">Côte Melvyn</p>
         <p className="mt-2 text-xs uppercase tracking-[0.25em] text-[#8a7460]">Chargement de la côte…</p>
       </div>
     </div>
@@ -23,9 +23,11 @@ function LoaderScreen() {
 }
 
 export function CoteMelvynApp() {
-  const { phase } = useGameStore();
+  const phase = useGameStore((s) => s.phase);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     document.body.classList.add("game-locked");
     document.body.classList.remove("cv-page");
     return () => {
@@ -34,15 +36,15 @@ export function CoteMelvynApp() {
   }, []);
 
   return (
-    <main className="relative h-[100dvh] w-full overflow-hidden bg-[#d8e6ef]">
-      <ExperienceCanvas />
+    <main className="relative h-[100dvh] w-full overflow-hidden bg-[#070604]">
+      {mounted ? <ExperienceCanvas /> : <LoaderScreen />}
       <GameHUD />
-      <AmbientAudio />
-      <IntroDirector />
-      {phase === "boot" && (
-        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-[#d8e6ef]">
+      {mounted && <AmbientAudio />}
+      {mounted && <IntroDirector />}
+      {mounted && phase === "boot" && (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-[#070604]">
           <div className="animate-fade-in text-center">
-            <p className="font-display text-3xl text-[#2f281f]">Côte Melvyn</p>
+            <p className="font-display text-3xl text-[#e4d2b0]">Côte Melvyn</p>
             <p className="mt-2 text-xs uppercase tracking-[0.25em] text-[#8a7460]">Préparation du soleil…</p>
           </div>
         </div>

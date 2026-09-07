@@ -6,7 +6,7 @@ import { getColliders } from "@/lib/colliders";
 
 /** Visualize AABB colliders — OFF in production unless debugColliders. */
 export function DebugColliders() {
-  const { debugColliders } = useGameStore();
+  const debugColliders = useGameStore((s) => s.debugColliders);
   const boxes = useMemo(() => getColliders(), []);
 
   if (!debugColliders) return null;

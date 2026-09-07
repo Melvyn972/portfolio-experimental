@@ -2,31 +2,42 @@
 
 import { useMemo } from "react";
 import { useGLTF } from "@react-three/drei";
-import { Sky, ContactShadows, Environment } from "@react-three/drei";
+import { Sky, Environment } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import * as THREE from "three";
 import { getRoadCurve } from "@/lib/road";
+import { sampleGroundHeight } from "@/lib/ground";
 
 type AtmosphereProps = {
   dust?: boolean;
   shadows?: boolean;
   shadowMapSize?: number;
+  lite?: boolean;
 };
 
 /** Late Mediterranean afternoon PBR lighting. */
-export function Atmosphere({ dust = true, shadows = true, shadowMapSize = 2048 }: AtmosphereProps) {
+export function Atmosphere({
+  dust = true,
+  shadows = true,
+  shadowMapSize = 2048,
+  lite = false,
+}: AtmosphereProps) {
+  if (lite) {
+    return <color attach="background" args={["#8aa8b4"]} />;
+  }
+
   return (
     <>
-      <color attach="background" args={["#b5d0e2"]} />
-      <fog attach="fog" args={["#c2dae8", 55, 190]} />
-      <ambientLight intensity={0.42} color="#fff1e0" />
-      <hemisphereLight args={["#9ec8e0", "#c4a078", 0.58]} />
+      <color attach="background" args={["#7e9aaa"]} />
+      <fog attach="fog" args={["#8ea8b0", 150, 340]} />
+      <ambientLight intensity={0.38} color="#f0c8a0" />
+      <hemisphereLight args={["#6e9cb4", "#b08850", 0.92]} />
       <directionalLight
         castShadow={shadows}
-        position={[52, 38, 22]}
-        intensity={2.2}
-        color="#ffd4a0"
+        position={[52, 22, 14]}
+        intensity={1.72}
+        color="#ffb060"
         shadow-mapSize={[shadowMapSize, shadowMapSize]}
         shadow-camera-near={1}
         shadow-camera-far={200}
@@ -34,24 +45,22 @@ export function Atmosphere({ dust = true, shadows = true, shadowMapSize = 2048 }
         shadow-camera-right={60}
         shadow-camera-top={60}
         shadow-camera-bottom={-60}
-        shadow-bias={-0.00035}
-        shadow-normalBias={0.04}
+        shadow-bias={-0.00028}
+        shadow-normalBias={0.035}
       />
-      <directionalLight position={[-28, 16, -40]} intensity={0.38} color="#8eb8d4" />
+      <directionalLight position={[-22, 14, -36]} intensity={0.62} color="#8eb8d8" />
+      <directionalLight position={[8, 6, 30]} intensity={0.34} color="#ffb070" />
       <Sky
         distance={450000}
-        sunPosition={[52, 12, 22]}
-        inclination={0.54}
-        azimuth={0.22}
-        mieCoefficient={0.005}
-        mieDirectionalG={0.84}
-        rayleigh={0.75}
-        turbidity={6}
+        sunPosition={[52, 6.5, 14]}
+        inclination={0.46}
+        azimuth={0.18}
+        mieCoefficient={0.007}
+        mieDirectionalG={0.9}
+        rayleigh={0.55}
+        turbidity={9.2}
       />
-      <Environment files="/hdri/venice_sunset_1k.hdr" background={false} environmentIntensity={0.55} />
-      {shadows && (
-        <ContactShadows position={[0, 0.01, -70]} opacity={0.28} scale={140} blur={2.6} far={22} color="#3a2e22" />
-      )}
+      <Environment files="/hdri/venice_sunset_1k.hdr" background={false} environmentIntensity={1.32} />
       {dust && <DustMotes />}
     </>
   );
@@ -97,11 +106,12 @@ export function RoadAccentProps() {
   const { scene } = useGLTF("/models/lamp.glb");
   const props = useMemo(() => {
     const curve = getRoadCurve();
-    return [0.18, 0.35, 0.55, 0.7, 0.85].map((t) => {
+    return [0.08, 0.16, 0.24, 0.32].map((t) => {
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-      const pos = p.clone().addScaledVector(side, 4.6);
+      const pos = p.clone().addScaledVector(side, 5.4);
+      pos.y = sampleGroundHeight(pos.x, pos.z);
       const clone = scene.clone(true);
       clone.traverse((o) => {
         const m = o as THREE.Mesh;
@@ -129,4 +139,3 @@ export function RoadAccentProps() {
   );
 }
 
-useGLTF.preload("/models/lamp.glb");

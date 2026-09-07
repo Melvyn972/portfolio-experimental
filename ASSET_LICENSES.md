@@ -6,7 +6,10 @@ All third-party assets used in this project. Remaining house-generated props are
 
 | File | Source | License | Notes |
 |------|--------|---------|-------|
-| `public/models/roadster.glb` | [Kenney Car Kit](https://kenney.nl/assets/car-kit) (`sedan-sports`) | CC0 1.0 | Recolored terracotta in-engine; wheels spin/steer by mesh name |
+| `public/models/roadster.glb` | [RGS Dev — Free Low Poly Vehicles Pack](https://opengameart.org/content/free-low-poly-vehicles-pack) (`Roadster.fbx`) | CC0 1.0 | Authored roadster: body + 4 wheels + window/interior/light materials. Imported via `scripts/import-rgs-roadster.mjs` (cm→m, Standard, terracotta, glass). |
+| `public/models/rgs/Roadster.fbx` | Same pack | CC0 1.0 | Source FBX |
+| `public/licenses/RGSDEV_LICENSE.txt` | Raphael Gonçalves (Rgsdev) | CC0 | Pack license |
+| `public/models/kenney/sedan-sports.glb` | [Kenney Car Kit](https://kenney.nl/assets/car-kit) | CC0 1.0 | Reference only — not the hero vehicle |
 | `public/models/kenney/*.glb` | Kenney Car Kit | CC0 1.0 | Reference copies / wheels |
 | `public/licenses/KENNEY_LICENSE.txt` | Kenney | CC0 | Full license text |
 

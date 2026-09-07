@@ -1,95 +1,111 @@
 "use client";
 
 import { useMemo } from "react";
-import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
-import { getRoadCurve, nearestRoadSample, getBelvedereWorldAnchor } from "@/lib/road";
+import {
+  computeTerrainHeight,
+  ROAD_SAND_APRON,
+  TERRAIN_MAX_X,
+  TERRAIN_MAX_Z,
+  TERRAIN_MIN_X,
+  TERRAIN_MIN_Z,
+  roadClearance,
+} from "@/lib/ground";
+import { ROAD_WIDTH } from "@/lib/road";
+import { SEA_BED_Y, SEA_INLAND_X } from "@/lib/sea";
 
-export function Terrain() {
+/** Warm earth — pale beige + ACES read as a white slab in Melvyn's FAIL shot. */
+const SAND = new THREE.Color("#b08954");
+const WET = new THREE.Color("#8a7654");
+const APRON = new THREE.Color("#b8945c");
+const DIRT = new THREE.Color("#8f6e42");
+const GRASS = new THREE.Color("#4e5c32");
+const ROCK = new THREE.Color("#7a6a52");
+const GRAVEL = new THREE.Color("#6a655c");
+
+function makeSandTexture() {
+  const s = 128;
+  const data = new Uint8Array(s * s * 4);
+  for (let y = 0; y < s; y++) {
+    for (let x = 0; x < s; x++) {
+      const i = (y * s + x) * 4;
+      const n = ((x * 17 + y * 11) % 23) + ((x * 3 + y * 5) % 9);
+      data[i] = 168 + n;
+      data[i + 1] = 132 + (n >> 1);
+      data[i + 2] = 82 + (n >> 2);
+      data[i + 3] = 255;
+    }
+  }
+  const tex = new THREE.DataTexture(data, s, s);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(1, 1);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.needsUpdate = true;
+  return tex;
+}
+
+/**
+ * Continuous coastal heightfield. Sand stays above the water sheet.
+ * Colors lerp — no hard white / cyan biome seams.
+ */
+export function Terrain({
+  segmentsX = 140,
+  segmentsZ = 220,
+  lite = false,
+}: {
+  segmentsX?: number;
+  segmentsZ?: number;
+  lite?: boolean;
+}) {
+  const sandFallback = useMemo(() => (lite ? null : makeSandTexture()), [lite]);
+  const underlayTex = useMemo(() => {
+    if (!sandFallback) return null;
+    const t = sandFallback.clone();
+    t.repeat.set(22, 36);
+    t.needsUpdate = true;
+    return t;
+  }, [sandFallback]);
   const land = useMemo(() => {
-    const geo = new THREE.PlaneGeometry(95, 260, 80, 120);
+    const sizeX = TERRAIN_MAX_X - TERRAIN_MIN_X;
+    const sizeZ = TERRAIN_MAX_Z - TERRAIN_MIN_Z;
+    const midX = (TERRAIN_MIN_X + TERRAIN_MAX_X) / 2;
+    const midZ = (TERRAIN_MIN_Z + TERRAIN_MAX_Z) / 2;
+    const geo = new THREE.PlaneGeometry(sizeX, sizeZ, segmentsX, segmentsZ);
     geo.rotateX(-Math.PI / 2);
     const pos = geo.attributes.position as THREE.BufferAttribute;
-    for (let i = 0; i < pos.count; i++) {
-      const lx = pos.getX(i);
-      const nx = ((lx + 47.5) / 95) * 82 - 12;
-      pos.setX(i, nx);
-      pos.setZ(i, pos.getZ(i) - 55);
-    }
+    const uv = geo.attributes.uv as THREE.BufferAttribute;
 
     const colors = new Float32Array(pos.count * 3);
     const c = new THREE.Color();
-    const terrace = getBelvedereWorldAnchor().terrace;
 
     for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i);
-      const z = pos.getZ(i);
-      let y = 0.02;
+      const x = pos.getX(i) + midX;
+      const z = pos.getZ(i) + midZ;
+      pos.setX(i, x);
+      pos.setZ(i, z);
+      const { roadDist } = roadClearance(x, z);
+      pos.setY(i, computeTerrainHeight(x, z));
+      if (!lite) uv.setXY(i, (x - TERRAIN_MIN_X) / 7.5, (z - TERRAIN_MIN_Z) / 7.5);
 
-      const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 60);
-      const lat = sample.lateral;
-      const roadDist = Math.abs(lat);
+      const sandMix = THREE.MathUtils.smoothstep(-2, -10, -x);
+      const wetMix = THREE.MathUtils.smoothstep(-13.5, -18.2, -x);
+      const apronMix = THREE.MathUtils.clamp(1 - (roadDist - ROAD_SAND_APRON) / 3.2, 0, 1);
+      const y = pos.getY(i);
+      const grassMix = THREE.MathUtils.smoothstep(0.85, 2.6, y) * (1 - sandMix);
+      const rockMix = THREE.MathUtils.smoothstep(3.2, 5.2, y);
 
-      if (roadDist < 5) {
-        y = sample.position.y;
-      } else if (roadDist < 10) {
-        const t = (roadDist - 5) / 5;
-        y = THREE.MathUtils.lerp(sample.position.y, 0.15, t);
+      c.copy(DIRT);
+      if (roadDist < ROAD_WIDTH * 0.5 + 1.8) {
+        c.copy(GRAVEL);
       } else {
-        y = 0.2 + Math.sin(x * 0.04 + z * 0.02) * 0.15 + Math.cos(z * 0.03) * 0.08;
+        c.lerp(SAND, Math.max(sandMix, apronMix * 0.85));
+        c.lerp(WET, wetMix * 0.62);
+        c.lerp(APRON, apronMix * (1 - sandMix) * 0.55);
       }
-
-      if (x < -6) {
-        const lip = THREE.MathUtils.smoothstep(-6, -12, -x);
-        y = THREE.MathUtils.lerp(y, -0.15, lip);
-      }
-
-      if (x > 5) {
-        const rise = THREE.MathUtils.smoothstep(5, 28, x);
-        const ridge =
-          Math.sin(z * 0.045) * 1.4 +
-          Math.cos(z * 0.09 + x * 0.05) * 0.9 +
-          Math.sin(x * 0.12) * 0.6;
-        y = Math.max(y, rise * (3.2 + ridge) + Math.pow(rise, 1.6) * 2.8);
-        if (x > 6 && x < 14 && roadDist > 6) {
-          y = Math.max(y, 1.2 + (x - 6) * 0.55 + Math.sin(z * 0.15) * 0.4);
-        }
-      }
-
-      // Belvedere plateau pocket (synced to terrace)
-      const dx = x - terrace.x;
-      const dz = z - terrace.z;
-      if (dx * dx + dz * dz < 120) {
-        y = Math.max(y, 0.95);
-      }
-
-      // Future zone plateaus
-      if (x > 12 && z < -30 && z > -55) y = Math.max(y, 1.6);
-      if (x > 12 && z < -108 && z > -130) y = Math.max(y, 1.8);
-      if (x > 2 && z < -175 && z > -195) y = Math.max(y, 3.8);
-      // Phare rocky outcrop
-      {
-        const pdx = x - -8;
-        const pdz = z - -168;
-        if (pdx * pdx + pdz * pdz < 90) {
-          const falloff = 1 - Math.sqrt(pdx * pdx + pdz * pdz) / 9.5;
-          y = Math.max(y, 0.35 + falloff * 1.4);
-        }
-      }
-      if (x < -14 && z < -85 && z > -110) y = Math.min(y, 0.2);
-
-      pos.setY(i, y);
-
-      if (x < -8) c.set("#e8dcc4");
-      else if (y > 4.5) c.set("#c4b49e");
-      else if (y > 2.2) c.set("#cfc0a8");
-      else if (y > 0.9) c.set("#b7a888");
-      else if (x < -2) c.set("#d4c4a4");
-      else c.set("#8f9f68");
-
-      if (y < 1.2 && x > -2) {
-        c.offsetHSL(0, -0.05, Math.sin(x * 2.1 + z * 1.7) * 0.04);
-      }
+      c.lerp(GRASS, grassMix * 0.72);
+      c.lerp(ROCK, rockMix);
+      if (!lite) c.offsetHSL(0, -0.02, Math.sin(x * 1.4 + z * 1.1) * 0.01);
 
       colors[i * 3] = c.r;
       colors[i * 3 + 1] = c.g;
@@ -97,62 +113,62 @@ export function Terrain() {
     }
 
     pos.needsUpdate = true;
+    if (!lite) uv.needsUpdate = true;
     geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-    geo.computeVertexNormals();
+    if (!lite) geo.computeVertexNormals();
     return geo;
-  }, []);
+  }, [segmentsX, segmentsZ, lite]);
 
-  const cliffFaces = useMemo(() => {
-    const curve = getRoadCurve();
-    return Array.from({ length: 18 }, (_, i) => {
-      const t = 0.12 + i * 0.042;
-      const p = curve.getPointAt(t);
-      const tangent = curve.getTangentAt(t);
-      const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-      const pos = p.clone().addScaledVector(side, 7.4);
-      pos.y = p.y + 0.35 + (i % 3) * 0.15;
-      return {
-        pos: [pos.x, pos.y, pos.z] as [number, number, number],
-        yaw: Math.atan2(tangent.x, tangent.z) + (i % 2 === 0 ? 0.4 : -0.3),
-        scale: [1.1 + (i % 3) * 0.35, 0.9 + (i % 4) * 0.25, 1.3 + (i % 2) * 0.4] as [number, number, number],
-        variant: i % 3,
-      };
-    });
-  }, []);
+  const midZ = (TERRAIN_MIN_Z + TERRAIN_MAX_Z) / 2;
+  const sizeZ = TERRAIN_MAX_Z - TERRAIN_MIN_Z;
+  const landMinX = SEA_INLAND_X + 0.35;
+  const landMaxX = TERRAIN_MAX_X + 8;
+  const landMidX = (landMinX + landMaxX) / 2;
+  const landW = landMaxX - landMinX;
 
-  const { scene: rockA } = useGLTF("/models/rock-a.glb");
-  const { scene: rockB } = useGLTF("/models/rock-b.glb");
-  const { scene: rockC } = useGLTF("/models/rock-c.glb");
-  const rockScenes = useMemo(() => [rockA, rockB, rockC], [rockA, rockB, rockC]);
-
-  const cliffRocks = useMemo(() => {
-    return cliffFaces.map((w, i) => {
-      const clone = rockScenes[w.variant].clone(true);
-      clone.traverse((o) => {
-        const m = o as THREE.Mesh;
-        if (m.isMesh) {
-          m.castShadow = true;
-          m.receiveShadow = true;
-        }
-      });
-      return { ...w, object: clone, key: i };
-    });
-  }, [cliffFaces, rockScenes]);
+  if (lite) {
+    return (
+      <group>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[landMidX, SEA_BED_Y, midZ]} frustumCulled={false}>
+          <planeGeometry args={[landW, sizeZ + 12]} />
+          <meshBasicMaterial color="#a07c48" />
+        </mesh>
+        <mesh geometry={land} renderOrder={0} frustumCulled={false}>
+          <meshBasicMaterial vertexColors polygonOffset polygonOffsetFactor={2} polygonOffsetUnits={2} />
+        </mesh>
+        <mesh position={[SEA_INLAND_X, SEA_BED_Y + 0.12, midZ]} rotation={[0, Math.PI / 2, 0]}>
+          <planeGeometry args={[sizeZ, 0.36]} />
+          <meshBasicMaterial color="#8a7048" side={THREE.DoubleSide} />
+        </mesh>
+      </group>
+    );
+  }
 
   return (
     <group>
-      <mesh geometry={land} receiveShadow castShadow>
-        <meshStandardMaterial vertexColors roughness={0.92} metalness={0} flatShading={false} />
+      {/* Safety sand on LAND only — the old full-map underlay sat at y=-0.12
+          over the sea (y=-0.22) and hid the Mediterranean. */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[landMidX, SEA_BED_Y, midZ]} receiveShadow frustumCulled={false}>
+        <planeGeometry args={[landW, sizeZ + 12]} />
+        <meshStandardMaterial color="#a07c48" map={underlayTex ?? undefined} roughness={0.97} metalness={0} />
       </mesh>
-      {cliffRocks.map((w) => (
-        <group key={w.key} position={w.pos} rotation={[0.1, w.yaw, 0.05]} scale={w.scale}>
-          <primitive object={w.object} />
-        </group>
-      ))}
+      <mesh geometry={land} receiveShadow renderOrder={0} frustumCulled={false}>
+        <meshStandardMaterial
+          vertexColors
+          map={sandFallback ?? undefined}
+          roughness={0.96}
+          metalness={0}
+          flatShading={false}
+          polygonOffset
+          polygonOffsetFactor={2}
+          polygonOffsetUnits={2}
+        />
+      </mesh>
+      {/* Vertical lip at the waterline, not in the middle of the sea. */}
+      <mesh position={[SEA_INLAND_X, SEA_BED_Y + 0.12, midZ]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
+        <planeGeometry args={[sizeZ, 0.36]} />
+        <meshStandardMaterial color="#8a7048" roughness={0.97} metalness={0} side={THREE.DoubleSide} />
+      </mesh>
     </group>
   );
 }
-
-useGLTF.preload("/models/rock-a.glb");
-useGLTF.preload("/models/rock-b.glb");
-useGLTF.preload("/models/rock-c.glb");
