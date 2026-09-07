@@ -79,7 +79,7 @@ export function ExperienceCanvas() {
         toneMapping: THREE.ACESFilmicToneMapping,
         toneMappingExposure: 0.96,
       }}
-      camera={{ fov: 42, near: 0.1, far: 340, position: [32, 24, 58] }}
+      camera={{ fov: 42, near: 0.22, far: 360, position: [32, 24, 58] }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = 0.96;

@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { computeTerrainHeight, sampleGroundHeight } from "@/lib/ground";
 import { getBelvedereWorldAnchor, nearestRoadSample, ROAD_SURFACE_LIFT } from "@/lib/road";
+import { SEA_INLAND_X, SEA_SURFACE_Y } from "@/lib/sea";
 import { isFinitePos, sanitizeWalkSpawn, zoneWalkSpawns } from "@/lib/spawn";
 import { chapterForInteractableId, interactableForChapter } from "@/lib/interaction";
 import { inputRef } from "@/hooks/useKeyboard";
@@ -412,13 +413,17 @@ if (typeof window !== "undefined") {
     },
     sampleHeights: (x: number, z: number) => {
       const sample = nearestRoadSample(new THREE.Vector3(x, 0, z), 160);
+      const visual = computeTerrainHeight(x, z);
+      const liftRoad = sample.position.y + ROAD_SURFACE_LIFT;
       return {
-        visual: computeTerrainHeight(x, z),
+        visual,
         walk: sampleGroundHeight(x, z),
         roadY: sample.position.y,
-        liftRoad: sample.position.y + ROAD_SURFACE_LIFT,
+        liftRoad,
         roadDist: Math.min(Math.abs(sample.lateral), sample.dist),
         lat: sample.lateral,
+        sandBelowAsphalt: visual <= liftRoad - 0.08,
+        seaCovered: x < SEA_INLAND_X && visual >= SEA_SURFACE_Y - 0.02,
       };
     },
   };

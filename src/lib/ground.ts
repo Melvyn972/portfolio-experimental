@@ -1,8 +1,9 @@
 import * as THREE from "three";
 import { nearestRoadSample, getBelvedereWorldAnchor, ROAD_WIDTH, ROAD_SURFACE_LIFT } from "@/lib/road";
 import { content } from "@/lib/content";
+import { SEA_BED_Y, SEA_INLAND_X, SEA_SURFACE_Y } from "@/lib/sea";
 
-/** Visual bounds — sand runs under the sea sheet so driving view never shows a white void. */
+/** Visual bounds — seaward cells drop under the sea sheet (never cover it). */
 export const TERRAIN_MIN_X = -28;
 export const TERRAIN_MAX_X = 70;
 export const TERRAIN_MIN_Z = -220;
@@ -15,7 +16,9 @@ export const INLAND_SHELF_WIDTH = 14;
 export const PLAZA_HEIGHT = 1.64;
 
 function sandBedY(roadY: number) {
-  return roadY + ROAD_SURFACE_LIFT - 0.018;
+  // Asphalt overlay is at roadY + ROAD_SURFACE_LIFT (20 cm). A 1.8 cm gap
+  // let the coarse heightfield interpolate above the ribbon (Melvyn: dirt blanket).
+  return roadY;
 }
 
 function scenicHeight(x: number, z: number): { y: number; roadDist: number; roadY: number; onAccess: boolean } {
@@ -43,10 +46,15 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
   const seaRamp = seaShoulderY(lat, roadY);
   if (seaRamp != null) y = seaRamp;
 
-  // Beach slopes to the waterline, always a few cm above the sea sheet (y = −0.22).
-  if (x < -11 && roadDist > ROAD_SAND_APRON + 1.8) {
-    const lip = THREE.MathUtils.smoothstep(-11, -17.6, -x);
-    y = THREE.MathUtils.lerp(y, -0.18, lip);
+  // Beach slopes to the waterline. Seaward of SEA_INLAND_X the bed drops
+  // under the Mediterranean — never a dirt sheet over the water.
+  if (x < -11 && roadDist > ROAD_SAND_APRON + 1.2) {
+    if (x >= SEA_INLAND_X) {
+      const lip = THREE.MathUtils.smoothstep(-11, SEA_INLAND_X, -x);
+      y = THREE.MathUtils.lerp(y, SEA_SURFACE_Y + 0.045, lip);
+    } else {
+      y = Math.min(y, SEA_BED_Y);
+    }
   }
 
   const shelf = inlandShelfY(lat, roadY);
@@ -116,11 +124,20 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
   const driveFlat = ROAD_WIDTH * 0.5 + 9.2;
   if (roadDist < driveFlat) {
     const t = THREE.MathUtils.clamp((roadDist - ROAD_WIDTH * 0.5 - 0.2) / 8.8, 0, 1);
-    const cap = sandBedY(roadY) + t * t * 0.2;
+    const cap = sandBedY(roadY) + t * t * 0.14;
     if (y > cap) y = cap;
   }
-  if (roadDist < ROAD_WIDTH * 0.5 + 0.28) {
+  // Hard: sand/dirt never reaches the asphalt plane on the ribbon.
+  if (roadDist < ROAD_WIDTH * 0.5 + 0.95) {
+    y = Math.min(y, sandBedY(roadY));
+  }
+  if (roadDist < ROAD_WIDTH * 0.5 + 0.4) {
     y = sandBedY(roadY);
+  }
+
+  // Absolute last: heightfield must not cover the sea sheet.
+  if (x < SEA_INLAND_X) {
+    y = Math.min(y, SEA_BED_Y);
   }
 
   return { y, roadDist, roadY, onAccess: access != null && roadDist >= ROAD_WIDTH * 0.62 };
@@ -145,7 +162,7 @@ export function seaShoulderY(lat: number, roadY: number): number | null {
   if (lat < -ROAD_SAND_APRON - 10) return null;
   const t = THREE.MathUtils.clamp((-lat - ROAD_SAND_APRON) / 8.5, 0, 1);
   const e = t * t * (3 - 2 * t);
-  return THREE.MathUtils.lerp(bed, -0.08, e);
+  return THREE.MathUtils.lerp(bed, SEA_SURFACE_Y + 0.04, e);
 }
 
 /** Smooth inland shelf: road shoulder → plaza height over INLAND_SHELF_WIDTH. */

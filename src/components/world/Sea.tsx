@@ -3,10 +3,9 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { SEA_INLAND_X, SEA_SURFACE_Y } from "@/lib/sea";
 
-/** Inland water edge — past the beach, never under the road lip. */
-export const SEA_INLAND_X = -17.4;
-export const SEA_SURFACE_Y = -0.22;
+export { SEA_INLAND_X, SEA_SURFACE_Y };
 
 const seaVertex = /* glsl */ `
 uniform float uTime;
@@ -39,17 +38,17 @@ varying float vDeep;
 #include <fog_pars_fragment>
 
 void main() {
-  vec3 deep = vec3(0.14, 0.32, 0.36);
-  vec3 mid = vec3(0.24, 0.42, 0.42);
-  vec3 shore = vec3(0.46, 0.54, 0.52);
+  vec3 deep = vec3(0.07, 0.28, 0.40);
+  vec3 mid = vec3(0.12, 0.46, 0.50);
+  vec3 shore = vec3(0.28, 0.56, 0.54);
   vec3 col = mix(deep, mid, smoothstep(0.0, 0.68, vUv.x));
   col = mix(col, shore, smoothstep(0.78, 1.0, vUv.x));
   float sparkle = pow(max(0.0, sin(vUv.y * 28.0 + uTime * 0.8) * cos(vUv.x * 18.0)), 16.0);
-  col += vec3(0.07, 0.08, 0.07) * sparkle * vDeep * 0.28;
+  col += vec3(0.08, 0.10, 0.09) * sparkle * vDeep * 0.32;
   float foamBand = smoothstep(0.78, 1.0, vUv.x);
   float foam = foamBand * (0.58 + 0.38 * sin(vUv.y * 52.0 + uTime * 2.4));
   col = mix(col, vec3(0.90, 0.91, 0.86), foam * 0.72);
-  col *= 0.90 + 0.08 * (1.0 - vDeep);
+  col *= 0.94 + 0.06 * (1.0 - vDeep);
   gl_FragColor = vec4(col, 1.0);
   #include <fog_fragment>
 }

@@ -24,7 +24,7 @@ import { getBelvedereInteractPosition, getBelvedereStopPosition } from "@/compon
 import { isUnsafePosition, safeRespawnPosition } from "@/lib/respawn";
 import { isFinitePos, sanitizeWalkSpawn } from "@/lib/spawn";
 import { isInsideCameraOccluder, resolveCollisions } from "@/lib/colliders";
-import { SEA_INLAND_X } from "@/components/world/Sea";
+import { SEA_INLAND_X } from "@/lib/sea";
 
 const MAX_SPEED = 20;
 const ACCEL = 12;
@@ -645,6 +645,9 @@ export function PlayerSystem() {
       camInside: isInsideCameraOccluder(camera.position, 0.08),
       camGround: computeTerrainHeight(camera.position.x, camera.position.z),
       camClearance: camera.position.y - computeTerrainHeight(camera.position.x, camera.position.z),
+      sandY: computeTerrainHeight(pos.current.x, pos.current.z),
+      asphaltY: pos.current.y + ROAD_SURFACE_LIFT,
+      sandBelowAsphalt: computeTerrainHeight(pos.current.x, pos.current.z) <= pos.current.y + ROAD_SURFACE_LIFT - 0.08,
       keys: { ...inputRef.current },
     };
     api._live = snap;

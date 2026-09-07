@@ -11,6 +11,7 @@ import {
   TERRAIN_MIN_Z,
   roadClearance,
 } from "@/lib/ground";
+import { SEA_BED_Y, SEA_INLAND_X } from "@/lib/sea";
 
 /** Warm earth — pale beige + ACES read as a white slab in Melvyn's FAIL shot. */
 const SAND = new THREE.Color("#b08954");
@@ -105,14 +106,17 @@ export function Terrain() {
 
   const midZ = (TERRAIN_MIN_Z + TERRAIN_MAX_Z) / 2;
   const sizeZ = TERRAIN_MAX_Z - TERRAIN_MIN_Z;
-  const sizeX = TERRAIN_MAX_X - TERRAIN_MIN_X;
-  const midX = (TERRAIN_MIN_X + TERRAIN_MAX_X) / 2;
+  const landMinX = SEA_INLAND_X + 0.35;
+  const landMaxX = TERRAIN_MAX_X + 8;
+  const landMidX = (landMinX + landMaxX) / 2;
+  const landW = landMaxX - landMinX;
 
   return (
     <group>
-      {/* Safety sand — if the heightfield misses a cell, driving view never shows a white void. */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[midX, -0.12, midZ]} receiveShadow frustumCulled={false}>
-        <planeGeometry args={[sizeX + 36, sizeZ + 40]} />
+      {/* Safety sand on LAND only — the old full-map underlay sat at y=-0.12
+          over the sea (y=-0.22) and hid the Mediterranean. */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[landMidX, SEA_BED_Y, midZ]} receiveShadow frustumCulled={false}>
+        <planeGeometry args={[landW, sizeZ + 12]} />
         <meshStandardMaterial
           color="#a07c48"
           map={underlayTex}
@@ -128,13 +132,13 @@ export function Terrain() {
           metalness={0}
           flatShading={false}
           polygonOffset
-          polygonOffsetFactor={1}
-          polygonOffsetUnits={1}
+          polygonOffsetFactor={2}
+          polygonOffsetUnits={2}
         />
       </mesh>
-      {/* Vertical lip so the paper-thin sand edge never reads as a floating slab. */}
-      <mesh position={[TERRAIN_MIN_X, -0.16, midZ]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
-        <planeGeometry args={[sizeZ, 0.28]} />
+      {/* Vertical lip at the waterline, not in the middle of the sea. */}
+      <mesh position={[SEA_INLAND_X, SEA_BED_Y + 0.12, midZ]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
+        <planeGeometry args={[sizeZ, 0.36]} />
         <meshStandardMaterial color="#8a7048" roughness={0.97} metalness={0} side={THREE.DoubleSide} />
       </mesh>
     </group>
