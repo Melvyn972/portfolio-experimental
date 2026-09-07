@@ -49,9 +49,18 @@ function makeSandTexture() {
  * Continuous coastal heightfield. Sand stays above the water sheet.
  * Colors lerp — no hard white / cyan biome seams.
  */
-export function Terrain({ segmentsX = 140, segmentsZ = 220 }: { segmentsX?: number; segmentsZ?: number }) {
-  const sandFallback = useMemo(() => makeSandTexture(), []);
+export function Terrain({
+  segmentsX = 140,
+  segmentsZ = 220,
+  lite = false,
+}: {
+  segmentsX?: number;
+  segmentsZ?: number;
+  lite?: boolean;
+}) {
+  const sandFallback = useMemo(() => (lite ? null : makeSandTexture()), [lite]);
   const underlayTex = useMemo(() => {
+    if (!sandFallback) return null;
     const t = sandFallback.clone();
     t.repeat.set(22, 36);
     t.needsUpdate = true;
@@ -77,7 +86,7 @@ export function Terrain({ segmentsX = 140, segmentsZ = 220 }: { segmentsX?: numb
       pos.setZ(i, z);
       const { roadDist } = roadClearance(x, z);
       pos.setY(i, computeTerrainHeight(x, z));
-      uv.setXY(i, (x - TERRAIN_MIN_X) / 7.5, (z - TERRAIN_MIN_Z) / 7.5);
+      if (!lite) uv.setXY(i, (x - TERRAIN_MIN_X) / 7.5, (z - TERRAIN_MIN_Z) / 7.5);
 
       const sandMix = THREE.MathUtils.smoothstep(-2, -10, -x);
       const wetMix = THREE.MathUtils.smoothstep(-13.5, -18.2, -x);
@@ -96,7 +105,7 @@ export function Terrain({ segmentsX = 140, segmentsZ = 220 }: { segmentsX?: numb
       }
       c.lerp(GRASS, grassMix * 0.72);
       c.lerp(ROCK, rockMix);
-      c.offsetHSL(0, -0.02, Math.sin(x * 1.4 + z * 1.1) * 0.01);
+      if (!lite) c.offsetHSL(0, -0.02, Math.sin(x * 1.4 + z * 1.1) * 0.01);
 
       colors[i * 3] = c.r;
       colors[i * 3 + 1] = c.g;
@@ -104,11 +113,11 @@ export function Terrain({ segmentsX = 140, segmentsZ = 220 }: { segmentsX?: numb
     }
 
     pos.needsUpdate = true;
-    uv.needsUpdate = true;
+    if (!lite) uv.needsUpdate = true;
     geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-    geo.computeVertexNormals();
+    if (!lite) geo.computeVertexNormals();
     return geo;
-  }, [segmentsX, segmentsZ]);
+  }, [segmentsX, segmentsZ, lite]);
 
   const midZ = (TERRAIN_MIN_Z + TERRAIN_MAX_Z) / 2;
   const sizeZ = TERRAIN_MAX_Z - TERRAIN_MIN_Z;
@@ -117,23 +126,36 @@ export function Terrain({ segmentsX = 140, segmentsZ = 220 }: { segmentsX?: numb
   const landMidX = (landMinX + landMaxX) / 2;
   const landW = landMaxX - landMinX;
 
+  if (lite) {
+    return (
+      <group>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[landMidX, SEA_BED_Y, midZ]} frustumCulled={false}>
+          <planeGeometry args={[landW, sizeZ + 12]} />
+          <meshBasicMaterial color="#a07c48" />
+        </mesh>
+        <mesh geometry={land} renderOrder={0} frustumCulled={false}>
+          <meshBasicMaterial vertexColors polygonOffset polygonOffsetFactor={2} polygonOffsetUnits={2} />
+        </mesh>
+        <mesh position={[SEA_INLAND_X, SEA_BED_Y + 0.12, midZ]} rotation={[0, Math.PI / 2, 0]}>
+          <planeGeometry args={[sizeZ, 0.36]} />
+          <meshBasicMaterial color="#8a7048" side={THREE.DoubleSide} />
+        </mesh>
+      </group>
+    );
+  }
+
   return (
     <group>
       {/* Safety sand on LAND only — the old full-map underlay sat at y=-0.12
           over the sea (y=-0.22) and hid the Mediterranean. */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[landMidX, SEA_BED_Y, midZ]} receiveShadow frustumCulled={false}>
         <planeGeometry args={[landW, sizeZ + 12]} />
-        <meshStandardMaterial
-          color="#a07c48"
-          map={underlayTex}
-          roughness={0.97}
-          metalness={0}
-        />
+        <meshStandardMaterial color="#a07c48" map={underlayTex ?? undefined} roughness={0.97} metalness={0} />
       </mesh>
       <mesh geometry={land} receiveShadow renderOrder={0} frustumCulled={false}>
         <meshStandardMaterial
           vertexColors
-          map={sandFallback}
+          map={sandFallback ?? undefined}
           roughness={0.96}
           metalness={0}
           flatShading={false}

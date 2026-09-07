@@ -3,6 +3,7 @@
 import { useGameStore } from "@/hooks/useGameStore";
 import {
   setGameState,
+  getGameState,
   toggleMute,
   setQuality,
   openChapter,
@@ -21,30 +22,31 @@ import { TitleScreen } from "@/components/ui/TitleScreen";
  * Menu/Mute top (safe-area) · 3D center clear · Joystick BL · Look BR · Interact only when available
  */
 export function GameHUD() {
-  const state = useGameStore();
+  const phase = useGameStore((s) => s.phase);
+  const openChapterId = useGameStore((s) => s.openChapter);
+  const prompt = useGameStore((s) => s.prompt);
+  const showExplorerHint = useGameStore((s) => s.showExplorerHint);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (state.openChapter) openChapter(null);
-        else if (state.rescueOpen) setGameState({ rescueOpen: false });
+        if (getGameState().openChapter) openChapter(null);
+        else if (getGameState().rescueOpen) setGameState({ rescueOpen: false });
       }
       if (e.key === "F3") {
-        setGameState({ debugColliders: !state.debugColliders });
+        setGameState({ debugColliders: !getGameState().debugColliders });
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [state.openChapter, state.rescueOpen, state.debugColliders]);
+  }, []);
 
   return (
     <div className="pointer-events-none fixed inset-0 z-20 text-[var(--fg)]">
       <TitleScreen />
-      {state.phase !== "title" && state.phase !== "boot" && <TopBar />}
-      {state.phase === "intro" && <CinematicSkip />}
-      {state.showExplorerHint && state.phase === "playing" && !state.openChapter && !state.prompt && (
-        <ExplorerHint />
-      )}
+      {phase !== "title" && phase !== "boot" && <TopBar />}
+      {phase === "intro" && <CinematicSkip />}
+      {showExplorerHint && phase === "playing" && !openChapterId && !prompt && <ExplorerHint />}
       <TravelJournal />
       <TouchControls />
       <InteractPrompt />
@@ -110,7 +112,7 @@ function AxesProof() {
 }
 
 function ExplorerHint() {
-  const { mode } = useGameStore();
+  const mode = useGameStore((s) => s.mode);
   const [touch, setTouch] = useState(false);
   const [ready, setReady] = useState(false);
   useEffect(() => {
@@ -142,7 +144,10 @@ function ExplorerHint() {
 }
 
 function TopBar() {
-  const { muted, quality, rescueOpen, isMobile } = useGameStore();
+  const muted = useGameStore((s) => s.muted);
+  const quality = useGameStore((s) => s.quality);
+  const rescueOpen = useGameStore((s) => s.rescueOpen);
+  const isMobile = useGameStore((s) => s.isMobile);
   const { done, total } = discoveryProgress();
   return (
     <div
@@ -192,7 +197,8 @@ function TopBar() {
 }
 
 function DiscoveryToast() {
-  const { lastFound, phase } = useGameStore();
+  const lastFound = useGameStore((s) => s.lastFound);
+  const phase = useGameStore((s) => s.phase);
   const [visible, setVisible] = useState(false);
   const [label, setLabel] = useState("");
 
@@ -222,10 +228,14 @@ function DiscoveryToast() {
 }
 
 function InteractPrompt() {
-  const { prompt, phase, openChapter, rescueOpen, isMobile } = useGameStore();
+  const prompt = useGameStore((s) => s.prompt);
+  const phase = useGameStore((s) => s.phase);
+  const openChapterId = useGameStore((s) => s.openChapter);
+  const rescueOpen = useGameStore((s) => s.rescueOpen);
+  const isMobile = useGameStore((s) => s.isMobile);
   // Mobile: contextual FAB only — a second top chip covered the world.
   if (isMobile) return null;
-  if (!prompt || phase !== "playing" || openChapter || rescueOpen) return null;
+  if (!prompt || phase !== "playing" || openChapterId || rescueOpen) return null;
 
   return (
     <div
@@ -258,7 +268,10 @@ function shortInteractLabel(prompt: string | null) {
 }
 
 function SpeedWhisper() {
-  const { speed, mode, phase, isMobile } = useGameStore();
+  const speed = useGameStore((s) => s.speed);
+  const mode = useGameStore((s) => s.mode);
+  const phase = useGameStore((s) => s.phase);
+  const isMobile = useGameStore((s) => s.isMobile);
   if (phase !== "playing" || mode !== "driving" || speed < 0.5 || isMobile) return null;
   return (
     <div
@@ -272,7 +285,12 @@ function SpeedWhisper() {
 
 function TouchControls() {
   const [isTouch, setIsTouch] = useState(false);
-  const { interactTarget, prompt, openChapter, rescueOpen, mode, phase } = useGameStore();
+  const interactTarget = useGameStore((s) => s.interactTarget);
+  const prompt = useGameStore((s) => s.prompt);
+  const openChapterId = useGameStore((s) => s.openChapter);
+  const rescueOpen = useGameStore((s) => s.rescueOpen);
+  const mode = useGameStore((s) => s.mode);
+  const phase = useGameStore((s) => s.phase);
 
   useEffect(() => {
     const mq = window.matchMedia("(pointer: coarse)");
@@ -312,7 +330,7 @@ function TouchControls() {
   }, [mode]);
 
   if (!isTouch) return null;
-  const hidden = phase !== "playing" || Boolean(openChapter) || rescueOpen;
+  const hidden = phase !== "playing" || Boolean(openChapterId) || rescueOpen;
 
   const showInteract = Boolean(interactTarget && prompt);
   const showLook = mode === "walking";

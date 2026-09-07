@@ -1,10 +1,10 @@
 "use client";
 
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, lazy, useEffect, useRef } from "react";
 import { CapsuleCollider, CuboidCollider, RigidBody, useRapier, type RapierRigidBody } from "@react-three/rapier";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { Convertible } from "@/components/vehicle/Convertible";
+import { ConvertibleLite } from "@/components/vehicle/ConvertibleLite";
 import { inputRef, consumeInteractPulse } from "@/hooks/useKeyboard";
 import {
   getGameState,
@@ -33,6 +33,9 @@ import { isUnsafePosition, safeRespawnPosition } from "@/lib/respawn";
 import { isFinitePos, sanitizeWalkSpawn } from "@/lib/spawn";
 import { isInsideCameraOccluder, resolveCollisions } from "@/lib/colliders";
 import { SEA_INLAND_X } from "@/lib/sea";
+import { getSoftGL } from "@/lib/softgl";
+
+const ConvertibleHeavy = lazy(() => import("@/components/vehicle/Convertible").then((m) => ({ default: m.Convertible })));
 
 const MAX_SPEED = 22;
 const ACCEL = 16.5;
@@ -86,6 +89,9 @@ export function PlayerSystem() {
   const lastScreenDx = useRef(0);
   const lastSteerDyaw = useRef(0);
   const debugMode = useRef<"walking" | "driving" | null>(null);
+  const tmpQuat = useRef(new THREE.Quaternion());
+  const tmpEuler = useRef(new THREE.Euler());
+  const liveSnap = useRef<Record<string, unknown> | null>(null);
   const transition = useRef<{
     kind: "exit" | "enter" | null;
     t: number;
@@ -655,6 +661,30 @@ export function PlayerSystem() {
     if (typeof window === "undefined") return;
     const api = (window as unknown as { __coteMelvyn?: Record<string, unknown> }).__coteMelvyn;
     if (!api) return;
+    if (getSoftGL()) {
+      let snap = liveSnap.current;
+      if (!snap) {
+        snap = {};
+        liveSnap.current = snap;
+        api.live = Object.assign(() => snap, snap);
+      }
+      snap.mode = mode;
+      const pp = (snap.playerPos as { x: number; y: number; z: number } | undefined) ?? { x: 0, y: 0, z: 0 };
+      pp.x = playerPos.current.x;
+      pp.y = playerPos.current.y;
+      pp.z = playerPos.current.z;
+      snap.playerPos = pp;
+      const cp = (snap.carPos as { x: number; y: number; z: number } | undefined) ?? { x: 0, y: 0, z: 0 };
+      cp.x = pos.current.x;
+      cp.y = pos.current.y;
+      cp.z = pos.current.z;
+      snap.carPos = cp;
+      snap.carYaw = yaw.current;
+      snap.lookYaw = lookYaw.current;
+      snap.walkYaw = walkYaw.current;
+      snap.driveSpeed = velocity.current;
+      return;
+    }
     camera.getWorldDirection(tmp.current);
     tmp.current.y = 0;
     if (tmp.current.lengthSq() > 1e-8) tmp.current.normalize();
@@ -736,8 +766,14 @@ export function PlayerSystem() {
     const yPos = p.y + ROAD_SURFACE_LIFT + susp;
     if (carBody.current) {
       carBody.current.setNextKinematicTranslation({ x: p.x, y: yPos + 0.35, z: p.z });
-      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch, y, roll, "YXZ"));
-      carBody.current.setNextKinematicRotation({ x: q.x, y: q.y, z: q.z, w: q.w });
+      tmpEuler.current.set(pitch, y, roll, "YXZ");
+      tmpQuat.current.setFromEuler(tmpEuler.current);
+      carBody.current.setNextKinematicRotation({
+        x: tmpQuat.current.x,
+        y: tmpQuat.current.y,
+        z: tmpQuat.current.z,
+        w: tmpQuat.current.w,
+      });
     }
     if (carVisual.current) {
       carVisual.current.position.set(p.x, yPos, p.z);
@@ -754,7 +790,7 @@ export function PlayerSystem() {
       const t = { x: feet.x, y: feet.y + CAPSULE_Y, z: feet.z };
       playerBody.current.setTranslation(t, true);
       playerBody.current.setNextKinematicTranslation(t);
-      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, facing, 0));
+      const q = tmpQuat.current.setFromEuler(tmpEuler.current.set(0, facing, 0));
       playerBody.current.setRotation({ x: q.x, y: q.y, z: q.z, w: q.w }, true);
       playerBody.current.setNextKinematicRotation({ x: q.x, y: q.y, z: q.z, w: q.w });
     }
@@ -776,9 +812,13 @@ export function PlayerSystem() {
         <CuboidCollider args={[1.05, 0.5, 2.25]} friction={0.8} />
       </RigidBody>
       <group ref={carVisual}>
-        <Suspense fallback={null}>
-          <Convertible color="#c45c3e" />
-        </Suspense>
+        {getSoftGL() ? (
+          <ConvertibleLite color="#c45c3e" />
+        ) : (
+          <Suspense fallback={null}>
+            <ConvertibleHeavy color="#c45c3e" />
+          </Suspense>
+        )}
       </group>
 
       <RigidBody

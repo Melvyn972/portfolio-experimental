@@ -16,7 +16,8 @@ import { content } from "@/lib/content";
  * In-world discovery language — leather journal + brass, never a white modal.
  */
 export function TravelJournal() {
-  const { openChapter: chapter, rescueOpen } = useGameStore();
+  const chapter = useGameStore((s) => s.openChapter);
+  const rescueOpen = useGameStore((s) => s.rescueOpen);
   if (rescueOpen) return <JournalShell onClose={() => setGameState({ rescueOpen: false })} title="Carnet de voyage" index />;
   if (chapter) {
     return (
@@ -90,7 +91,7 @@ function JournalShell({
 }
 
 function JournalIndex() {
-  const { discovered } = useGameStore();
+  const discovered = useGameStore((s) => s.discovered);
   const { done, total } = discoveryProgress();
   const id = content.identity;
   const contact = content.contact;
@@ -140,7 +141,7 @@ function JournalIndex() {
 }
 
 function ChapterPages({ chapter }: { chapter: ChapterId }) {
-  const { journalPage } = useGameStore();
+  const journalPage = useGameStore((s) => s.journalPage);
   const pages = pagesFor(chapter);
   const page = pages[Math.min(journalPage, pages.length - 1)];
   const prev = useRef(journalPage);

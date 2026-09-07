@@ -1,15 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
-import { Suspense } from "react";
-import { World } from "@/components/world/World";
+import { WorldLite } from "@/components/world/WorldLite";
 import { PlayerSystem } from "@/components/player/PlayerSystem";
 import { PhysicsWorld } from "@/components/physics/PhysicsWorld";
 import { WorldColliders } from "@/components/physics/WorldColliders";
 import { GameCamera } from "@/components/camera/GameCamera";
-import { PostFX } from "@/components/experience/PostFX";
 import { ProgressiveLoader } from "@/components/experience/ProgressiveLoader";
 import { useGameStore } from "@/hooks/useGameStore";
 import { resolveQuality } from "@/lib/quality";
@@ -17,8 +15,12 @@ import { detectSoftGL, setSoftGL } from "@/lib/softgl";
 import { getGameState, setGameState } from "@/lib/gameStore";
 import { useKeyboard } from "@/hooks/useKeyboard";
 
+const PostFX = lazy(() => import("@/components/experience/PostFX").then((m) => ({ default: m.PostFX })));
+const WorldHeavy = lazy(() => import("@/components/world/World").then((m) => ({ default: m.World })));
+
 function Scene({ isMobile }: { isMobile: boolean }) {
-  const { quality: preset, phase } = useGameStore();
+  const preset = useGameStore((s) => s.quality);
+  const phase = useGameStore((s) => s.phase);
   const quality = useMemo(() => resolveQuality(preset, isMobile), [preset, isMobile]);
 
   return (
@@ -27,12 +29,12 @@ function Scene({ isMobile }: { isMobile: boolean }) {
           A shared Suspense remounted chase-cam + PlayerSystem on origin
           and dropped the first teleport* after skipToPlay. */}
       <GameCamera />
-      <WorldColliders />
+      {!quality.lite && <WorldColliders />}
       {(phase === "playing" || phase === "intro" || phase === "title") && <PlayerSystem />}
       <Suspense fallback={null}>
-        <World quality={quality} />
-        <PostFX enabled={quality.postfx} ao={quality.shadows && !isMobile} />
-        <ProgressiveLoader />
+        {quality.lite ? <WorldLite /> : <WorldHeavy quality={quality} />}
+        {quality.postfx ? <PostFX enabled ao={quality.shadows && !isMobile} /> : null}
+        {!quality.lite && <ProgressiveLoader />}
       </Suspense>
     </PhysicsWorld>
   );
@@ -40,7 +42,9 @@ function Scene({ isMobile }: { isMobile: boolean }) {
 
 export function ExperienceCanvas() {
   useKeyboard();
-  const { quality: preset, openChapter, rescueOpen } = useGameStore();
+  const preset = useGameStore((s) => s.quality);
+  const openChapter = useGameStore((s) => s.openChapter);
+  const rescueOpen = useGameStore((s) => s.rescueOpen);
   const [isMobile, setIsMobile] = useState(false);
   const [softGL] = useState(() => {
     const soft = detectSoftGL();
@@ -102,12 +106,14 @@ export function ExperienceCanvas() {
         stencil: false,
         depth: true,
         alpha: false,
+        precision: quality.lite ? "lowp" : "highp",
       }}
-      camera={{ fov: 42, near: 0.22, far: quality.lite ? 220 : 360, position: [32, 24, 58] }}
+      camera={{ fov: 42, near: 0.22, far: quality.lite ? 180 : 360, position: [32, 24, 58] }}
       onCreated={({ gl }) => {
         gl.toneMapping = quality.lite ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = quality.lite ? 1 : 0.96;
         gl.setClearColor("#7e9aa0");
+        gl.shadowMap.enabled = quality.shadows;
         gl.domElement.addEventListener(
           "webglcontextlost",
           (e) => {

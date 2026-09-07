@@ -147,6 +147,19 @@ function shallowEqualPos(
   return Math.abs(a.x - b.x) < eps && Math.abs(a.y - b.y) < eps && Math.abs(a.z - b.z) < eps;
 }
 
+const POSE_KEYS = new Set<keyof GameState>([
+  "playerPos",
+  "carPos",
+  "speed",
+  "carYaw",
+  "walkYaw",
+  "lookYaw",
+  "lookPitch",
+]);
+
+let lastPoseNotifyAt = 0;
+const POSE_NOTIFY_MS = 250;
+
 export function getGameState() {
   return state;
 }
@@ -154,7 +167,13 @@ export function getGameState() {
 /** Push state; skips notify when nothing UI-relevant changed. */
 export function setGameState(partial: Partial<GameState>) {
   let changed = false;
+  let uiChanged = false;
   const next = { ...state };
+
+  const mark = (key: keyof GameState) => {
+    changed = true;
+    if (!POSE_KEYS.has(key)) uiChanged = true;
+  };
 
   for (const key of Object.keys(partial) as (keyof GameState)[]) {
     const value = partial[key];
@@ -167,7 +186,7 @@ export function setGameState(partial: Partial<GameState>) {
       if (isNullIsland(val.x, val.y, val.z)) continue;
       if (!shallowEqualPos(cur, val)) {
         next[key] = { x: val.x, y: val.y, z: val.z };
-        changed = true;
+        mark(key);
       }
       continue;
     }
@@ -177,21 +196,21 @@ export function setGameState(partial: Partial<GameState>) {
       if (val === null) {
         if (state.relicFocus !== null) {
           next.relicFocus = null;
-          changed = true;
+          mark(key);
         }
         continue;
       }
       if (!isFinitePos(val)) continue;
       if (!state.relicFocus || !shallowEqualPos(state.relicFocus, val, 0.05)) {
         next.relicFocus = { x: val.x, y: val.y, z: val.z };
-        changed = true;
+        mark(key);
       }
       continue;
     }
 
     if (key === "discovered") {
       next.discovered = { ...state.discovered, ...(value as GameState["discovered"]) };
-      changed = true;
+      mark(key);
       continue;
     }
 
@@ -201,19 +220,25 @@ export function setGameState(partial: Partial<GameState>) {
       const eps = key === "speed" ? 0.15 : 0.02;
       if (Math.abs(cur - val) >= eps) {
         (next as Record<string, unknown>)[key] = val;
-        changed = true;
+        mark(key);
       }
       continue;
     }
 
     if (state[key] !== value) {
       (next as Record<string, unknown>)[key] = value;
-      changed = true;
+      mark(key);
     }
   }
 
   if (!changed) return;
   state = next;
+  // Soft-GL: pose-only ticks must not notify React 60×/s (R3F remount → Error 9).
+  if (!uiChanged && getSoftGL()) {
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    if (now - lastPoseNotifyAt < POSE_NOTIFY_MS) return;
+    lastPoseNotifyAt = now;
+  }
   listeners.forEach((l) => l());
 }
 

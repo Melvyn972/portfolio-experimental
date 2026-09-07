@@ -4,11 +4,8 @@ import { lazy, Suspense, useMemo } from "react";
 import { Sea } from "./Sea";
 import { Road } from "./Road";
 import { Terrain } from "./Terrain";
-import { Belvedere } from "./Belvedere";
-import { CoastalZonesLite } from "./ZonesLite";
 import { Atmosphere } from "./Atmosphere";
 import { DebugColliders } from "./DebugColliders";
-import { DiscoveryZones } from "./DiscoveryZones";
 import type { QualitySettings } from "@/lib/quality";
 import * as THREE from "three";
 import { useGLTF } from "@react-three/drei";
@@ -25,6 +22,9 @@ const LivingWorld = lazy(() => import("./LivingWorld").then((m) => ({ default: m
 const CoastalZones = lazy(() => import("./Zones").then((m) => ({ default: m.CoastalZones })));
 const DiscoveryRelics = lazy(() => import("./DiscoveryRelics").then((m) => ({ default: m.DiscoveryRelics })));
 const RoadAccentProps = lazy(() => import("./Atmosphere").then((m) => ({ default: m.RoadAccentProps })));
+
+const Belvedere = lazy(() => import("./Belvedere").then((m) => ({ default: m.Belvedere })));
+const DiscoveryZones = lazy(() => import("./DiscoveryZones").then((m) => ({ default: m.DiscoveryZones })));
 
 /** Poly Haven coast rocks — grounded, not procedural spheres. */
 function ShoreRocks({ count }: { count: number }) {
@@ -157,38 +157,36 @@ function BeachScatter() {
 }
 
 export function World({ quality }: { quality: QualitySettings }) {
-  const lite = quality.lite;
   return (
     <group>
       <Atmosphere
-        lite={lite}
-        dust={!lite && quality.dust}
+        lite={false}
+        dust={quality.dust}
         shadows={quality.shadows}
         shadowMapSize={quality.shadowMapSize}
       />
       <Sea segments={quality.seaSegments} />
-      <Terrain segmentsX={lite ? 48 : 140} segmentsZ={lite ? 72 : 220} />
-      <Road simple={lite} />
-      {lite ? <CoastalZonesLite /> : null}
+      <Terrain segmentsX={140} segmentsZ={220} />
+      <Road />
       <AccessPaths />
-      <Belvedere />
-      <DiscoveryZones />
+      <Suspense fallback={null}>
+        <Belvedere />
+        <DiscoveryZones />
+      </Suspense>
       <DebugColliders />
-      {!lite && (
-        <Suspense fallback={null}>
-          <RoadAccentProps />
-          <ShoreRocks count={quality.shadows ? 7 : 5} />
-          <BeachScatter />
-          <Vegetation count={quality.treeCount} />
-          <CoastalTown rich={quality.shadows} />
-          <HeroCoast lit={quality.shadows} />
-          <VillageHeart />
-          <CoastCliffs />
-          <CoastalZones />
-          <DiscoveryRelics />
-          <LivingWorld />
-        </Suspense>
-      )}
+      <Suspense fallback={null}>
+        <RoadAccentProps />
+        <ShoreRocks count={quality.shadows ? 7 : 5} />
+        <BeachScatter />
+        <Vegetation count={quality.treeCount} />
+        <CoastalTown rich={quality.shadows} />
+        <HeroCoast lit={quality.shadows} />
+        <VillageHeart />
+        <CoastCliffs />
+        <CoastalZones />
+        <DiscoveryRelics />
+        <LivingWorld />
+      </Suspense>
     </group>
   );
 }

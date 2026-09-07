@@ -9,7 +9,7 @@ import { hasVoyagedBefore, skipToPlay, startJourney } from "@/lib/gameStore";
  * Returning visitors may skip after 0.5s (Escape / Passer).
  */
 export function TitleScreen() {
-  const { phase } = useGameStore();
+  const phase = useGameStore((s) => s.phase);
   const [readySkip, setReadySkip] = useState(false);
   const [returning, setReturning] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);

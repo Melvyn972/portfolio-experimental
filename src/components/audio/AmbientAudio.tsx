@@ -9,7 +9,8 @@ import { setGameState, getGameState, skipToPlay } from "@/lib/gameStore";
  * waves, wind, birds chirps, idle engine, tire hiss.
  */
 export function AmbientAudio() {
-  const { muted, phase } = useGameStore();
+  const muted = useGameStore((s) => s.muted);
+  const phase = useGameStore((s) => s.phase);
   const ctxRef = useRef<AudioContext | null>(null);
   const nodes = useRef<{
     master: GainNode;
@@ -222,7 +223,7 @@ function chirp(ctx: AudioContext, dest: AudioNode) {
 
 /** Drives intro → playing handoff + explorer hint. */
 export function IntroDirector() {
-  const { phase } = useGameStore();
+  const phase = useGameStore((s) => s.phase);
   const done = useRef(false);
 
   useEffect(() => {

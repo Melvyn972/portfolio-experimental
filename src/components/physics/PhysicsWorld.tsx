@@ -14,7 +14,7 @@ export function PhysicsWorld({
   lite?: boolean;
 }) {
   return (
-    <Physics gravity={[0, -18, 0]} timeStep={lite ? 1 / 30 : "vary"} interpolate={interpolate}>
+    <Physics gravity={[0, -18, 0]} timeStep={lite ? 1 / 20 : "vary"} interpolate={interpolate}>
       {children}
     </Physics>
   );

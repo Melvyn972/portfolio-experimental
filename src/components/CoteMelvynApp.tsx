@@ -23,7 +23,7 @@ function LoaderScreen() {
 }
 
 export function CoteMelvynApp() {
-  const { phase } = useGameStore();
+  const phase = useGameStore((s) => s.phase);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
