@@ -359,6 +359,16 @@ export function skipToPlay() {
   setGameState({ showExplorerHint: true });
 }
 
+/** Leather index — J / Tab / icône. Works under pointer lock (clicks HUD do not). */
+export function toggleTravelJournal() {
+  if (state.phase !== "playing") return;
+  if (state.openChapter) {
+    openChapter(null);
+    return;
+  }
+  setGameState({ rescueOpen: !state.rescueOpen });
+}
+
 /** Open the in-range chapter now — do not wait for the physics frame (1 fps / SwiftShader). */
 export function tryOpenCurrentInteractable() {
   const s = state;
@@ -435,6 +445,7 @@ if (typeof window !== "undefined") {
       teleportDrive: (t?: number) => void;
       startJourney: () => void;
       skipToPlay: () => void;
+      toggleTravelJournal: () => void;
       live?: {
         mode: string;
         playerPos: { x: number; y: number; z: number };
@@ -512,6 +523,7 @@ if (typeof window !== "undefined") {
     },
     startJourney,
     skipToPlay,
+    toggleTravelJournal,
     belvedereAnchor: () => {
       const a = getBelvedereWorldAnchor();
       return {

@@ -7,6 +7,7 @@ import { Terrain } from "./Terrain";
 import { DebugColliders } from "./DebugColliders";
 import { content } from "@/lib/content";
 import { sampleGroundHeight } from "@/lib/ground";
+import { getBelvedereWorldAnchor } from "@/lib/road";
 
 /**
  * Soft-GL Éco world: unlit primitives only.
@@ -19,9 +20,10 @@ export function WorldLite() {
       <color attach="background" args={["#8aa8b4"]} />
       <Sea lite />
       <Terrain lite segmentsX={24} segmentsZ={36} />
-      <Road simple />
-      <SoftLandmarks />
-      <DebugColliders />
+        <Road simple />
+        <SoftLandmarks />
+        <SoftCarnet />
+        <DebugColliders />
     </group>
   );
 }
@@ -59,6 +61,26 @@ function SoftLandmarks() {
           <meshBasicMaterial color={it.color} />
         </mesh>
       ))}
+    </group>
+  );
+}
+
+/** Unlit book at the lookout — no carnet.glb (Error 9). Interactable « carnet » stays in JS. */
+function SoftCarnet() {
+  const pose = useMemo(() => {
+    const { terrace, yaw } = getBelvedereWorldAnchor();
+    return { x: terrace.x, y: terrace.y + 1.08, z: terrace.z, yaw };
+  }, []);
+  return (
+    <group position={[pose.x, pose.y, pose.z]} rotation={[0, pose.yaw, 0]}>
+      <mesh position={[0, 0.04, -0.4]}>
+        <boxGeometry args={[0.55, 0.08, 0.72]} />
+        <meshBasicMaterial color="#5c3a24" />
+      </mesh>
+      <mesh position={[0, 0.09, -0.4]}>
+        <boxGeometry args={[0.5, 0.04, 0.66]} />
+        <meshBasicMaterial color="#c4a46a" />
+      </mesh>
     </group>
   );
 }

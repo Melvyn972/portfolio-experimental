@@ -10,6 +10,7 @@ import {
   tryOpenCurrentInteractable,
   discoveryProgress,
   skipToPlay,
+  toggleTravelJournal,
   CHAPTERS,
 } from "@/lib/gameStore";
 import { inputRef } from "@/hooks/useKeyboard";
@@ -32,13 +33,23 @@ export function GameHUD() {
       if (e.key === "Escape") {
         if (getGameState().openChapter) openChapter(null);
         else if (getGameState().rescueOpen) setGameState({ rescueOpen: false });
+        return;
       }
       if (e.key === "F3") {
         setGameState({ debugColliders: !getGameState().debugColliders });
+        return;
       }
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA") return;
+      const isJournalKey =
+        e.key === "Tab" || e.key === "j" || e.key === "J" || e.code === "KeyJ";
+      if (!isJournalKey) return;
+      if (getGameState().phase !== "playing") return;
+      e.preventDefault();
+      toggleTravelJournal();
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, []);
 
   return (
@@ -48,6 +59,7 @@ export function GameHUD() {
       {phase === "intro" && <CinematicSkip />}
       {showExplorerHint && phase === "playing" && !openChapterId && !prompt && <ExplorerHint />}
       <TravelJournal />
+      <JournalFab />
       <TouchControls />
       <InteractPrompt />
       <DiscoveryToast />
@@ -129,8 +141,8 @@ function ExplorerHint() {
       ? "Stick gauche : marcher · stick droit : regard"
       : "Stick : conduire · Interagir au belvédère"
     : mode === "walking"
-      ? "ZQSD ou WASD · souris — marcher"
-      : "ZQSD ou WASD · E — descendre n’importe où";
+      ? "ZQSD ou WASD · souris — marcher · J ou Tab — carnet"
+      : "ZQSD ou WASD · E — descendre · J ou Tab — carnet";
   return (
     <div
       className="absolute left-1/2 -translate-x-1/2 animate-fade-in"
@@ -146,7 +158,6 @@ function ExplorerHint() {
 function TopBar() {
   const muted = useGameStore((s) => s.muted);
   const quality = useGameStore((s) => s.quality);
-  const rescueOpen = useGameStore((s) => s.rescueOpen);
   const isMobile = useGameStore((s) => s.isMobile);
   const { done, total } = discoveryProgress();
   return (
@@ -187,9 +198,9 @@ function TopBar() {
         <button
           type="button"
           className="rounded-sm border border-[#c4a574]/25 bg-[#1a120c]/40 px-2 py-1 text-[10px] text-[#e8d8b8] backdrop-blur md:px-3 md:py-1.5 md:text-xs"
-          onClick={() => setGameState({ rescueOpen: !rescueOpen })}
+          onClick={() => toggleTravelJournal()}
         >
-          Menu{done > 0 ? ` · ${done}/${total}` : ""}
+          Carnet{done > 0 ? ` · ${done}/${total}` : ""}
         </button>
       </div>
     </div>
@@ -265,6 +276,32 @@ function shortInteractLabel(prompt: string | null) {
   if (/parcours/i.test(prompt)) return "Parcours";
   const first = prompt.split(/[\s&/]/)[0]?.trim();
   return first && first.length <= 12 ? first : "E";
+}
+
+function JournalFab() {
+  const phase = useGameStore((s) => s.phase);
+  const rescueOpen = useGameStore((s) => s.rescueOpen);
+  const openChapterId = useGameStore((s) => s.openChapter);
+  if (phase !== "playing" || rescueOpen || openChapterId) return null;
+  return (
+    <button
+      type="button"
+      aria-label="Ouvrir le carnet de voyage"
+      title="Carnet de voyage (J ou Tab)"
+      className="pointer-events-auto absolute z-30 flex h-11 w-11 items-center justify-center rounded-full border border-[#c4a574]/55 bg-[#1a120c]/78 shadow-[0_8px_18px_rgba(20,10,4,0.4)] backdrop-blur-sm"
+      style={{
+        right: "max(1rem, env(safe-area-inset-right))",
+        top: "46%",
+      }}
+      onClick={() => toggleTravelJournal()}
+    >
+      <span className="flex flex-col gap-[3px]" aria-hidden>
+        <span className="block h-px w-3.5 bg-[#f0e2c4]" />
+        <span className="block h-px w-3.5 bg-[#f0e2c4]" />
+        <span className="block h-px w-3.5 bg-[#f0e2c4]" />
+      </span>
+    </button>
+  );
 }
 
 function SpeedWhisper() {
