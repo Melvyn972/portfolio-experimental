@@ -74,9 +74,3 @@ export function useCoastalPbr(anisotropy = 4): CoastalPbr {
     },
   }), [maps, anisotropy]);
 }
-
-useTexture.preload("/textures/pbr/cobble_diff.jpg");
-useTexture.preload("/textures/pbr/stucco_diff.jpg");
-useTexture.preload("/textures/pbr/roof_diff.jpg");
-useTexture.preload("/textures/pbr/terra_diff.jpg");
-useTexture.preload("/textures/pbr/asphalt_diff.jpg");

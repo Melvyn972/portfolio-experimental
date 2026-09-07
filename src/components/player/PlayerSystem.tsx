@@ -60,8 +60,7 @@ export function PlayerSystem() {
   const carVisual = useRef<THREE.Group>(null);
   const playerBody = useRef<RapierRigidBody>(null);
   const playerVisual = useRef<THREE.Group>(null);
-  const { world, rapier } = useRapier();
-  const controller = useRef<ReturnType<typeof world.createCharacterController> | null>(null);
+  const { rapier } = useRapier();
 
   const velocity = useRef(0);
   const yaw = useRef(Math.atan2(START_POSE.tangent.x, START_POSE.tangent.z));
@@ -238,21 +237,6 @@ export function PlayerSystem() {
     applyWalkTeleportLocal(pending);
     return true;
   }
-
-  useEffect(() => {
-    const c = world.createCharacterController(0.08);
-    c.setApplyImpulsesToDynamicBodies(false);
-    c.setMaxSlopeClimbAngle((48 * Math.PI) / 180);
-    c.setMinSlopeSlideAngle((55 * Math.PI) / 180);
-    c.enableAutostep(0.78, 0.38, true);
-    c.enableSnapToGround(0.7);
-    c.setCharacterMass(70);
-    controller.current = c;
-    return () => {
-      c.free();
-      controller.current = null;
-    };
-  }, [world]);
 
   useEffect(() => {
     const onTeleport = () => {
@@ -821,13 +805,13 @@ function ExplorerAvatar() {
   });
   return (
     <group ref={group} visible={false}>
-      <mesh position={[0, 0.88, 0]} castShadow>
-        <capsuleGeometry args={[0.28, 0.82, 3, 6]} />
-        <meshStandardMaterial color="#4a3424" roughness={0.9} metalness={0} />
+      <mesh position={[0, 0.88, 0]}>
+        <capsuleGeometry args={[0.28, 0.82, 2, 5]} />
+        <meshBasicMaterial color="#4a3424" />
       </mesh>
-      <mesh position={[0, 1.58, 0.04]} castShadow>
-        <sphereGeometry args={[0.2, 7, 6]} />
-        <meshStandardMaterial color="#c4a574" roughness={0.72} metalness={0} />
+      <mesh position={[0, 1.58, 0.04]}>
+        <sphereGeometry args={[0.2, 5, 4]} />
+        <meshBasicMaterial color="#c4a574" />
       </mesh>
     </group>
   );

@@ -1,27 +1,30 @@
 "use client";
 
+import { lazy, Suspense, useMemo } from "react";
 import { Sea } from "./Sea";
 import { Road } from "./Road";
 import { Terrain } from "./Terrain";
-import { Vegetation } from "./Vegetation";
 import { Belvedere } from "./Belvedere";
-import { CoastalZones } from "./Zones";
-import { CoastalTown } from "./CoastalTown";
-import { Atmosphere, RoadAccentProps } from "./Atmosphere";
+import { CoastalZonesLite } from "./ZonesLite";
+import { Atmosphere } from "./Atmosphere";
 import { DebugColliders } from "./DebugColliders";
-import { LivingWorld } from "./LivingWorld";
-import { DiscoveryRelics } from "./DiscoveryRelics";
-import { HeroCoast } from "./HeroCoast";
-import { VillageHeart } from "./VillageHeart";
-import { CoastCliffs } from "./CoastCliffs";
 import { DiscoveryZones } from "./DiscoveryZones";
 import type { QualitySettings } from "@/lib/quality";
-import { useMemo } from "react";
 import * as THREE from "three";
 import { useGLTF } from "@react-three/drei";
 import { getRoadCurve, nearestRoadSample, ROAD_WIDTH } from "@/lib/road";
 import { accessCorridors, sampleGroundHeight } from "@/lib/ground";
 import { enableShadows, groundClone } from "@/lib/gltfFit";
+
+const Vegetation = lazy(() => import("./Vegetation").then((m) => ({ default: m.Vegetation })));
+const CoastalTown = lazy(() => import("./CoastalTown").then((m) => ({ default: m.CoastalTown })));
+const HeroCoast = lazy(() => import("./HeroCoast").then((m) => ({ default: m.HeroCoast })));
+const VillageHeart = lazy(() => import("./VillageHeart").then((m) => ({ default: m.VillageHeart })));
+const CoastCliffs = lazy(() => import("./CoastCliffs").then((m) => ({ default: m.CoastCliffs })));
+const LivingWorld = lazy(() => import("./LivingWorld").then((m) => ({ default: m.LivingWorld })));
+const CoastalZones = lazy(() => import("./Zones").then((m) => ({ default: m.CoastalZones })));
+const DiscoveryRelics = lazy(() => import("./DiscoveryRelics").then((m) => ({ default: m.DiscoveryRelics })));
+const RoadAccentProps = lazy(() => import("./Atmosphere").then((m) => ({ default: m.RoadAccentProps })));
 
 /** Poly Haven coast rocks — grounded, not procedural spheres. */
 function ShoreRocks({ count }: { count: number }) {
@@ -153,9 +156,6 @@ function BeachScatter() {
   );
 }
 
-useGLTF.preload("/models/rock-coast-a.glb");
-useGLTF.preload("/models/rocks-dormin.glb");
-
 export function World({ quality }: { quality: QualitySettings }) {
   const lite = quality.lite;
   return (
@@ -167,23 +167,28 @@ export function World({ quality }: { quality: QualitySettings }) {
         shadowMapSize={quality.shadowMapSize}
       />
       <Sea segments={quality.seaSegments} />
-      <Terrain segmentsX={lite ? 56 : 140} segmentsZ={lite ? 88 : 220} />
+      <Terrain segmentsX={lite ? 48 : 140} segmentsZ={lite ? 72 : 220} />
       <Road simple={lite} />
-      {!lite && <RoadAccentProps />}
-      <ShoreRocks count={lite ? 2 : quality.shadows ? 7 : 5} />
-      {!lite && <BeachScatter />}
-      <Vegetation count={quality.treeCount} />
+      {lite ? <CoastalZonesLite /> : null}
       <AccessPaths />
-      <CoastalTown rich={!lite && quality.shadows} />
-      <HeroCoast lit={!lite && quality.shadows} />
-      <VillageHeart />
-      {!lite && <CoastCliffs />}
       <Belvedere />
-      <CoastalZones />
       <DiscoveryZones />
-      <DiscoveryRelics />
-      {!lite && <LivingWorld />}
       <DebugColliders />
+      {!lite && (
+        <Suspense fallback={null}>
+          <RoadAccentProps />
+          <ShoreRocks count={quality.shadows ? 7 : 5} />
+          <BeachScatter />
+          <Vegetation count={quality.treeCount} />
+          <CoastalTown rich={quality.shadows} />
+          <HeroCoast lit={quality.shadows} />
+          <VillageHeart />
+          <CoastCliffs />
+          <CoastalZones />
+          <DiscoveryRelics />
+          <LivingWorld />
+        </Suspense>
+      )}
     </group>
   );
 }

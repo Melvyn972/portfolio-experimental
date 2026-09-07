@@ -22,7 +22,7 @@ function Scene({ isMobile }: { isMobile: boolean }) {
   const quality = useMemo(() => resolveQuality(preset, isMobile), [preset, isMobile]);
 
   return (
-    <PhysicsWorld interpolate={!quality.lite}>
+    <PhysicsWorld interpolate={!quality.lite} lite={quality.lite}>
       {/* Camera / physics / player stay mounted while World GLBs suspend.
           A shared Suspense remounted chase-cam + PlayerSystem on origin
           and dropped the first teleport* after skipToPlay. */}
@@ -96,14 +96,17 @@ export function ExperienceCanvas() {
       gl={{
         antialias: quality.aa,
         powerPreference: quality.lite ? "low-power" : "default",
-        toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 0.96,
+        toneMapping: quality.lite ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping,
+        toneMappingExposure: quality.lite ? 1 : 0.96,
         failIfMajorPerformanceCaveat: false,
+        stencil: false,
+        depth: true,
+        alpha: false,
       }}
-      camera={{ fov: 42, near: 0.22, far: quality.lite ? 280 : 360, position: [32, 24, 58] }}
+      camera={{ fov: 42, near: 0.22, far: quality.lite ? 220 : 360, position: [32, 24, 58] }}
       onCreated={({ gl }) => {
-        gl.toneMapping = THREE.ACESFilmicToneMapping;
-        gl.toneMappingExposure = 0.96;
+        gl.toneMapping = quality.lite ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
+        gl.toneMappingExposure = quality.lite ? 1 : 0.96;
         gl.setClearColor("#7e9aa0");
         gl.domElement.addEventListener(
           "webglcontextlost",

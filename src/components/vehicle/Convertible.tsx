@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { getSoftGL } from "@/lib/softgl";
 
 type Props = {
   color?: string;
@@ -40,6 +41,7 @@ export function Convertible({ color = "#c45c3e" }: Props) {
   const steer = useRef(0);
   const spinNodes = useRef<THREE.Object3D[]>([]);
   const steerNodes = useRef<THREE.Object3D[]>([]);
+  const simple = getSoftGL();
 
   const model = useMemo(() => {
     const clone = scene.clone(true);
@@ -50,8 +52,19 @@ export function Convertible({ color = "#c45c3e" }: Props) {
     clone.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
       if (mesh.isMesh) {
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
+        mesh.castShadow = !simple;
+        mesh.receiveShadow = !simple;
+        if (simple) {
+          const raw = mesh.material;
+          const list = Array.isArray(raw) ? raw : raw ? [raw] : [];
+          list.forEach((mat) => {
+            if (mat instanceof THREE.MeshPhysicalMaterial) {
+              mat.transmission = 0;
+              mat.thickness = 0;
+              mat.clearcoat = 0;
+            }
+          });
+        } else {
         const raw = mesh.material;
         const list = Array.isArray(raw) ? raw : raw ? [raw] : [];
         list.forEach((mat, idx) => {
@@ -149,6 +162,7 @@ export function Convertible({ color = "#c45c3e" }: Props) {
           if (Array.isArray(mesh.material)) mesh.material[idx] = next;
           else mesh.material = next;
         });
+        }
       }
 
       const n = obj.name;
@@ -176,7 +190,7 @@ export function Convertible({ color = "#c45c3e" }: Props) {
     spinNodes.current = spins;
     steerNodes.current = steers;
     return clone;
-  }, [scene, color]);
+  }, [scene, color, simple]);
 
   useEffect(() => {
     const node = root.current;
@@ -215,45 +229,47 @@ export function Convertible({ color = "#c45c3e" }: Props) {
   return (
     <group ref={root} scale={1.1} position={[0, 0.015, 0]}>
       <primitive object={model} />
-      {/* Windshield glass + chrome surround so the cockpit frames instead of reading as a hole */}
-      <mesh position={[0, 0.92, 0.62]} rotation={[0.38, 0, 0]} castShadow>
-        <boxGeometry args={[1.18, 0.42, 0.012]} />
-        <meshPhysicalMaterial
-          color="#8ecad6"
-          transparent
-          opacity={0.32}
-          roughness={0.02}
-          metalness={0.03}
-          transmission={0.82}
-          thickness={0.3}
-          ior={1.5}
-          envMapIntensity={1.85}
-          depthWrite={false}
-        />
-      </mesh>
-      <mesh position={[0, 1.12, 0.5]} rotation={[0.38, 0, 0]}>
-        <boxGeometry args={[1.22, 0.03, 0.03]} />
-        <meshPhysicalMaterial color="#d8d2c6" metalness={0.88} roughness={0.18} clearcoat={0.4} />
-      </mesh>
-      <mesh position={[-0.58, 0.88, 0.58]} rotation={[0.15, 0, 0.08]}>
-        <boxGeometry args={[0.035, 0.42, 0.035]} />
-        <meshPhysicalMaterial color="#d8d2c6" metalness={0.88} roughness={0.18} />
-      </mesh>
-      <mesh position={[0.58, 0.88, 0.58]} rotation={[0.15, 0, -0.08]}>
-        <boxGeometry args={[0.035, 0.42, 0.035]} />
-        <meshPhysicalMaterial color="#d8d2c6" metalness={0.88} roughness={0.18} />
-      </mesh>
-      {/* Chrome bumpers */}
-      <mesh position={[0, 0.28, 2.12]} castShadow>
-        <boxGeometry args={[1.55, 0.08, 0.1]} />
-        <meshPhysicalMaterial color="#ece6da" metalness={0.9} roughness={0.14} clearcoat={0.5} />
-      </mesh>
-      <mesh position={[0, 0.3, -2.14]} castShadow>
-        <boxGeometry args={[1.48, 0.08, 0.1]} />
-        <meshPhysicalMaterial color="#ece6da" metalness={0.9} roughness={0.14} clearcoat={0.5} />
-      </mesh>
-      <pointLight position={[0.55, 0.42, 2.05]} intensity={0.55} color="#fff1c8" distance={4} />
-      <pointLight position={[-0.55, 0.42, 2.05]} intensity={0.55} color="#fff1c8" distance={4} />
+      {!simple && (
+        <>
+          <mesh position={[0, 0.92, 0.62]} rotation={[0.38, 0, 0]} castShadow>
+            <boxGeometry args={[1.18, 0.42, 0.012]} />
+            <meshPhysicalMaterial
+              color="#8ecad6"
+              transparent
+              opacity={0.32}
+              roughness={0.02}
+              metalness={0.03}
+              transmission={0.82}
+              thickness={0.3}
+              ior={1.5}
+              envMapIntensity={1.85}
+              depthWrite={false}
+            />
+          </mesh>
+          <mesh position={[0, 1.12, 0.5]} rotation={[0.38, 0, 0]}>
+            <boxGeometry args={[1.22, 0.03, 0.03]} />
+            <meshPhysicalMaterial color="#d8d2c6" metalness={0.88} roughness={0.18} clearcoat={0.4} />
+          </mesh>
+          <mesh position={[-0.58, 0.88, 0.58]} rotation={[0.15, 0, 0.08]}>
+            <boxGeometry args={[0.035, 0.42, 0.035]} />
+            <meshPhysicalMaterial color="#d8d2c6" metalness={0.88} roughness={0.18} />
+          </mesh>
+          <mesh position={[0.58, 0.88, 0.58]} rotation={[0.15, 0, -0.08]}>
+            <boxGeometry args={[0.035, 0.42, 0.035]} />
+            <meshPhysicalMaterial color="#d8d2c6" metalness={0.88} roughness={0.18} />
+          </mesh>
+          <mesh position={[0, 0.28, 2.12]} castShadow>
+            <boxGeometry args={[1.55, 0.08, 0.1]} />
+            <meshPhysicalMaterial color="#ece6da" metalness={0.9} roughness={0.14} clearcoat={0.5} />
+          </mesh>
+          <mesh position={[0, 0.3, -2.14]} castShadow>
+            <boxGeometry args={[1.48, 0.08, 0.1]} />
+            <meshPhysicalMaterial color="#ece6da" metalness={0.9} roughness={0.14} clearcoat={0.5} />
+          </mesh>
+          <pointLight position={[0.55, 0.42, 2.05]} intensity={0.55} color="#fff1c8" distance={4} />
+          <pointLight position={[-0.55, 0.42, 2.05]} intensity={0.55} color="#fff1c8" distance={4} />
+        </>
+      )}
     </group>
   );
 }
