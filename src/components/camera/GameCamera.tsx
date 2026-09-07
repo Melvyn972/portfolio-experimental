@@ -6,7 +6,7 @@ import { useRapier } from "@react-three/rapier";
 import * as THREE from "three";
 import { getGameState, getTeleportGen } from "@/lib/gameStore";
 import { START_POSE, START_T, ribbonPose, isNullIsland } from "@/lib/road";
-import { computeTerrainHeight, sampleGroundHeight } from "@/lib/ground";
+import { computeTerrainHeight } from "@/lib/ground";
 import { getBelvedereInteractPosition } from "@/components/world/Belvedere";
 import { pushCameraOut } from "@/lib/colliders";
 
@@ -191,6 +191,8 @@ export function GameCamera() {
     if (maxGroundAt(_desired.x, _desired.z) > _subject.y + 2.55) {
       offsetPos(_desired, _subject, yaw, pitch, walking ? 2.6 : 3.4, height + 0.4, 0);
     }
+    // Nudge chase west so the Mediterranean stays in the left of the frame.
+    if (!walking) _desired.x -= 2.6;
     // Hard rule: camera stays behind the look/car yaw. Obstacle pull must
     // never flip in front — that reads as "controls inverted" mid-session.
 
@@ -247,8 +249,8 @@ export function GameCamera() {
       );
     } else {
       _lookTarget.set(
-        _subject.x + Math.sin(yaw) * 22,
-        _subject.y + 1.05,
+        _subject.x + Math.sin(yaw) * 22 - 3.4,
+        _subject.y + 0.85,
         _subject.z + Math.cos(yaw) * 22,
       );
     }
@@ -317,7 +319,7 @@ export function GameCamera() {
     publishCamLive(camera, _subject);
 
     const persp = camera as THREE.PerspectiveCamera;
-    const targetFov = walking ? (mobile ? 48 : 46) : THREE.MathUtils.lerp(40, 50, Math.min(1, state.speed / 20));
+    const targetFov = walking ? (mobile ? 48 : 46) : THREE.MathUtils.lerp(46, 52, Math.min(1, state.speed / 20));
     persp.fov = THREE.MathUtils.lerp(persp.fov, targetFov, 0.07);
     persp.updateProjectionMatrix();
   });
@@ -346,14 +348,16 @@ function offsetPos(
 
 function maxGroundAt(x: number, z: number) {
   let m = -Infinity;
-  const offs = [0, 0.7, -0.7, 1.2, -1.2];
-  for (const dx of offs) {
-    for (const dz of offs) {
-      const v = computeTerrainHeight(x + dx, z + dz);
-      const s = sampleGroundHeight(x + dx, z + dz);
-      if (Number.isFinite(v)) m = Math.max(m, v);
-      if (Number.isFinite(s)) m = Math.max(m, s);
-    }
+  const pts = [
+    [0, 0],
+    [1.15, 0],
+    [-1.15, 0],
+    [0, 1.15],
+    [0, -1.15],
+  ];
+  for (const [dx, dz] of pts) {
+    const v = computeTerrainHeight(x + dx, z + dz);
+    if (Number.isFinite(v)) m = Math.max(m, v);
   }
   return Number.isFinite(m) ? m : 0.2;
 }

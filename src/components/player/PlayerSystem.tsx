@@ -1,11 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { CapsuleCollider, CuboidCollider, RigidBody, useRapier, type RapierRigidBody } from "@react-three/rapier";
-import { useGLTF } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import { Convertible } from "@/components/vehicle/Convertible";
 import { inputRef, consumeInteractPulse } from "@/hooks/useKeyboard";
 import {
@@ -175,6 +173,59 @@ export function PlayerSystem() {
       showExplorerHint: false,
     });
     return true;
+  }
+
+  function tryBeginExit(
+    sample: { tangent: THREE.Vector3; position: THREE.Vector3 },
+    nearStop: boolean,
+    interactPos: THREE.Vector3,
+  ) {
+    try {
+      const toward = tmp.current;
+      if (nearStop) {
+        toward.copy(interactPos).sub(pos.current);
+        toward.y = 0;
+        if (toward.lengthSq() > 0.01) toward.normalize();
+        else toward.set(Math.cos(yaw.current), 0, -Math.sin(yaw.current));
+      } else {
+        toward.set(-sample.tangent.z, 0, sample.tangent.x);
+        if (toward.lengthSq() > 0.01) toward.normalize();
+        if (toward.x < 0) toward.negate();
+        if (Math.abs(toward.x) < 0.22) toward.set(1, 0, 0);
+      }
+      const exitTo = pos.current.clone().addScaledVector(toward, EXIT_DIST);
+      exitTo.x = THREE.MathUtils.clamp(exitTo.x, SEA_INLAND_X + 1.6, 22);
+      exitTo.y = sampleGroundHeight(exitTo.x, exitTo.z);
+      if (!isFinitePos(exitTo)) return false;
+      transition.current = {
+        kind: "exit",
+        t: 0,
+        from: pos.current.clone().setY(sample.position.y),
+        to: exitTo,
+      };
+      playerPos.current.copy(pos.current);
+      walkYaw.current = Math.atan2(toward.x, toward.z);
+      lookYaw.current = walkYaw.current;
+      lookPitch.current = 0.12;
+      velocity.current = 0;
+      exitCooldown.current = 0.8;
+      setPlayerKinematic(playerPos.current, walkYaw.current, true);
+      setGameState({
+        mode: "walking",
+        speed: 0,
+        nearStopSpot: true,
+        nearCar: false,
+        walkYaw: walkYaw.current,
+        lookYaw: lookYaw.current,
+        prompt: null,
+        engineOn: true,
+        interactTarget: null,
+      });
+      return true;
+    } catch {
+      transition.current.kind = null;
+      return false;
+    }
   }
 
   function consumeGate() {
@@ -410,45 +461,15 @@ export function PlayerSystem() {
       const canExit = Math.abs(velocity.current) < 3.4;
 
       if (canExit && exitCooldown.current <= 0 && !blocked && (consumeInteractPulse() || input.exit)) {
-        const toward = tmp.current;
-        if (nearStop) {
-          toward.copy(interactPos).sub(pos.current);
-          toward.y = 0;
-          if (toward.lengthSq() > 0.01) toward.normalize();
-          else toward.set(Math.cos(yaw.current), 0, -Math.sin(yaw.current));
-        } else {
-          toward.set(-sample.tangent.z, 0, sample.tangent.x);
-          if (toward.lengthSq() > 0.01) toward.normalize();
-          if (toward.x < 0) toward.negate();
-          if (Math.abs(toward.x) < 0.22) toward.set(1, 0, 0);
+        if (!tryBeginExit(sample, nearStop, interactPos)) {
+          transition.current.kind = null;
+          setGameState({
+            mode: "driving",
+            prompt: "Descendre",
+            interactTarget: "exit-car",
+            engineOn: true,
+          });
         }
-        const exitTo = pos.current.clone().addScaledVector(toward, EXIT_DIST);
-        exitTo.x = THREE.MathUtils.clamp(exitTo.x, SEA_INLAND_X + 1.6, 22);
-        exitTo.y = sampleGroundHeight(exitTo.x, exitTo.z);
-        transition.current = {
-          kind: "exit",
-          t: 0,
-          from: pos.current.clone().setY(sample.position.y),
-          to: exitTo,
-        };
-        playerPos.current.copy(pos.current);
-        walkYaw.current = Math.atan2(toward.x, toward.z);
-        lookYaw.current = walkYaw.current;
-        lookPitch.current = 0.12;
-        velocity.current = 0;
-        exitCooldown.current = 0.8;
-        setPlayerKinematic(playerPos.current, walkYaw.current, true);
-        setGameState({
-          mode: "walking",
-          speed: 0,
-          nearStopSpot: true,
-          nearCar: false,
-          walkYaw: walkYaw.current,
-          lookYaw: lookYaw.current,
-          prompt: null,
-          engineOn: true,
-          interactTarget: null,
-        });
       }
 
       setGameState({
@@ -471,6 +492,7 @@ export function PlayerSystem() {
     }
 
     // ——— Walking ———
+    try {
     // lookYaw / lookPitch = camera only (look right = +yaw).
     // Movement is lookYaw-relative so a chasing camera cannot invert axes
     // while it lerps. walkYaw = avatar facing only — never fed back into look.
@@ -626,6 +648,15 @@ export function PlayerSystem() {
     });
 
     writeAxesDebug("walking");
+    } catch {
+      transition.current.kind = null;
+      setGameState({
+        mode: "driving",
+        prompt: "Descendre",
+        interactTarget: "exit-car",
+        engineOn: true,
+      });
+    }
 
     void rapier;
   });
@@ -769,83 +800,29 @@ export function PlayerSystem() {
       >
         <CapsuleCollider args={[CAPSULE_HALF, PLAYER_RADIUS]} friction={0.9} />
         <group ref={playerVisual} position={[0, -CAPSULE_Y, 0]} visible={false}>
-          <Suspense fallback={null}>
-            <ExplorerAvatar />
-          </Suspense>
+          <ExplorerAvatar />
         </group>
       </RigidBody>
     </group>
   );
 }
 
+/** Soft-GL: skinned explorer.glb + mixer compiles GPU skinning and kills the tab (Chrome 9). */
 function ExplorerAvatar() {
-  const gltf = useGLTF("/models/explorer.glb");
   const group = useRef<THREE.Group>(null);
-  const mixer = useRef<THREE.AnimationMixer | null>(null);
-  const actions = useRef<Record<string, THREE.AnimationAction>>({});
-  const current = useRef<string | null>(null);
-
-  const model = useMemo(() => {
-    const clone = SkeletonUtils.clone(gltf.scene);
-    clone.traverse((o: THREE.Object3D) => {
-      const m = o as THREE.Mesh;
-      if (m.isMesh) {
-        m.castShadow = true;
-        m.receiveShadow = true;
-        // Hide weapon trail / dagger gizmos (Quaternius Rogue extras)
-        if (/nurbs|path|dagger|weapon|rogue001/i.test(o.name)) {
-          m.visible = false;
-        }
-      }
-    });
-    return clone;
-  }, [gltf.scene]);
-
-  useEffect(() => {
-    const mix = new THREE.AnimationMixer(model);
-    mixer.current = mix;
-    const clips = gltf.animations ?? [];
-    const pick = (names: string[]) => clips.find((c) => names.includes(c.name));
-    const idle = pick(["Idle", "CharacterArmature|Idle", "Attacking_Idle"]);
-    const walk = pick(["Walk", "CharacterArmature|Walk"]);
-    const run = pick(["Run", "CharacterArmature|Run"]);
-    if (idle) actions.current.idle = mix.clipAction(idle);
-    if (walk) actions.current.walk = mix.clipAction(walk);
-    if (run) actions.current.run = mix.clipAction(run);
-    actions.current.idle?.play();
-    current.current = "idle";
-    return () => {
-      mix.stopAllAction();
-      mix.uncacheRoot(model);
-      mixer.current = null;
-    };
-  }, [model, gltf.animations]);
-
-  useFrame((_, dt) => {
-    const { mode } = getGameState();
-    if (!group.current) return;
-    group.current.visible = mode === "walking";
-    mixer.current?.update(dt);
-    if (mode !== "walking") return;
-
-    const moving = Boolean(group.current.parent?.userData.moving);
-    const running = Boolean(group.current.parent?.userData.running);
-    const next = !moving ? "idle" : running ? "run" : "walk";
-    if (next !== current.current) {
-      const prev = current.current ? actions.current[current.current] : null;
-      const act = actions.current[next] ?? actions.current.idle;
-      if (act) {
-        act.reset().fadeIn(0.18).play();
-        prev?.fadeOut(0.18);
-        current.current = next;
-      }
-    }
+  useFrame(() => {
+    if (group.current) group.current.visible = getGameState().mode === "walking";
   });
-
-  // Quaternius Rogue ≈ 2.8u tall → scale to ~1.75m
   return (
-    <group ref={group} scale={0.64} position={[0, 0, 0]}>
-      <primitive object={model} />
+    <group ref={group} visible={false}>
+      <mesh position={[0, 0.88, 0]} castShadow>
+        <capsuleGeometry args={[0.28, 0.82, 3, 6]} />
+        <meshStandardMaterial color="#4a3424" roughness={0.9} metalness={0} />
+      </mesh>
+      <mesh position={[0, 1.58, 0.04]} castShadow>
+        <sphereGeometry args={[0.2, 7, 6]} />
+        <meshStandardMaterial color="#c4a574" roughness={0.72} metalness={0} />
+      </mesh>
     </group>
   );
 }
@@ -858,5 +835,3 @@ function ribbonTFromXZ(x: number, z: number) {
 function easeOutCubic(t: number) {
   return 1 - Math.pow(1 - t, 3);
 }
-
-useGLTF.preload("/models/explorer.glb");
