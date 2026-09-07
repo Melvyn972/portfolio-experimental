@@ -472,17 +472,19 @@ export function PlayerSystem() {
         }
       }
 
-      setGameState({
-        speed: Math.abs(velocity.current),
-        carPos: { x: pos.current.x, y: pos.current.y, z: pos.current.z },
-        carYaw: yaw.current,
-        walkYaw: yaw.current,
-        nearStopSpot: nearStop,
-        nearCar: false,
-        prompt: canExit ? "Descendre" : nearBelvedereZone ? "Ralentissez sur le marquage" : null,
-        interactTarget: canExit ? "exit-car" : null,
-        playerPos: { x: pos.current.x, y: pos.current.y, z: pos.current.z },
-      });
+      if (getGameState().mode === "driving") {
+        setGameState({
+          speed: Math.abs(velocity.current),
+          carPos: { x: pos.current.x, y: pos.current.y, z: pos.current.z },
+          carYaw: yaw.current,
+          walkYaw: yaw.current,
+          nearStopSpot: nearStop,
+          nearCar: false,
+          prompt: canExit ? "Descendre" : nearBelvedereZone ? "Ralentissez sur le marquage" : null,
+          interactTarget: canExit ? "exit-car" : null,
+          playerPos: { x: pos.current.x, y: pos.current.y, z: pos.current.z },
+        });
+      }
 
       if (typeof window !== "undefined") {
         (window as unknown as { __roadT?: number }).__roadT = sample.t;

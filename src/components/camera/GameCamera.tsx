@@ -24,9 +24,9 @@ const _dir = new THREE.Vector3();
 const _from = { x: 0, y: 0, z: 0 };
 const _rayDir = { x: 0, y: 0, z: 0 };
 
-const CAM_DIST_DRIVE = 8.6;
+const CAM_DIST_DRIVE = 10.4;
 const CAM_DIST_WALK = 5.6;
-const CAM_HEIGHT_DRIVE = 3.25;
+const CAM_HEIGHT_DRIVE = 4.05;
 const CAM_HEIGHT_WALK = 3.05;
 
 /**
@@ -191,8 +191,8 @@ export function GameCamera() {
     if (maxGroundAt(_desired.x, _desired.z) > _subject.y + 2.55) {
       offsetPos(_desired, _subject, yaw, pitch, walking ? 2.6 : 3.4, height + 0.4, 0);
     }
-    // Nudge chase west so the Mediterranean stays in the left of the frame.
-    if (!walking) _desired.x -= 2.6;
+    // Keep the Mediterranean in the left third (spawn looks south; sea is −X).
+    if (!walking) _desired.x = Math.min(_desired.x - 3.2, _subject.x - 5.4);
     // Hard rule: camera stays behind the look/car yaw. Obstacle pull must
     // never flip in front — that reads as "controls inverted" mid-session.
 
@@ -249,9 +249,9 @@ export function GameCamera() {
       );
     } else {
       _lookTarget.set(
-        _subject.x + Math.sin(yaw) * 22 - 3.4,
-        _subject.y + 0.85,
-        _subject.z + Math.cos(yaw) * 22,
+        Math.min(_subject.x + Math.sin(yaw) * 16 - 7.2, -12.5),
+        _subject.y + 1.35,
+        _subject.z + Math.cos(yaw) * 20,
       );
     }
 
@@ -319,7 +319,7 @@ export function GameCamera() {
     publishCamLive(camera, _subject);
 
     const persp = camera as THREE.PerspectiveCamera;
-    const targetFov = walking ? (mobile ? 48 : 46) : THREE.MathUtils.lerp(46, 52, Math.min(1, state.speed / 20));
+    const targetFov = walking ? (mobile ? 48 : 46) : THREE.MathUtils.lerp(50, 54, Math.min(1, state.speed / 20));
     persp.fov = THREE.MathUtils.lerp(persp.fov, targetFov, 0.07);
     persp.updateProjectionMatrix();
   });
