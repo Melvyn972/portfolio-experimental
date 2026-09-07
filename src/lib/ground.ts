@@ -63,8 +63,8 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
   }
 
   const shelf = inlandShelfY(lat, roadY);
-  if (shelf != null) {
-    // Continuous walkable ground Route → Maison → Studio. No cliff, no trench.
+  if (shelf != null && x > 3.6) {
+    // Lateral sign flips on the return lane — never treat the beach as plaza.
     y = shelf;
   } else if (x > 22 && lat > INLAND_SHELF_WIDTH + ROAD_WIDTH + 4) {
     const rise = THREE.MathUtils.smoothstep(22, 40, x);
