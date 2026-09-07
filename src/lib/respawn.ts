@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { sampleGroundHeight } from "@/lib/ground";
-import { START_POSE, nearestRoadSample, isNullIsland, ribbonPose, START_T } from "@/lib/road";
+import { nearestRoadSample, isNullIsland, ribbonPose, START_T } from "@/lib/road";
 
 const SAFE = new THREE.Vector3();
 

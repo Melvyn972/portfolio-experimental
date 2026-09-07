@@ -239,6 +239,7 @@ export function PlayerSystem() {
       window.removeEventListener("cote:teleport-walk", onTeleportWalk as EventListener);
       window.removeEventListener("cote:teleport-drive", onTeleportDrive as EventListener);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- apply* close over refs
   }, []);
 
   useFrame((_, rawDt) => {
