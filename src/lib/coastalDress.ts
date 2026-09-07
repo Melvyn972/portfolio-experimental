@@ -29,7 +29,9 @@ export function dressCoastalBuilding(root: THREE.Object3D, pbr: CoastalPbr, wall
     const raw = mesh.material;
     const list = Array.isArray(raw) ? raw : raw ? [raw] : [];
     meshBox.setFromObject(mesh);
+    const size = meshBox.getSize(new THREE.Vector3());
     const highMesh = meshBox.min.y >= roofCut - 0.05;
+    const flatSlab = size.y < Math.max(size.x, size.z) * 0.42;
     const nextList = list.map((mat) => {
       if (!(mat instanceof THREE.MeshStandardMaterial) && !(mat instanceof THREE.MeshPhysicalMaterial)) return mat;
       const name = `${mat.name} ${mesh.name}`.toLowerCase();
@@ -41,7 +43,7 @@ export function dressCoastalBuilding(root: THREE.Object3D, pbr: CoastalPbr, wall
         next.envMapIntensity = 1.35;
         return next;
       }
-      if (highMesh || isRoof(name, mat)) {
+      if (isRoof(name, mat) || (highMesh && flatSlab)) {
         next.map = pbr.roof.map;
         next.roughnessMap = pbr.roof.roughnessMap;
         next.color.set("#c45a38");
