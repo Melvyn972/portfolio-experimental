@@ -52,10 +52,11 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
   // under the Mediterranean — never a dirt sheet over the water.
   if (x < -11 && roadDist > ROAD_SAND_APRON + 1.2) {
     if (x >= SEA_INLAND_X) {
-      // x goes −11 → −17.4 seaward. (−x) was always > 0 and never sloped
-      // the beach — ochre lip at y≈0.2 hid the sheet (Melvyn dirt/water).
-      const lip = THREE.MathUtils.smoothstep(-11, SEA_INLAND_X, x);
-      y = THREE.MathUtils.lerp(y, SEA_SURFACE_Y + 0.045, lip);
+      // Seaward x: −11 → −17.4. Three.smoothstep(x,min,max) needs min<max,
+      // so we use −x. Old (−x) in a decreasing range never sloped the beach.
+      const lip = THREE.MathUtils.clamp((-11 - x) / (-11 - SEA_INLAND_X), 0, 1);
+      const ease = lip * lip * (3 - 2 * lip);
+      y = THREE.MathUtils.lerp(y, SEA_SURFACE_Y + 0.045, ease);
     } else {
       y = Math.min(y, SEA_BED_Y);
     }
