@@ -3,6 +3,7 @@ import { nearestRoadSample, getBelvedereWorldAnchor, ROAD_WIDTH, ROAD_SURFACE_LI
 import { content } from "@/lib/content";
 import { VILLAGE_SQUARE } from "@/lib/town";
 import { SEA_BED_Y, SEA_INLAND_X, SEA_SURFACE_Y } from "@/lib/sea";
+import { walkPlatformHeight } from "@/lib/lighthouseClimb";
 
 /** Visual bounds — seaward cells drop under the sea sheet (never cover it). */
 export const TERRAIN_MIN_X = -28;
@@ -185,6 +186,14 @@ export function sampleGroundHeight(x: number, z: number): number {
   if (roadDist < ROAD_WIDTH * 0.55) return roadY + ROAD_SURFACE_LIFT;
   if (onAccess) return y;
   return y;
+}
+
+/** Walking only — lighthouse treads. Drive / heightfield stay on sampleGroundHeight. */
+export function sampleWalkHeight(x: number, z: number): number {
+  const base = sampleGroundHeight(x, z);
+  const plat = walkPlatformHeight(x, z);
+  if (plat == null) return base;
+  return Math.max(base, plat);
 }
 
 export const MAX_SLOPE = 0.55;

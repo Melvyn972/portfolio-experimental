@@ -3,6 +3,7 @@ import type { ChapterId } from "@/lib/gameStore";
 import { getBelvedereWorldAnchor } from "@/lib/road";
 import { content } from "@/lib/content";
 import { MAISON_PORCH } from "@/lib/spawn";
+import { lighthouseClimbStep, PHARE_CLIMB } from "@/lib/lighthouseClimb";
 
 export type Interactable = {
   id: string;
@@ -119,6 +120,15 @@ export function getInteractables(): Interactable[] {
         walkingOnly: true,
       },
     );
+    const summit = lighthouseClimbStep(PHARE_CLIMB.steps - 1);
+    list.push({
+      id: "phare-sommet",
+      chapter: "activite",
+      label: "Lanterne — le sommet",
+      position: new THREE.Vector3(summit.x, summit.y + 0.35, summit.z),
+      radius: 2.2,
+      walkingOnly: true,
+    });
   }
 
   return list;

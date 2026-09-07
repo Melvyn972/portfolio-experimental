@@ -5,7 +5,10 @@ import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { getBelvedereWorldAnchor } from "@/lib/road";
-import { useGameStore } from "@/hooks/useGameStore";
+import { getGameState } from "@/lib/gameStore";
+import { content } from "@/lib/content";
+import { enableShadows, groundClone } from "@/lib/gltfFit";
+import { MuseumPlaque } from "./MuseumPlaque";
 
 const STONE = "#d2c4a6";
 const STONE_DARK = "#b4a488";
@@ -113,10 +116,17 @@ export function Belvedere() {
         </mesh>
 
         <IdentityCarnetModel position={[0, 1.08, -0.4]} />
-        <mesh position={[0, 1.06, -0.4]} receiveShadow>
-          <cylinderGeometry args={[0.55, 0.62, 0.1, 10]} />
-          <meshStandardMaterial color="#c9a66b" roughness={0.7} />
-        </mesh>
+        <IdentityPlinth position={[0, 1.05, -0.4]} />
+        <MuseumPlaque
+          title={content.identity.name}
+          lines={[content.identity.title, content.identity.credo]}
+          width={1.28}
+          height={0.62}
+          position={[0, 1.42, -2.55]}
+          rotation={[-0.18, 0, 0]}
+        />
+        <CarnetHighlight />
+        <IdentityPot position={[2.15, 1.05, 1.35]} />
         <pointLight position={[0, 2.6, -0.6]} intensity={0.45} color="#ffc878" distance={9} />
       </group>
       <StopMarker position={[anchor.stop.x, anchor.stop.y + 0.02, anchor.stop.z]} />
@@ -145,12 +155,74 @@ function StopMarker({ position }: { position: [number, number, number] }) {
   );
 }
 
+function IdentityPot({ position }: { position: [number, number, number] }) {
+  const { scene } = useGLTF("/models/ph/ceramic_pot/ceramic_pot_1k.gltf");
+  const model = useMemo(() => {
+    const c = scene.clone(true);
+    enableShadows(c);
+    groundClone(c);
+    return c;
+  }, [scene]);
+  return (
+    <group position={position} scale={0.52}>
+      <primitive object={model} />
+    </group>
+  );
+}
+
+function IdentityPlinth({ position }: { position: [number, number, number] }) {
+  const { scene } = useGLTF("/models/plinth.glb");
+  const model = useMemo(() => {
+    const c = scene.clone(true);
+    enableShadows(c);
+    groundClone(c);
+    return c;
+  }, [scene]);
+  return (
+    <group position={position} scale={1.05}>
+      <primitive object={model} />
+    </group>
+  );
+}
+
+function CarnetHighlight() {
+  const ring = useRef<THREE.MeshStandardMaterial>(null);
+  const disc = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => {
+    const s = getGameState();
+    const near = s.interactTarget === "carnet" || s.nearBelvedere;
+    const found = Boolean(s.discovered.identity);
+    const open = s.openChapter === "identity";
+    const pulse = 0.2 + Math.sin(clock.elapsedTime * (near ? 3.6 : 1.7)) * (near ? 0.22 : 0.1);
+    if (ring.current) {
+      ring.current.emissiveIntensity = open ? 0.12 : found ? 0.48 + pulse * 0.2 : pulse;
+      ring.current.emissive.set(near || found ? "#d4a24a" : "#6a4a20");
+    }
+    if (disc.current) {
+      const k = near ? 1.18 : found ? 1.06 : 1;
+      disc.current.scale.setScalar(k);
+    }
+  });
+  return (
+    <group position={[0, 1.07, -0.4]}>
+      <mesh ref={disc} position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.62, 0.92, 28]} />
+        <meshStandardMaterial
+          ref={ring}
+          color="#c9a66b"
+          emissive="#8a6a3a"
+          emissiveIntensity={0.24}
+          roughness={0.55}
+        />
+      </mesh>
+    </group>
+  );
+}
+
 function IdentityCarnetModel({ position }: { position: [number, number, number] }) {
   const { scene } = useGLTF("/models/carnet.glb");
   const root = useRef<THREE.Group>(null);
   const glassMat = useRef<THREE.MeshStandardMaterial | null>(null);
-  const { openChapter } = useGameStore();
-  const open = openChapter === "identity";
 
   const model = useMemo(() => {
     const c = scene.clone(true);
@@ -174,8 +246,14 @@ function IdentityCarnetModel({ position }: { position: [number, number, number] 
       });
     }
     if (!glassMat.current) return;
-    const pulse = 0.18 + Math.sin(clock.elapsedTime * 1.6) * 0.1;
+    const s = getGameState();
+    const near = s.interactTarget === "carnet";
+    const open = s.openChapter === "identity";
+    const pulse = 0.18 + Math.sin(clock.elapsedTime * (near ? 2.8 : 1.6)) * (near ? 0.2 : 0.1);
     glassMat.current.emissiveIntensity = open ? 0.06 : pulse;
+    if (root.current) {
+      root.current.position.y = position[1] + (near ? Math.sin(clock.elapsedTime * 1.8) * 0.025 : 0);
+    }
   });
 
   return (
@@ -196,3 +274,5 @@ export function getBelvedereStopPosition() {
 }
 
 useGLTF.preload("/models/carnet.glb");
+useGLTF.preload("/models/plinth.glb");
+useGLTF.preload("/models/ph/ceramic_pot/ceramic_pot_1k.gltf");

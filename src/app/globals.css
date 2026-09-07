@@ -322,6 +322,33 @@ select {
   animation: rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.touch-stick {
+  width: 4rem;
+  height: 4rem;
+}
+
+@media (min-width: 640px) {
+  .touch-stick {
+    width: 4.5rem;
+    height: 4.5rem;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .touch-stick {
+    width: 3.15rem;
+    height: 3.15rem;
+  }
+
+  .travel-journal {
+    max-height: min(92dvh, 26rem);
+  }
+
+  .journal-spread {
+    max-height: min(72dvh, 20rem);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in,
   .animate-rise,

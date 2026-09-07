@@ -18,7 +18,7 @@ import {
   ROAD_WIDTH,
   ROAD_SURFACE_LIFT,
 } from "@/lib/road";
-import { computeTerrainHeight, sampleGroundHeight, PLAYER_RADIUS, PLAYER_HEIGHT } from "@/lib/ground";
+import { computeTerrainHeight, sampleGroundHeight, sampleWalkHeight, PLAYER_RADIUS, PLAYER_HEIGHT } from "@/lib/ground";
 import { findNearestInteractable } from "@/lib/interaction";
 import { getBelvedereInteractPosition, getBelvedereStopPosition } from "@/components/world/Belvedere";
 import { isUnsafePosition, safeRespawnPosition } from "@/lib/respawn";
@@ -480,9 +480,9 @@ export function PlayerSystem() {
       playerPos.current.x += playerVel.current.x * dt;
       playerPos.current.z += playerVel.current.z * dt;
     }
-    playerPos.current.y = sampleGroundHeight(playerPos.current.x, playerPos.current.z);
+    playerPos.current.y = sampleWalkHeight(playerPos.current.x, playerPos.current.z);
     resolveCollisions(playerPos.current, PLAYER_RADIUS, PLAYER_HEIGHT);
-    playerPos.current.y = sampleGroundHeight(playerPos.current.x, playerPos.current.z);
+    playerPos.current.y = sampleWalkHeight(playerPos.current.x, playerPos.current.z);
     setPlayerKinematic(playerPos.current, walkYaw.current, true);
 
     // Soft world bounds — beach stays walkable, sea sheet is a wall (no swim-off).
@@ -496,7 +496,7 @@ export function PlayerSystem() {
     if (playerPos.current.z < -188) playerPos.current.z = -188;
 
     // Soft snap if the capsule dropped into a trench / void under the mesh.
-    const standY = sampleGroundHeight(playerPos.current.x, playerPos.current.z);
+    const standY = sampleWalkHeight(playerPos.current.x, playerPos.current.z);
     if (Number.isFinite(standY) && playerPos.current.y < standY - 0.55) {
       playerPos.current.y = standY;
       playerVel.current.set(0, 0, 0);

@@ -154,7 +154,9 @@ function TopBar() {
       }}
     >
       <div className="min-w-0">
-        <p className="font-display text-base tracking-[0.06em] text-[#f0e2c4]/90 md:text-xl">Côte Melvyn</p>
+        <p className="font-display text-base tracking-[0.06em] text-[#f0e2c4]/90 md:text-xl max-[740px]:landscape:hidden">
+          Côte Melvyn
+        </p>
       </div>
       <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
         {!isMobile && (
@@ -221,6 +223,8 @@ function DiscoveryToast() {
 
 function InteractPrompt() {
   const { prompt, phase, openChapter, rescueOpen, isMobile } = useGameStore();
+  // Mobile: contextual FAB only — a second top chip covered the world.
+  if (isMobile) return null;
   if (!prompt || phase !== "playing" || openChapter || rescueOpen) return null;
 
   return (
@@ -477,7 +481,7 @@ function VirtualStick({
     <div
       ref={zone}
       data-inactive={inactive ? "1" : "0"}
-      className="pointer-events-auto absolute h-16 w-16 rounded-full border border-[#c4a574]/40 bg-[#f3ead8]/32 backdrop-blur-[2px] touch-none sm:h-[4.5rem] sm:w-[4.5rem]"
+      className="touch-stick pointer-events-auto absolute rounded-full border border-[#c4a574]/40 bg-[#f3ead8]/32 backdrop-blur-[2px] touch-none"
       style={{ ...style, visibility: inactive ? "hidden" : "visible", pointerEvents: inactive ? "none" : "auto" }}
     >
       <div

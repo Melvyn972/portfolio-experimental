@@ -7,6 +7,7 @@ import * as THREE from "three";
 import { getInteractables } from "@/lib/interaction";
 import { sampleGroundHeight } from "@/lib/ground";
 import { enableShadows, groundClone } from "@/lib/gltfFit";
+import { getGameState, type ChapterId } from "@/lib/gameStore";
 
 /**
  * Physical discovery rewards — objects you find, not UI icons.
@@ -17,11 +18,13 @@ export function DiscoveryRelics() {
   const lamp = useMemo(() => dress(lantern), [lantern]);
 
   const items = useMemo(() => {
-    return getInteractables().map((it) => {
-      const ground = sampleGroundHeight(it.position.x, it.position.z);
-      const y = it.chapter === "identity" ? it.position.y - 0.12 : ground;
-      return { ...it, y };
-    });
+    return getInteractables()
+      .filter((it) => it.chapter !== "identity")
+      .map((it) => {
+        const ground = sampleGroundHeight(it.position.x, it.position.z);
+        const y = it.id === "phare-sommet" ? it.position.y - 0.12 : ground;
+        return { ...it, y };
+      });
   }, []);
 
   return (
@@ -37,20 +40,43 @@ export function DiscoveryRelics() {
           {it.chapter === "activite" && <primitive object={lamp.clone(true)} scale={1.1} />}
           {it.chapter === "cv" && <EnvelopeRelic />}
           {it.chapter === "contact" && <BrassPlaque />}
-          <RelicPad />
+          <RelicPad id={it.id} chapter={it.chapter} radius={it.radius} x={it.position.x} z={it.position.z} />
         </group>
       ))}
     </group>
   );
 }
 
-function RelicPad() {
+function RelicPad({
+  id,
+  chapter,
+  radius,
+  x,
+  z,
+}: {
+  id: string;
+  chapter: ChapterId;
+  radius: number;
+  x: number;
+  z: number;
+}) {
   const mat = useRef<THREE.MeshStandardMaterial>(null);
+  const mesh = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
-    if (mat.current) mat.current.emissiveIntensity = 0.28 + Math.sin(clock.elapsedTime * 2.1) * 0.16;
+    const s = getGameState();
+    const d = Math.hypot(s.playerPos.x - x, s.playerPos.z - z);
+    const approach = Math.max(0, 1 - d / (radius * 1.85));
+    const near = s.interactTarget === id;
+    const found = Boolean(s.discovered[chapter]);
+    const pulse = 0.2 + Math.sin(clock.elapsedTime * (near ? 3.8 : 2.1)) * (near ? 0.22 : 0.12);
+    if (mat.current) {
+      mat.current.emissiveIntensity = found ? 0.58 + pulse * 0.18 : 0.16 + approach * 0.45 + pulse;
+      mat.current.emissive.set(near || found ? "#d4a24a" : "#6a4a20");
+    }
+    if (mesh.current) mesh.current.scale.setScalar(near ? 1.22 : 0.92 + approach * 0.28);
   });
   return (
-    <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+    <mesh ref={mesh} position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       <circleGeometry args={[0.48, 16]} />
       <meshStandardMaterial
         ref={mat}

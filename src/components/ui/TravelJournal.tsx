@@ -41,9 +41,10 @@ function JournalShell({
 }) {
   return (
     <div
-      className="pointer-events-auto absolute inset-0 z-30 flex items-end justify-center md:items-center"
+      className="journal-overlay pointer-events-auto absolute inset-0 z-30 flex items-end justify-center md:items-center"
       style={{
         background: "radial-gradient(ellipse at 50% 40%, rgba(12,8,5,0.38), rgba(8,6,4,0.68))",
+        paddingTop: "max(0.5rem, env(safe-area-inset-top))",
         paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
         paddingLeft: "max(0.75rem, env(safe-area-inset-left))",
         paddingRight: "max(0.75rem, env(safe-area-inset-right))",
@@ -52,7 +53,7 @@ function JournalShell({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="travel-journal relative max-h-[min(82dvh,44rem)] w-full max-w-lg overflow-hidden md:max-w-3xl">
+      <div className="travel-journal relative max-h-[min(82dvh,44rem)] w-full max-w-lg overflow-hidden md:max-w-3xl max-[740px]:landscape:max-h-[min(92dvh,26rem)]">
         <span className="journal-brass-corner journal-brass-corner--tl" />
         <span className="journal-brass-corner journal-brass-corner--tr" />
         <span className="journal-brass-corner journal-brass-corner--bl" />
@@ -102,7 +103,7 @@ function JournalIndex() {
         Pages trouvées {done}/{total}. Le monde reste la voie — ce carnet n’est qu’un index.
       </p>
       <p className="mt-2 text-[10px] leading-relaxed tracking-[0.04em] text-[#6a5438]">
-        Reliques sur la côte : identité au belvédère, parcours à la maison, projets au studio, passions à la crique, freelance au phare.
+        Reliques sur la côte : identité au belvédère, pièces à la maison, établi à l’atelier, polaroids au studio, crique, lanterne au phare — les lieux visités s’allument.
       </p>
       <nav className="mt-4 flex flex-col">
         {CHAPTERS.map((c) => {

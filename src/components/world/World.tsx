@@ -14,6 +14,7 @@ import { DiscoveryRelics } from "./DiscoveryRelics";
 import { HeroCoast } from "./HeroCoast";
 import { VillageHeart } from "./VillageHeart";
 import { CoastCliffs } from "./CoastCliffs";
+import { DiscoveryZones } from "./DiscoveryZones";
 import type { QualitySettings } from "@/lib/quality";
 import { useMemo } from "react";
 import * as THREE from "three";
@@ -173,6 +174,7 @@ export function World({ quality }: { quality: QualitySettings }) {
       <CoastCliffs />
       <Belvedere />
       <CoastalZones />
+      <DiscoveryZones />
       <DiscoveryRelics />
       <LivingWorld />
       <DebugColliders />

@@ -17,7 +17,18 @@ Tous les modèles runtime dans `/public/models/*.glb` sont générés par `scrip
 | `rock-a/b/c.glb` | Rochers |
 | `bench.glb` / `carnet.glb` / `lamp.glb` / `plinth.glb` | Props |
 
-Aucun asset Sketchfab / Meshy / Poly Haven n’est embarqué dans cette build. Si des packs CC0 externes sont ajoutés plus tard, documenter ici licence + URL + auteur.
+## Poly Haven (CC0)
+
+| Fichier | Source | Licence |
+|---------|--------|---------|
+| `public/models/rock-coast-a.glb` | Coast Rocks 01 | CC0 |
+| `public/models/cliff-coast.glb` | Coastal Cliff 01 | CC0 |
+| `public/models/ph/painted_wooden_bench` | Painted Wooden Bench | CC0 |
+| `public/models/ph/ceramic_pot` | Ceramic Pot | CC0 |
+| `public/models/ph/planter_pot_clay` | Planter Pot Clay | CC0 |
+| `public/hdri/venice_sunset_1k.hdr` | Venice Sunset | CC0 |
+
+Pas de Sketchfab / Meshy. Le roadster héros (`roadster.glb`, RGS Dev CC0) n’est pas régénéré par `generate-assets.mjs`.
 
 ## Environnement procédural
 Terrain, mer (shader), route asphaltée, ciel (`@react-three/drei` Sky) — code maison.
