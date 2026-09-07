@@ -249,9 +249,9 @@ export function GameCamera() {
       );
     } else {
       _lookTarget.set(
-        Math.min(_subject.x + Math.sin(yaw) * 16 - 7.2, -12.5),
-        _subject.y + 1.35,
-        _subject.z + Math.cos(yaw) * 20,
+        Math.min(_subject.x + Math.sin(yaw) * 16 - 8.5, -18.5),
+        _subject.y + 1.15,
+        _subject.z + Math.cos(yaw) * 18,
       );
     }
 
