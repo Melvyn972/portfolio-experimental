@@ -11,6 +11,7 @@ import { Atmosphere, RoadAccentProps } from "./Atmosphere";
 import { DebugColliders } from "./DebugColliders";
 import { LivingWorld } from "./LivingWorld";
 import { DiscoveryRelics } from "./DiscoveryRelics";
+import { HeroCoast } from "./HeroCoast";
 import type { QualitySettings } from "@/lib/quality";
 import { useMemo } from "react";
 import * as THREE from "three";
@@ -165,6 +166,7 @@ export function World({ quality }: { quality: QualitySettings }) {
       <Vegetation count={quality.treeCount} />
       <AccessPaths />
       <CoastalTown rich={quality.shadows} />
+      <HeroCoast rich={quality.shadows} />
       <Belvedere />
       <CoastalZones />
       <DiscoveryRelics />

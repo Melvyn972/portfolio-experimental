@@ -365,13 +365,23 @@ export function PlayerSystem() {
       if (distStop < 10) velocity.current *= 1 - 3.2 * dt;
       else if (nearBelvedereZone && Math.abs(velocity.current) > 5) velocity.current *= 1 - 2.0 * dt;
       const nearStop = distStop < STOP_RADIUS && Math.abs(velocity.current) < STOP_SPEED;
+      const canExit = Math.abs(velocity.current) < 3.4;
 
-      if (nearStop && exitCooldown.current <= 0 && !blocked && (consumeInteractPulse() || input.exit)) {
-        const toward = interactPos.clone().sub(pos.current);
-        toward.y = 0;
-        if (toward.lengthSq() > 0.01) toward.normalize();
-        else toward.set(Math.cos(yaw.current), 0, -Math.sin(yaw.current));
+      if (canExit && exitCooldown.current <= 0 && !blocked && (consumeInteractPulse() || input.exit)) {
+        const toward = tmp.current;
+        if (nearStop) {
+          toward.copy(interactPos).sub(pos.current);
+          toward.y = 0;
+          if (toward.lengthSq() > 0.01) toward.normalize();
+          else toward.set(Math.cos(yaw.current), 0, -Math.sin(yaw.current));
+        } else {
+          toward.set(-sample.tangent.z, 0, sample.tangent.x);
+          if (toward.lengthSq() > 0.01) toward.normalize();
+          if (toward.x < 0) toward.negate();
+          if (Math.abs(toward.x) < 0.22) toward.set(1, 0, 0);
+        }
         const exitTo = pos.current.clone().addScaledVector(toward, EXIT_DIST);
+        exitTo.x = THREE.MathUtils.clamp(exitTo.x, SEA_INLAND_X + 1.6, 22);
         exitTo.y = sampleGroundHeight(exitTo.x, exitTo.z);
         transition.current = {
           kind: "exit",
@@ -406,8 +416,8 @@ export function PlayerSystem() {
         walkYaw: yaw.current,
         nearStopSpot: nearStop,
         nearCar: false,
-        prompt: nearStop ? "Descendre" : nearBelvedereZone ? "Ralentissez sur le marquage" : null,
-        interactTarget: nearStop ? "exit-car" : null,
+        prompt: canExit ? "Descendre" : nearBelvedereZone ? "Ralentissez sur le marquage" : null,
+        interactTarget: canExit ? "exit-car" : null,
         playerPos: { x: pos.current.x, y: pos.current.y, z: pos.current.z },
       });
 

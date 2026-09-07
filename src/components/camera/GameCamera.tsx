@@ -104,6 +104,20 @@ export function GameCamera() {
       return;
     }
 
+    if (state.openChapter && state.relicFocus) {
+      _subject.set(state.relicFocus.x, state.relicFocus.y, state.relicFocus.z);
+      _desired.copy(_subject).add(_a.set(4.6, 2.85, 4.9));
+      const gY = sampleGroundHeight(_desired.x, _desired.z);
+      _desired.y = Math.max(_desired.y, gY + 2.0);
+      pushCameraOut(_desired, 0.7);
+      current.current.lerp(_desired, 1 - Math.exp(-2.6 * dt));
+      pushCameraOut(current.current, 0.7);
+      look.current.lerp(_subject.clone().add(_lookA.set(0, 0.42, 0)), 1 - Math.exp(-3.4 * dt));
+      camera.position.copy(current.current);
+      camera.lookAt(look.current);
+      return;
+    }
+
     if (state.openChapter) {
       _subject.set(state.playerPos.x, state.playerPos.y, state.playerPos.z);
       offsetPos(_desired, _subject, state.lookYaw, 0.18, distWalk * 1.05, hWalk + 1.0, 0.4);

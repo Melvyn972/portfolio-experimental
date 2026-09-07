@@ -28,7 +28,7 @@ export const CHAPTERS: { id: ChapterId; label: string; zone: string }[] = [
   { id: "competences", label: "Compétences", zone: "maison-atelier" },
   { id: "projets", label: "Projets", zone: "studio" },
   { id: "passions", label: "Passions", zone: "plage" },
-  { id: "activite", label: "Activité", zone: "phare" },
+  { id: "activite", label: "Freelance", zone: "phare" },
   { id: "cv", label: "CV", zone: "phare" },
   { id: "contact", label: "Contact", zone: "phare" },
 ];
@@ -65,6 +65,8 @@ export interface GameState {
   isMobile: boolean;
   /** Page inside the open travel journal (0-based). */
   journalPage: number;
+  /** Relic world position — camera eases in when a chapter opens. */
+  relicFocus: { x: number; y: number; z: number } | null;
 }
 
 type Listener = () => void;
@@ -98,6 +100,7 @@ let state: GameState = {
   debugColliders: false,
   isMobile: false,
   journalPage: 0,
+  relicFocus: null,
 };
 
 function shallowEqualPos(
@@ -127,6 +130,23 @@ export function setGameState(partial: Partial<GameState>) {
       if (!isFinitePos(val)) continue;
       if (!shallowEqualPos(cur, val)) {
         next[key] = { x: val.x, y: val.y, z: val.z };
+        changed = true;
+      }
+      continue;
+    }
+
+    if (key === "relicFocus") {
+      const val = value as GameState["relicFocus"];
+      if (val === null) {
+        if (state.relicFocus !== null) {
+          next.relicFocus = null;
+          changed = true;
+        }
+        continue;
+      }
+      if (!isFinitePos(val)) continue;
+      if (!state.relicFocus || !shallowEqualPos(state.relicFocus, val, 0.05)) {
+        next.relicFocus = { x: val.x, y: val.y, z: val.z };
         changed = true;
       }
       continue;
@@ -167,7 +187,14 @@ export function markDiscovered(id: ChapterId) {
 
 export function openChapter(id: ChapterId | null) {
   if (id) markDiscovered(id);
-  setGameState({ openChapter: id, rescueOpen: false, prompt: null, journalPage: 0 });
+  const relic = id ? interactableForChapter(id) : null;
+  setGameState({
+    openChapter: id,
+    rescueOpen: false,
+    prompt: null,
+    journalPage: 0,
+    relicFocus: relic ? { x: relic.position.x, y: relic.position.y, z: relic.position.z } : null,
+  });
 }
 
 const VOYAGE_KEY = "cote-melvyn-voyage";
@@ -191,7 +218,14 @@ export function markVoyaged() {
 /** Black-title CTA → aerial cinematic. */
 export function startJourney() {
   markVoyaged();
-  setGameState({ phase: "intro", engineOn: false, showExplorerHint: false, openChapter: null, rescueOpen: false });
+  setGameState({
+    phase: "intro",
+    engineOn: false,
+    showExplorerHint: false,
+    openChapter: null,
+    rescueOpen: false,
+    relicFocus: null,
+  });
 }
 
 /** Escape / Passer — never soft-locks a returning visitor. */
@@ -203,6 +237,7 @@ export function skipToPlay() {
     showExplorerHint: true,
     openChapter: null,
     rescueOpen: false,
+    relicFocus: null,
   });
 }
 
@@ -249,6 +284,7 @@ export function travelToChapterZone(id: ChapterId) {
     mode: "walking",
     rescueOpen: false,
     openChapter: null,
+    relicFocus: null,
     showExplorerHint: false,
     focusChapter: id,
     prompt: target?.label ?? null,
@@ -356,6 +392,7 @@ if (typeof window !== "undefined") {
         mode: "driving",
         engineOn: true,
         openChapter: null,
+        relicFocus: null,
         rescueOpen: false,
         showExplorerHint: false,
       });

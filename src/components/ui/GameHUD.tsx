@@ -126,7 +126,7 @@ function ExplorerHint() {
       : "Stick : conduire · Interagir au belvédère"
     : mode === "walking"
       ? "ZQSD ou WASD · souris — marcher"
-      : "ZQSD ou WASD · E — conduisez";
+      : "ZQSD ou WASD · E — descendre n’importe où";
   return (
     <div
       className="absolute left-1/2 -translate-x-1/2 animate-fade-in"

@@ -76,24 +76,163 @@ select {
 }
 
 .travel-journal {
-  border-radius: 2px;
+  position: relative;
+  border-radius: 3px 10px 10px 3px;
   background:
-    linear-gradient(160deg, #3a2418 0%, #1e140e 55%, #160e0a 100%);
+    radial-gradient(ellipse at 18% 12%, rgba(176, 141, 87, 0.18), transparent 42%),
+    linear-gradient(165deg, #4a2e1c 0%, #1e140e 46%, #120c08 100%);
   box-shadow:
-    inset 0 0 0 1px rgba(176, 141, 87, 0.35),
-    0 24px 64px rgba(0, 0, 0, 0.45);
+    inset 0 0 0 1px rgba(196, 164, 106, 0.45),
+    inset 0 0 0 7px #2a1810,
+    0 28px 72px rgba(0, 0, 0, 0.52);
 }
 
 .journal-brass {
   height: 3px;
-  background: linear-gradient(90deg, transparent, #b08d57, transparent);
+  background: linear-gradient(90deg, transparent, #c4a46a, #8a6a38, #c4a46a, transparent);
+}
+
+.journal-brass-corner {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #c4a46a;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(80, 50, 20, 0.35);
+}
+
+.journal-brass-corner--tl {
+  top: 8px;
+  left: 8px;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.journal-brass-corner--tr {
+  top: 8px;
+  right: 8px;
+  border-left: 0;
+  border-bottom: 0;
+}
+
+.journal-brass-corner--bl {
+  bottom: 8px;
+  left: 8px;
+  border-right: 0;
+  border-top: 0;
+}
+
+.journal-brass-corner--br {
+  bottom: 8px;
+  right: 8px;
+  border-left: 0;
+  border-top: 0;
+}
+
+.journal-binding {
+  position: absolute;
+  left: 0;
+  top: 14%;
+  bottom: 14%;
+  width: 14px;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      #8a6a38 0 10px,
+      #5c4020 10px 16px,
+      transparent 16px 28px
+    );
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.journal-spread {
+  display: flex;
+  gap: 0;
 }
 
 .journal-page {
   background:
+    radial-gradient(ellipse at 80% 0%, rgba(90, 60, 28, 0.08), transparent 46%),
     linear-gradient(180deg, #cbb892 0%, #b89a68 100%);
   color: #2a1f14;
-  box-shadow: inset 0 0 40px rgba(80, 50, 20, 0.12);
+  box-shadow: inset 0 0 40px rgba(80, 50, 20, 0.14);
+}
+
+.journal-page--left {
+  display: none;
+  background:
+    linear-gradient(90deg, rgba(60, 36, 16, 0.18), transparent 18%),
+    linear-gradient(180deg, #c4b086 0%, #b08c5c 100%);
+}
+
+.journal-gutter {
+  display: none;
+  width: 10px;
+  background: linear-gradient(90deg, #6a4a28, #3a2414 45%, #6a4a28);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.35);
+}
+
+@media (min-width: 768px) {
+  .journal-page--left,
+  .journal-gutter {
+    display: block;
+  }
+}
+
+.journal-leaf {
+  transform-origin: left center;
+  animation: journal-turn 0.58s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.journal-leaf[data-dir="-1"] {
+  animation-name: journal-turn-back;
+}
+
+@keyframes journal-turn {
+  from {
+    transform: perspective(1100px) rotateY(-76deg);
+    opacity: 0.28;
+    filter: brightness(0.82);
+  }
+  to {
+    transform: perspective(1100px) rotateY(0deg);
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+@keyframes journal-turn-back {
+  from {
+    transform: perspective(1100px) rotateY(76deg);
+    opacity: 0.28;
+    filter: brightness(0.82);
+  }
+  to {
+    transform: perspective(1100px) rotateY(0deg);
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+.polaroid {
+  background: #e2d2a8;
+  color: #2a1f14;
+  padding: 0.45rem 0.45rem 1.15rem;
+  box-shadow: 0 8px 18px rgba(40, 22, 8, 0.28);
+  transform: rotate(var(--tilt, -1.4deg));
+}
+
+.polaroid-frame {
+  min-height: 3.4rem;
+  background:
+    linear-gradient(160deg, #8a6a48, #5c4030);
+}
+
+.postcard {
+  background: #d8c49a;
+  border: 1px solid #8a6a3e;
+  box-shadow: 0 4px 10px rgba(40, 22, 8, 0.16);
 }
 
 @keyframes fade-in {
@@ -126,7 +265,8 @@ select {
 
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in,
-  .animate-rise {
+  .animate-rise,
+  .journal-leaf {
     animation: none;
   }
 }

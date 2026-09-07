@@ -97,7 +97,7 @@ export function getInteractables(): Interactable[] {
       {
         id: "phare-activite",
         chapter: "activite",
-        label: "Lanternes — l’activité",
+        label: "Lanternes — freelance",
         position: new THREE.Vector3(phare.x + 2.5, phare.y + 0.5, phare.z + 2),
         radius: 3.5,
         walkingOnly: true,

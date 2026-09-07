@@ -20,9 +20,10 @@ void main() {
   vUv = uv;
   vDeep = 1.0 - uv.x;
   vec3 pos = position;
-  float amp = vDeep * vDeep * 0.07;
-  pos.z += sin(pos.y * 0.12 + uTime * 0.48) * amp;
-  pos.z += cos(pos.y * 0.07 + pos.x * 0.05 + uTime * 0.28) * amp * 0.5;
+  float amp = vDeep * vDeep * 0.145;
+  pos.z += sin(pos.y * 0.12 + uTime * 0.62) * amp;
+  pos.z += cos(pos.y * 0.07 + pos.x * 0.05 + uTime * 0.36) * amp * 0.62;
+  pos.z += sin(pos.y * 0.38 + uTime * 1.15) * amp * 0.38;
   vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
   gl_Position = projectionMatrix * mvPosition;
   #include <fog_vertex>
@@ -30,6 +31,7 @@ void main() {
 `;
 
 const seaFragment = /* glsl */ `
+uniform float uTime;
 varying vec2 vUv;
 varying float vDeep;
 
@@ -42,10 +44,11 @@ void main() {
   vec3 shore = vec3(0.46, 0.54, 0.52);
   vec3 col = mix(deep, mid, smoothstep(0.0, 0.68, vUv.x));
   col = mix(col, shore, smoothstep(0.78, 1.0, vUv.x));
-  float sparkle = pow(max(0.0, sin(vUv.y * 28.0) * cos(vUv.x * 18.0)), 18.0);
-  col += vec3(0.06, 0.07, 0.06) * sparkle * vDeep * 0.22;
-  float foam = smoothstep(0.88, 1.0, vUv.x) * (0.45 + 0.25 * sin(vUv.y * 40.0));
-  col = mix(col, vec3(0.86, 0.88, 0.84), foam * 0.55);
+  float sparkle = pow(max(0.0, sin(vUv.y * 28.0 + uTime * 0.8) * cos(vUv.x * 18.0)), 16.0);
+  col += vec3(0.07, 0.08, 0.07) * sparkle * vDeep * 0.28;
+  float foamBand = smoothstep(0.78, 1.0, vUv.x);
+  float foam = foamBand * (0.58 + 0.38 * sin(vUv.y * 52.0 + uTime * 2.4));
+  col = mix(col, vec3(0.90, 0.91, 0.86), foam * 0.72);
   col *= 0.90 + 0.08 * (1.0 - vDeep);
   gl_FragColor = vec4(col, 1.0);
   #include <fog_fragment>

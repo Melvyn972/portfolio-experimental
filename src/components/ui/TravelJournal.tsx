@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useGameStore } from "@/hooks/useGameStore";
 import {
   CHAPTERS,
@@ -42,7 +43,7 @@ function JournalShell({
     <div
       className="pointer-events-auto absolute inset-0 z-30 flex items-end justify-center md:items-center"
       style={{
-        background: "radial-gradient(ellipse at 50% 40%, rgba(12,8,5,0.35), rgba(8,6,4,0.62))",
+        background: "radial-gradient(ellipse at 50% 40%, rgba(12,8,5,0.38), rgba(8,6,4,0.68))",
         paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
         paddingLeft: "max(0.75rem, env(safe-area-inset-left))",
         paddingRight: "max(0.75rem, env(safe-area-inset-right))",
@@ -51,16 +52,35 @@ function JournalShell({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="travel-journal relative max-h-[min(78dvh,40rem)] w-full max-w-lg overflow-hidden md:max-w-xl">
+      <div className="travel-journal relative max-h-[min(82dvh,44rem)] w-full max-w-lg overflow-hidden md:max-w-3xl">
+        <span className="journal-brass-corner journal-brass-corner--tl" />
+        <span className="journal-brass-corner journal-brass-corner--tr" />
+        <span className="journal-brass-corner journal-brass-corner--bl" />
+        <span className="journal-brass-corner journal-brass-corner--br" />
+        <span className="journal-binding" />
         <div className="journal-brass" />
-        <div className="flex items-center justify-between px-5 pt-4">
+        <div className="flex items-center justify-between px-6 pt-4 md:px-8">
           <p className="font-display text-[11px] tracking-[0.28em] text-[#c4a46a] uppercase">{title}</p>
           <button type="button" className="text-[11px] tracking-[0.12em] text-[#b8a078]" onClick={onClose}>
             Refermer
           </button>
         </div>
-        <div className="journal-page mt-3 max-h-[min(64dvh,32rem)] overflow-y-auto px-5 pb-5 pt-3">
-          {index ? <JournalIndex /> : children}
+        <div className="journal-spread mt-3 max-h-[min(68dvh,36rem)] overflow-hidden">
+          <div className="journal-page journal-page--left w-[13.5rem] shrink-0 px-5 py-6">
+            <p className="font-display text-lg text-[#2a1f14]">Côte Melvyn</p>
+            <p className="mt-2 text-[10px] leading-relaxed tracking-[0.14em] text-[#6a5438] uppercase">
+              Carnet de cuir
+            </p>
+            <div className="mt-6 h-px w-12 bg-[#8a6a3e]/50" />
+            <p className="mt-6 text-xs leading-relaxed text-[#5c4a32]">{title}</p>
+            <div className="mt-8 flex justify-center">
+              <span className="inline-block h-10 w-10 rounded-full border-2 border-[#b08d57] bg-[#8a6a38]/40 shadow-[inset_0_0_0_3px_#3a2414]" />
+            </div>
+          </div>
+          <div className="journal-gutter" />
+          <div className="journal-page min-w-0 flex-1 overflow-y-auto px-5 pb-5 pt-3 md:px-6">
+            {index ? <JournalIndex /> : children}
+          </div>
         </div>
       </div>
     </div>
@@ -79,6 +99,9 @@ function JournalIndex() {
       <p className="mt-1 text-xs tracking-[0.08em] text-[#6a5438]">{id.title}</p>
       <p className="mt-3 text-[11px] leading-relaxed text-[#5c4a32]">
         Pages trouvées {done}/{total}. Le monde reste la voie — ce carnet n’est qu’un index.
+      </p>
+      <p className="mt-2 text-[10px] leading-relaxed tracking-[0.04em] text-[#6a5438]">
+        Identité · Parcours · Compétences · Projets · Freelance · Contact — reliques sur la côte.
       </p>
       <nav className="mt-4 flex flex-col">
         {CHAPTERS.map((c) => {
@@ -118,9 +141,17 @@ function ChapterPages({ chapter }: { chapter: ChapterId }) {
   const { journalPage } = useGameStore();
   const pages = pagesFor(chapter);
   const page = pages[Math.min(journalPage, pages.length - 1)];
+  const prev = useRef(journalPage);
+  const dir = journalPage >= prev.current ? 1 : -1;
+  useEffect(() => {
+    prev.current = journalPage;
+  }, [journalPage]);
+
   return (
     <div>
-      {page}
+      <div key={`${chapter}-${journalPage}`} className="journal-leaf" data-dir={dir}>
+        {page}
+      </div>
       {pages.length > 1 && (
         <div className="mt-5 flex items-center justify-between text-[11px] tracking-[0.14em] text-[#6a5438]">
           <button
@@ -217,7 +248,7 @@ function pagesFor(chapter: ChapterId): React.ReactNode[] {
       return [
         <>
           <Hairline />
-          <h2 className="font-display text-xl text-[#2a1f14]">Compétences</h2>
+          <h2 className="font-display text-xl text-[#2a1f14]">Compétences & stack</h2>
           <div className="mt-3 space-y-2.5 text-sm">
             {content.competences.clusters.map((c) => (
               <p key={c.id} className="text-[#3d3226]">
@@ -229,24 +260,24 @@ function pagesFor(chapter: ChapterId): React.ReactNode[] {
         </>,
       ];
     case "projets": {
-      const featured = content.projets.slice(0, 2);
-      const rest = content.projets.slice(2);
+      const featured = content.projets.slice(0, 3);
+      const rest = content.projets.slice(3);
       return [
         <>
           <Hairline />
           <h2 className="font-display text-xl text-[#2a1f14]">Projets — Polaroids</h2>
-          <div className="mt-3 space-y-3 text-sm">
-            {featured.map((p) => (
-              <ProjectNote key={p.id} p={p} />
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {featured.map((p, i) => (
+              <PolaroidNote key={p.id} p={p} tilt={i === 1 ? 1.6 : i === 2 ? -2.2 : -1.1} />
             ))}
           </div>
         </>,
         <>
           <Hairline />
-          <h2 className="font-display text-xl text-[#2a1f14]">Autres pages</h2>
+          <h2 className="font-display text-xl text-[#2a1f14]">Autres cartes</h2>
           <div className="mt-3 space-y-3 text-sm">
             {rest.map((p) => (
-              <ProjectNote key={p.id} p={p} />
+              <PostcardNote key={p.id} p={p} />
             ))}
           </div>
         </>,
@@ -265,7 +296,7 @@ function pagesFor(chapter: ChapterId): React.ReactNode[] {
       return [
         <>
           <Hairline />
-          <h2 className="font-display text-xl text-[#2a1f14]">Activité</h2>
+          <h2 className="font-display text-xl text-[#2a1f14]">Freelance</h2>
           <p className="mt-1 text-xs uppercase tracking-[0.16em] text-[#8a6a3e]">Auto-entreprise</p>
           <ul className="mt-3 space-y-1.5 text-sm text-[#3d3226]">
             {content.activite.services.map((s) => (
@@ -320,13 +351,37 @@ function pagesFor(chapter: ChapterId): React.ReactNode[] {
   }
 }
 
-function ProjectNote({
+function PolaroidNote({
+  p,
+  tilt,
+}: {
+  p: { id: string; name: string; tag: string; stack: string; blurb: string; href?: string };
+  tilt: number;
+}) {
+  return (
+    <article className="polaroid" style={{ ["--tilt" as string]: `${tilt}deg` }}>
+      <div className="polaroid-frame mb-2 flex items-end px-2 pb-2">
+        <span className="font-display text-[11px] text-[#f0e2c4]">{p.tag}</span>
+      </div>
+      <p className="text-[13px] font-medium text-[#2a1f14]">{p.name}</p>
+      <p className="mt-0.5 text-[10px] text-[#6a5438]">{p.stack}</p>
+      <p className="mt-1 text-[10px] leading-relaxed text-[#3d3226]">{p.blurb}</p>
+      {"href" in p && p.href ? (
+        <a href={p.href} target="_blank" rel="noreferrer" className="mt-1 inline-block text-[10px] underline">
+          Voir le site
+        </a>
+      ) : null}
+    </article>
+  );
+}
+
+function PostcardNote({
   p,
 }: {
   p: { id: string; name: string; tag: string; stack: string; blurb: string; href?: string };
 }) {
   return (
-    <div className="border-b border-[#8a7048]/20 pb-2.5">
+    <article className="postcard px-3 py-2.5">
       <p className="text-[#2a1f14]">
         {p.name} <span className="text-xs text-[#8a6a3e]">· {p.tag}</span>
       </p>
@@ -337,7 +392,7 @@ function ProjectNote({
           Voir le site
         </a>
       ) : null}
-    </div>
+    </article>
   );
 }
 

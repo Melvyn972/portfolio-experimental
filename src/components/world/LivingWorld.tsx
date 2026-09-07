@@ -5,16 +5,18 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { content } from "@/lib/content";
 import { sampleGroundHeight } from "@/lib/ground";
+import { getGameState } from "@/lib/gameStore";
 
-/** Idle life: clouds, birds, boats, foam, lighthouse beam, chimney smoke. */
+/** Idle life: clouds, birds, boats, foam, lighthouse beam, chimney smoke, road dust. */
 export function LivingWorld({ rich = true }: { rich?: boolean }) {
   return (
     <group>
       <Clouds count={rich ? 9 : 5} />
-      <BirdFlock count={rich ? 7 : 4} />
+      <BirdFlock count={rich ? 8 : 6} />
       <DistantBoats count={rich ? 3 : 2} />
       <ShoreFoam />
       <LighthouseBeam />
+      <RoadDust count={rich ? 42 : 24} />
       {rich && <ChimneySmoke />}
     </group>
   );
@@ -49,14 +51,17 @@ function Clouds({ count }: { count: number }) {
   );
 }
 
+/** V-wings that read on Éco / soft-GL — not tiny dark cones. */
 function BirdFlock({ count }: { count: number }) {
   const ref = useRef<THREE.Group>(null);
   const birds = useMemo(
     () =>
       Array.from({ length: count }, (_, i) => ({
-        phase: i * 0.9,
-        r: 14 + i * 2.2,
-        y: 6 + (i % 3) * 1.4,
+        phase: i * 0.85,
+        r: 16 + (i % 4) * 3.4,
+        y: 8.5 + (i % 3) * 1.8,
+        z0: -62 - (i % 3) * 14,
+        speed: 0.32 + (i % 3) * 0.04,
       })),
     [count],
   );
@@ -66,18 +71,25 @@ function BirdFlock({ count }: { count: number }) {
     const t = clock.elapsedTime;
     g.children.forEach((child, i) => {
       const b = birds[i];
-      const a = t * 0.28 + b.phase;
-      child.position.set(Math.cos(a) * b.r - 4, b.y + Math.sin(t * 1.4 + b.phase) * 0.4, Math.sin(a) * b.r - 70);
+      const a = t * b.speed + b.phase;
+      child.position.set(Math.cos(a) * b.r - 2, b.y + Math.sin(t * 1.6 + b.phase) * 0.55, Math.sin(a) * b.r + b.z0);
       child.rotation.y = a + Math.PI / 2;
+      child.rotation.z = Math.sin(t * 8 + b.phase) * 0.18;
     });
   });
   return (
     <group ref={ref}>
       {birds.map((_, i) => (
-        <mesh key={i}>
-          <coneGeometry args={[0.12, 0.42, 3]} />
-          <meshStandardMaterial color="#2a2420" roughness={0.8} />
-        </mesh>
+        <group key={i}>
+          <mesh position={[-0.28, 0, 0]} rotation={[0, 0, 0.48]}>
+            <boxGeometry args={[0.62, 0.045, 0.14]} />
+            <meshStandardMaterial color="#4a4036" emissive="#2c261e" emissiveIntensity={0.22} roughness={0.7} />
+          </mesh>
+          <mesh position={[0.28, 0, 0]} rotation={[0, 0, -0.48]}>
+            <boxGeometry args={[0.62, 0.045, 0.14]} />
+            <meshStandardMaterial color="#5a4e42" emissive="#2c261e" emissiveIntensity={0.22} roughness={0.7} />
+          </mesh>
+        </group>
       ))}
     </group>
   );
@@ -121,41 +133,112 @@ function DistantBoats({ count }: { count: number }) {
 }
 
 function ShoreFoam() {
-  const mat = useRef<THREE.MeshStandardMaterial>(null);
+  const a = useRef<THREE.MeshStandardMaterial>(null);
+  const b = useRef<THREE.MeshStandardMaterial>(null);
   useFrame(({ clock }) => {
-    if (mat.current) mat.current.opacity = 0.28 + Math.sin(clock.elapsedTime * 1.1) * 0.08;
+    const t = clock.elapsedTime;
+    if (a.current) a.current.opacity = 0.38 + Math.sin(t * 1.35) * 0.14;
+    if (b.current) b.current.opacity = 0.22 + Math.cos(t * 1.05) * 0.1;
   });
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-17.15, -0.16, -60]} renderOrder={1}>
-      <planeGeometry args={[1.6, 230]} />
-      <meshStandardMaterial
-        ref={mat}
-        color="#e8e4dc"
-        transparent
-        opacity={0.3}
-        roughness={1}
-        depthWrite={false}
-      />
-    </mesh>
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-17.05, -0.145, -60]} renderOrder={1}>
+        <planeGeometry args={[2.15, 230]} />
+        <meshStandardMaterial
+          ref={a}
+          color="#efe8dc"
+          transparent
+          opacity={0.4}
+          roughness={1}
+          depthWrite={false}
+        />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-16.55, -0.12, -60]} renderOrder={1}>
+        <planeGeometry args={[1.15, 230]} />
+        <meshStandardMaterial
+          ref={b}
+          color="#d8d0c4"
+          transparent
+          opacity={0.22}
+          roughness={1}
+          depthWrite={false}
+        />
+      </mesh>
+    </group>
   );
 }
 
 function LighthouseBeam() {
   const ref = useRef<THREE.Group>(null);
+  const cone = useRef<THREE.MeshBasicMaterial>(null);
+  const light = useRef<THREE.PointLight>(null);
   const phare = content.zones.zones.find((z) => z.id === "phare")?.marker;
-  useFrame((_, dt) => {
-    if (ref.current) ref.current.rotation.y += dt * 0.35;
+  useFrame(({ clock }, dt) => {
+    if (ref.current) ref.current.rotation.y += dt * 0.38;
+    const pulse = 0.55 + 0.45 * Math.sin(clock.elapsedTime * 1.85);
+    if (cone.current) cone.current.opacity = 0.07 + pulse * 0.13;
+    if (light.current) light.current.intensity = 0.7 + pulse * 1.55;
   });
   if (!phare) return null;
   const y = sampleGroundHeight(phare.x, phare.z) + 7.2;
   return (
     <group ref={ref} position={[phare.x, y, phare.z]}>
-      <mesh rotation={[0, 0, Math.PI / 2]} position={[6, 0, 0]}>
-        <coneGeometry args={[1.6, 14, 8, 1, true]} />
-        <meshBasicMaterial color="#ffe6b0" transparent opacity={0.09} depthWrite={false} side={THREE.DoubleSide} />
+      <mesh rotation={[0, 0, Math.PI / 2]} position={[7.2, 0, 0]}>
+        <coneGeometry args={[1.85, 16, 8, 1, true]} />
+        <meshBasicMaterial ref={cone} color="#ffe6b0" transparent opacity={0.12} depthWrite={false} side={THREE.DoubleSide} />
       </mesh>
-      <pointLight color="#ffd090" intensity={1.1} distance={28} />
+      <pointLight ref={light} color="#ffd090" intensity={1.4} distance={34} />
     </group>
+  );
+}
+
+function RoadDust({ count }: { count: number }) {
+  const ref = useRef<THREE.Points>(null);
+  const ages = useRef(new Float32Array(count));
+  const positions = useMemo(() => {
+    const arr = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) arr[i * 3 + 1] = -4;
+    return arr;
+  }, [count]);
+  useFrame((_, dt) => {
+    const pts = ref.current;
+    const pos = pts?.geometry.attributes.position as THREE.BufferAttribute | undefined;
+    if (!pts || !pos) return;
+    const s = getGameState();
+    const driving = s.mode === "driving" && s.phase === "playing";
+    const emit = driving && s.speed > 4.2;
+    const yaw = s.carYaw;
+    const backX = -Math.sin(yaw);
+    const backZ = -Math.cos(yaw);
+    for (let i = 0; i < count; i++) {
+      ages.current[i] += dt;
+      if (emit && (ages.current[i] > 0.55 || pos.getY(i) < 0.05)) {
+        const spread = (i % 7) * 0.09 - 0.27;
+        pos.setXYZ(
+          i,
+          s.carPos.x + backX * 1.8 + Math.cos(yaw) * spread,
+          s.carPos.y + 0.12,
+          s.carPos.z + backZ * 1.8 + Math.sin(yaw) * spread,
+        );
+        ages.current[i] = (i % 5) * 0.04;
+      } else {
+        pos.setY(i, pos.getY(i) + dt * 0.55);
+        pos.setX(i, pos.getX(i) + backX * dt * 0.4);
+        pos.setZ(i, pos.getZ(i) + backZ * dt * 0.4);
+        if (ages.current[i] > 1.1) pos.setY(i, -4);
+      }
+    }
+    pos.needsUpdate = true;
+    const mat = pts.material as THREE.PointsMaterial;
+    mat.opacity = emit ? 0.42 : 0.08;
+  });
+  return (
+    <points ref={ref} frustumCulled={false}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial color="#c4a878" size={0.22} transparent opacity={0.12} depthWrite={false} sizeAttenuation />
+    </points>
   );
 }
 

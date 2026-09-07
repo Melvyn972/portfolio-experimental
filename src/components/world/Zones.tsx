@@ -217,6 +217,8 @@ export function CoastalZones() {
       {plage && (
         <group>
           <WoodenPier position={[plage.x - 2.6, 0.12, plage.z]} yaw={-Math.PI / 2 + 0.08} />
+          <MooredBoat position={[plage.x - 5.4, -0.04, plage.z + 1.6]} yaw={-1.35} />
+          <MooredBoat position={[plage.x - 4.8, -0.02, plage.z - 2.2]} yaw={-1.72} />
           <Placed
             scene={lantern}
             position={[plage.x - 3.4, 0.52, plage.z + 0.2]}
@@ -287,6 +289,10 @@ function WoodenPier({ position, yaw }: { position: [number, number, number]; yaw
         <boxGeometry args={[1.6, 0.06, 0.06]} />
         <meshStandardMaterial color="#5c3f28" roughness={0.8} />
       </mesh>
+      <mesh position={[0.15, 0.52, 2.35]} rotation={[0.04, 0.1, 0]} castShadow>
+        <boxGeometry args={[0.55, 0.16, 1.15]} />
+        <meshStandardMaterial color="#6a4a32" roughness={0.74} />
+      </mesh>
       {[-1, 1].map((side) => (
         <group key={`rail-${side}`}>
           <mesh position={[side * 1.02, 0.72, 0]}>
@@ -301,6 +307,29 @@ function WoodenPier({ position, yaw }: { position: [number, number, number]; yaw
           ))}
         </group>
       ))}
+    </group>
+  );
+}
+
+function MooredBoat({ position, yaw }: { position: [number, number, number]; yaw: number }) {
+  return (
+    <group position={position} rotation={[0, yaw, 0]}>
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[2.05, 0.32, 0.72]} />
+        <meshStandardMaterial color="#6e4a30" roughness={0.72} />
+      </mesh>
+      <mesh position={[0, 0.22, 0]} castShadow>
+        <boxGeometry args={[1.45, 0.16, 0.48]} />
+        <meshStandardMaterial color="#8a5a38" roughness={0.7} />
+      </mesh>
+      <mesh position={[0.15, 0.95, 0]} castShadow>
+        <boxGeometry args={[0.07, 1.15, 0.07]} />
+        <meshStandardMaterial color="#d4ccc0" roughness={0.55} />
+      </mesh>
+      <mesh position={[0.22, 1.15, 0.02]} rotation={[0, 0, 0.4]} castShadow>
+        <boxGeometry args={[0.02, 0.7, 0.42]} />
+        <meshStandardMaterial color="#c8b898" roughness={0.8} />
+      </mesh>
     </group>
   );
 }
