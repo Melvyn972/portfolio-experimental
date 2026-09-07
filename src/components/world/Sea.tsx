@@ -9,7 +9,8 @@ export { SEA_INLAND_X, SEA_SURFACE_Y };
  * Flat Mediterranean sheet. Custom wave GLSL died silently on Soft-GL
  * (parent: water replaced by ochre). Standard material always draws.
  */
-export function Sea({ segments: _segments = 8 }: { segments?: number }) {
+export function Sea({ segments = 8 }: { segments?: number }) {
+  void segments;
   const width = 86;
   const depth = 270;
   const centerX = SEA_INLAND_X - width * 0.5;
