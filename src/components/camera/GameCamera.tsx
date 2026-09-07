@@ -6,7 +6,7 @@ import { useRapier } from "@react-three/rapier";
 import * as THREE from "three";
 import { getGameState } from "@/lib/gameStore";
 import { START_POSE } from "@/lib/road";
-import { sampleGroundHeight } from "@/lib/ground";
+import { computeTerrainHeight, sampleGroundHeight } from "@/lib/ground";
 import { getBelvedereInteractPosition } from "@/components/world/Belvedere";
 import { pushCameraOut } from "@/lib/colliders";
 
@@ -44,6 +44,7 @@ export function GameCamera() {
   const dist = useRef(CAM_DIST_DRIVE);
   const started = useRef(false);
   const lastMode = useRef(getGameState().mode);
+  const lastPhase = useRef(getGameState().phase);
   const lastSubject = useRef(new THREE.Vector3(Infinity, 0, 0));
   const snapFrames = useRef(4);
 
@@ -92,12 +93,17 @@ export function GameCamera() {
       return;
     }
 
+    if (lastPhase.current !== state.phase) {
+      lastPhase.current = state.phase;
+      if (state.phase === "playing") snapFrames.current = 12;
+    }
+
     if (state.openChapter === "identity") {
       const target = getBelvedereInteractPosition();
       _desired.copy(target).add(_a.set(5.8, 3.6, 6.4));
-      const gY = sampleGroundHeight(_desired.x, _desired.z);
-      _desired.y = Math.max(_desired.y, gY + 2.2);
+      liftAboveGround(_desired, target.y, false);
       current.current.lerp(_desired, 1 - Math.exp(-3.5 * dt));
+      liftAboveGround(current.current, target.y, false);
       look.current.lerp(_b.copy(target).add(_lookA.set(0, 0.5, 0)), 1 - Math.exp(-4.5 * dt));
       camera.position.copy(current.current);
       camera.lookAt(look.current);
@@ -107,11 +113,12 @@ export function GameCamera() {
     if (state.openChapter && state.relicFocus) {
       _subject.set(state.relicFocus.x, state.relicFocus.y, state.relicFocus.z);
       _desired.copy(_subject).add(_a.set(4.6, 2.85, 4.9));
-      const gY = sampleGroundHeight(_desired.x, _desired.z);
-      _desired.y = Math.max(_desired.y, gY + 2.0);
+      liftAboveGround(_desired, _subject.y, true);
       pushCameraOut(_desired, 0.7);
+      liftAboveGround(_desired, _subject.y, true);
       current.current.lerp(_desired, 1 - Math.exp(-2.6 * dt));
       pushCameraOut(current.current, 0.7);
+      liftAboveGround(current.current, _subject.y, true);
       look.current.lerp(_subject.clone().add(_lookA.set(0, 0.42, 0)), 1 - Math.exp(-3.4 * dt));
       camera.position.copy(current.current);
       camera.lookAt(look.current);
@@ -121,11 +128,12 @@ export function GameCamera() {
     if (state.openChapter) {
       _subject.set(state.playerPos.x, state.playerPos.y, state.playerPos.z);
       offsetPos(_desired, _subject, state.lookYaw, 0.18, distWalk * 1.05, hWalk + 1.0, 0.4);
-      const gY = sampleGroundHeight(_desired.x, _desired.z);
-      _desired.y = Math.max(_desired.y, gY + 2.0);
+      liftAboveGround(_desired, _subject.y, true);
       pushCameraOut(_desired, 0.7);
+      liftAboveGround(_desired, _subject.y, true);
       current.current.lerp(_desired, 1 - Math.exp(-3 * dt));
       pushCameraOut(current.current, 0.7);
+      liftAboveGround(current.current, _subject.y, true);
       look.current.lerp(_subject.clone().add(_a.set(0, 1.2, 0)), 1 - Math.exp(-4 * dt));
       camera.position.copy(current.current);
       camera.lookAt(look.current);
@@ -158,10 +166,12 @@ export function GameCamera() {
     // Hard rule: camera stays behind the look/car yaw. Obstacle pull must
     // never flip in front — that reads as "controls inverted" mid-session.
 
-    // Rapier ray obstacle avoidance — pull camera in + lift when blocked
+    // Rapier ray — Metal / Haute only. SwiftShader Éco often returns junk
+    // hits that yanked the chase cam under the heightfield (hfudbw9rf).
+    const useCamRay = state.quality === "high" && !mobile;
     _dir.copy(_desired).sub(_subject);
     const fullLen = _dir.length();
-    if (fullLen > 0.15) {
+    if (useCamRay && fullLen > 0.15) {
       _dir.normalize();
       _from.x = _subject.x;
       _from.y = _subject.y + 0.35;
@@ -172,21 +182,19 @@ export function GameCamera() {
       const ray = new rapier.Ray(_from, _rayDir);
       const hit = world.castRay(ray, fullLen, true, undefined, undefined, undefined, undefined, (collider) => {
         if (collider.isSensor()) return false;
-        // Ignore the kinematic car / capsule — hitting them pulled the camera
-        // inside the vehicle (QA: "voiture incomplète / vue dans la coque").
         const body = collider.parent();
         if (body?.isKinematic()) return false;
         return true;
       });
       if (hit && hit.timeOfImpact < fullLen - 0.25) {
         const hitY = _from.y + _rayDir.y * hit.timeOfImpact;
-        const groundHit = hitY < _subject.y - 0.2 || _rayDir.y < -0.32;
-        if (groundHit) {
-          _desired.y = Math.max(_desired.y, sampleGroundHeight(_desired.x, _desired.z) + (walking ? 1.9 : 2.2));
+        const downward = _rayDir.y < -0.15 || hitY < _subject.y - 0.15;
+        if (downward) {
+          liftAboveGround(_desired, _subject.y, walking);
         } else {
           const pull = Math.max(walking ? 1.65 : 3.2, hit.timeOfImpact - 0.85);
           _desired.copy(_subject).addScaledVector(_dir, pull);
-          _desired.y += walking ? 0.55 : 0.4;
+          _desired.y = Math.max(_desired.y + (walking ? 0.55 : 0.4), _subject.y + 1.35);
         }
       }
     }
@@ -201,10 +209,7 @@ export function GameCamera() {
       }
     }
 
-    const gY = sampleGroundHeight(_desired.x, _desired.z);
-    _desired.y = Math.max(_desired.y, gY + (walking ? 1.85 : 2.0));
-    // Never sink under sea plane
-    _desired.y = Math.max(_desired.y, 1.4);
+    liftAboveGround(_desired, _subject.y, walking);
 
     if (walking) {
       _lookTarget.set(
@@ -239,12 +244,15 @@ export function GameCamera() {
       current.current.lerp(_desired, 1 - Math.exp(-follow * dt));
       look.current.lerp(_lookTarget, 1 - Math.exp(-11 * dt));
     }
-    const cg = sampleGroundHeight(current.current.x, current.current.z);
-    current.current.y = Math.max(current.current.y, cg + (walking ? 1.15 : 1.55), 1.5);
     const maxAbove = _subject.y + (walking ? 3.4 : 4.6);
-    current.current.y = Math.min(current.current.y, maxAbove);
+    if (Number.isFinite(maxAbove) && current.current.y > maxAbove) {
+      current.current.y = maxAbove;
+    }
     pushCameraOut(_desired, 0.62);
     pushCameraOut(current.current, 0.62);
+    // Last: stay above the visual sand + asphalt. Occluder eject must not win.
+    liftAboveGround(_desired, _subject.y, walking);
+    liftAboveGround(current.current, _subject.y, walking);
     camera.position.copy(current.current);
     camera.lookAt(look.current);
     camera.updateMatrixWorld(true);
@@ -275,6 +283,32 @@ function offsetPos(
     subject.y + lift,
     subject.z - Math.cos(yaw) * back - Math.sin(yaw) * side,
   );
+}
+
+function maxGroundAt(x: number, z: number) {
+  let m = -Infinity;
+  const offs = [0, 0.85, -0.85];
+  for (const dx of offs) {
+    for (const dz of offs) {
+      if (dx !== 0 && dz !== 0) continue;
+      const v = computeTerrainHeight(x + dx, z + dz);
+      const s = sampleGroundHeight(x + dx, z + dz);
+      if (Number.isFinite(v)) m = Math.max(m, v);
+      if (Number.isFinite(s)) m = Math.max(m, s);
+    }
+  }
+  return Number.isFinite(m) ? m : 0.2;
+}
+
+/** Chase cam never sits under the heightfield / road ribbon. */
+function liftAboveGround(pos: THREE.Vector3, subjectY: number, walking: boolean) {
+  if (!Number.isFinite(pos.x) || !Number.isFinite(pos.z)) return;
+  const floor = Math.max(
+    maxGroundAt(pos.x, pos.z) + (walking ? 1.95 : 2.25),
+    Number.isFinite(subjectY) ? subjectY + 1.35 : 1.9,
+    1.9,
+  );
+  if (!Number.isFinite(pos.y) || pos.y < floor) pos.y = floor;
 }
 
 function easeInOut(t: number) {

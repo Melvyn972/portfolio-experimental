@@ -18,7 +18,7 @@ import {
   ROAD_WIDTH,
   ROAD_SURFACE_LIFT,
 } from "@/lib/road";
-import { sampleGroundHeight, PLAYER_RADIUS, PLAYER_HEIGHT } from "@/lib/ground";
+import { computeTerrainHeight, sampleGroundHeight, PLAYER_RADIUS, PLAYER_HEIGHT } from "@/lib/ground";
 import { findNearestInteractable } from "@/lib/interaction";
 import { getBelvedereInteractPosition, getBelvedereStopPosition } from "@/components/world/Belvedere";
 import { isUnsafePosition, safeRespawnPosition } from "@/lib/respawn";
@@ -326,14 +326,6 @@ export function PlayerSystem() {
       clampToRoad(pos.current, ROAD_WIDTH * 0.48);
 
       const sample = nearestRoadSample(pos.current);
-      if (sample.t < 0.015 || sample.t > 0.985) {
-        const safe = sampleRoad(THREE.MathUtils.clamp(sample.t, 0.015, 0.985));
-        pos.current.x = THREE.MathUtils.lerp(pos.current.x, safe.position.x, 0.4);
-        pos.current.z = THREE.MathUtils.lerp(pos.current.z, safe.position.z, 0.4);
-        if ((sample.t < 0.015 && velocity.current < 0) || (sample.t > 0.985 && velocity.current > 0)) {
-          velocity.current *= 0.4;
-        }
-      }
 
       if (Math.abs(velocity.current) > 2) {
         const desiredYaw = Math.atan2(sample.tangent.x, sample.tangent.z);
@@ -349,7 +341,7 @@ export function PlayerSystem() {
       suspension.current *= 1 - 4 * dt;
       prevGround.current = sample.position.y;
 
-      const ahead = sampleRoad(THREE.MathUtils.clamp(sample.t + 0.012, 0, 1));
+      const ahead = sampleRoad(sample.t + 0.012);
       const pitch = Math.atan2(ahead.position.y - sample.position.y, 2.2) * 0.9;
       const roll = ((left ? 1 : 0) - (right ? 1 : 0)) * 0.06;
 
@@ -651,6 +643,8 @@ export function PlayerSystem() {
       camDotLook: tmp.current.x * lookFx + tmp.current.z * lookFz,
       camPos: { x: camera.position.x, y: camera.position.y, z: camera.position.z },
       camInside: isInsideCameraOccluder(camera.position, 0.08),
+      camGround: computeTerrainHeight(camera.position.x, camera.position.z),
+      camClearance: camera.position.y - computeTerrainHeight(camera.position.x, camera.position.z),
       keys: { ...inputRef.current },
     };
     api._live = snap;

@@ -143,16 +143,16 @@ export function pushCameraOut(pos: THREE.Vector3, radius = 0.55): boolean {
 
     const penL = pos.x - (c.min.x - radius);
     const penR = c.max.x + radius - pos.x;
-    const penD = pos.y - (c.min.y - radius);
     const penU = c.max.y + radius - pos.y;
     const penN = pos.z - (c.min.z - radius);
     const penS = c.max.z + radius - pos.z;
-    const minPen = Math.min(penL, penR, penD, penU, penN, penS);
+    // Never eject downward — that clips the chase cam under the sand mesh
+    // (parent Eco QA: camera under jagged backfaces, « Ralentissez… »).
+    const minPen = Math.min(penL, penR, penU, penN, penS);
     if (minPen < 0) continue;
 
     if (minPen === penL) pos.x -= penL;
     else if (minPen === penR) pos.x += penR;
-    else if (minPen === penD) pos.y -= penD;
     else if (minPen === penU) pos.y += penU;
     else if (minPen === penN) pos.z -= penN;
     else pos.z += penS;
