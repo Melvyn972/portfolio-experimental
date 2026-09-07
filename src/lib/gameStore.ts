@@ -83,6 +83,15 @@ export type PendingTeleport =
   | { kind: "walk"; x: number; y: number; z: number; yaw: number; focusChapter?: ChapterId | null };
 
 let pendingTeleport: PendingTeleport | null = null;
+let teleportGen = 0;
+
+export function getTeleportGen() {
+  return teleportGen;
+}
+
+function bumpTeleportGen() {
+  teleportGen += 1;
+}
 
 export function queuePendingTeleport(next: PendingTeleport) {
   pendingTeleport = next;
@@ -260,6 +269,7 @@ export function startJourney() {
 export function applyRibbonDrive(t: number = START_T) {
   const pose = ribbonPose(t);
   queuePendingTeleport({ kind: "drive", t: pose.t });
+  bumpTeleportGen();
   setGameState({
     phase: "playing",
     mode: "driving",
@@ -295,6 +305,7 @@ export function applyWalkTeleport(raw: { x?: number; y?: number; z?: number; yaw
     yaw: pose.yaw,
     focusChapter: raw.focusChapter ?? null,
   });
+  bumpTeleportGen();
   setGameState({
     phase: "playing",
     mode: "walking",

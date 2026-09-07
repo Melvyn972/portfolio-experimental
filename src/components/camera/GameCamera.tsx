@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useRapier } from "@react-three/rapier";
 import * as THREE from "three";
-import { getGameState } from "@/lib/gameStore";
+import { getGameState, getTeleportGen } from "@/lib/gameStore";
 import { START_POSE, START_T, ribbonPose, isNullIsland } from "@/lib/road";
 import { computeTerrainHeight, sampleGroundHeight } from "@/lib/ground";
 import { getBelvedereInteractPosition } from "@/components/world/Belvedere";
@@ -48,6 +48,7 @@ export function GameCamera() {
   const lastSubject = useRef(new THREE.Vector3(Infinity, 0, 0));
   const snapFrames = useRef(getGameState().phase === "playing" ? 12 : 4);
   const buriedFrames = useRef(0);
+  const lastTeleportGen = useRef(-1);
 
   useFrame((_, rawDt) => {
     const dt = Math.min(rawDt, 0.18);
@@ -146,6 +147,11 @@ export function GameCamera() {
       lastMode.current = state.mode;
       snapFrames.current = 8;
     }
+    const gen = getTeleportGen();
+    if (gen !== lastTeleportGen.current) {
+      lastTeleportGen.current = gen;
+      snapFrames.current = 14;
+    }
     let subject = walking ? state.playerPos : state.carPos;
     if (
       !Number.isFinite(subject.x) ||
@@ -161,6 +167,9 @@ export function GameCamera() {
     else _subject.set(subject.x, subject.y + 0.9, subject.z);
     if (lastSubject.current.distanceTo(_subject) > 3.5) snapFrames.current = 10;
     lastSubject.current.copy(_subject);
+    if (Math.hypot(current.current.x - _subject.x, current.current.z - _subject.z) > 14) {
+      snapFrames.current = Math.max(snapFrames.current, 10);
+    }
 
     const yaw = walking ? state.lookYaw : state.carYaw;
     const pitch = walking ? state.lookPitch : 0.08;
