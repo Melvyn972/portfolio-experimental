@@ -240,6 +240,7 @@ if (typeof window !== "undefined") {
       setLookStick: (x: number, y: number) => void;
       setKeys: (partial: Partial<import("@/hooks/useKeyboard").InputState>) => void;
       enterCar: () => void;
+      teleportDrive: (t?: number) => void;
       live?: {
         mode: string;
         playerPos: { x: number; y: number; z: number };
@@ -317,6 +318,9 @@ if (typeof window !== "undefined") {
         rescueOpen: false,
         showExplorerHint: false,
       });
+    },
+    teleportDrive: (t = 0.08) => {
+      window.dispatchEvent(new CustomEvent("cote:teleport-drive", { detail: { t } }));
     },
     belvedereAnchor: () => {
       const a = getBelvedereWorldAnchor();

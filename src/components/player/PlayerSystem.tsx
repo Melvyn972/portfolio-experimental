@@ -165,11 +165,49 @@ export function PlayerSystem() {
       });
     };
 
+    const onTeleportDrive = (ev: Event) => {
+      const t = (ev as CustomEvent<{ t?: number }>).detail?.t;
+      const sample = sampleRoad(typeof t === "number" ? t : 0.08);
+      pos.current.copy(sample.position);
+      yaw.current = Math.atan2(sample.tangent.x, sample.tangent.z);
+      velocity.current = 0;
+      const yPos = pos.current.y + ROAD_SURFACE_LIFT;
+      if (carBody.current) {
+        carBody.current.setNextKinematicTranslation({ x: pos.current.x, y: yPos + 0.35, z: pos.current.z });
+        const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw.current, 0, "YXZ"));
+        carBody.current.setNextKinematicRotation({ x: q.x, y: q.y, z: q.z, w: q.w });
+      }
+      if (carVisual.current) {
+        carVisual.current.position.set(pos.current.x, yPos, pos.current.z);
+        carVisual.current.rotation.set(0, yaw.current, 0);
+      }
+      lookYaw.current = yaw.current;
+      lookPitch.current = 0.08;
+      setGameState({
+        phase: "playing",
+        mode: "driving",
+        engineOn: true,
+        openChapter: null,
+        rescueOpen: false,
+        showExplorerHint: false,
+        carPos: { x: pos.current.x, y: pos.current.y, z: pos.current.z },
+        carYaw: yaw.current,
+        lookYaw: yaw.current,
+        lookPitch: 0.08,
+        speed: 0,
+        nearStopSpot: false,
+        prompt: null,
+        interactTarget: null,
+      });
+    };
+
     window.addEventListener("cote:teleport-belvedere", onTeleport);
     window.addEventListener("cote:teleport-walk", onTeleportWalk as EventListener);
+    window.addEventListener("cote:teleport-drive", onTeleportDrive as EventListener);
     return () => {
       window.removeEventListener("cote:teleport-belvedere", onTeleport);
       window.removeEventListener("cote:teleport-walk", onTeleportWalk as EventListener);
+      window.removeEventListener("cote:teleport-drive", onTeleportDrive as EventListener);
     };
   }, []);
 
