@@ -19,15 +19,15 @@ type AtmosphereProps = {
 export function Atmosphere({ dust = true, shadows = true, shadowMapSize = 2048 }: AtmosphereProps) {
   return (
     <>
-      <color attach="background" args={["#8fb4b4"]} />
-      <fog attach="fog" args={["#a8bcb4", 70, 210]} />
-      <ambientLight intensity={0.4} color="#ffdcc0" />
-      <hemisphereLight args={["#96c0d6", "#c8a880", 0.88]} />
+      <color attach="background" args={["#9bb6b4"]} />
+      <fog attach="fog" args={["#b3c2b6", 52, 188]} />
+      <ambientLight intensity={0.48} color="#ffd4b4" />
+      <hemisphereLight args={["#8eb4c8", "#c8a070", 1.02]} />
       <directionalLight
         castShadow={shadows}
         position={[46, 28, 18]}
-        intensity={2.05}
-        color="#ffc888"
+        intensity={2.22}
+        color="#ffc070"
         shadow-mapSize={[shadowMapSize, shadowMapSize]}
         shadow-camera-near={1}
         shadow-camera-far={200}
@@ -50,7 +50,7 @@ export function Atmosphere({ dust = true, shadows = true, shadowMapSize = 2048 }
         rayleigh={0.62}
         turbidity={8.5}
       />
-      <Environment files="/hdri/venice_sunset_1k.hdr" background={false} environmentIntensity={1.02} />
+      <Environment files="/hdri/venice_sunset_1k.hdr" background={false} environmentIntensity={1.18} />
       {dust && <DustMotes />}
     </>
   );

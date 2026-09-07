@@ -239,6 +239,7 @@ if (typeof window !== "undefined") {
       setWalkStick: (x: number, y: number) => void;
       setLookStick: (x: number, y: number) => void;
       setKeys: (partial: Partial<import("@/hooks/useKeyboard").InputState>) => void;
+      enterCar: () => void;
       live?: {
         mode: string;
         playerPos: { x: number; y: number; z: number };
@@ -306,6 +307,16 @@ if (typeof window !== "undefined") {
     },
     setKeys: (partial) => {
       Object.assign(inputRef.current, partial);
+    },
+    enterCar: () => {
+      setGameState({
+        phase: "playing",
+        mode: "driving",
+        engineOn: true,
+        openChapter: null,
+        rescueOpen: false,
+        showExplorerHint: false,
+      });
     },
     belvedereAnchor: () => {
       const a = getBelvedereWorldAnchor();

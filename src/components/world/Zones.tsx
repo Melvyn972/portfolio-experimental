@@ -200,6 +200,11 @@ export function CoastalZones() {
         <group>
           <WoodenPier position={[plage.x - 2.6, 0.12, plage.z]} yaw={-Math.PI / 2 + 0.08} />
           <Placed
+            scene={lantern}
+            position={[plage.x - 3.4, 0.52, plage.z + 0.2]}
+            scale={1.05}
+          />
+          <Placed
             scene={pine}
             position={[plage.x + 0.8, sampleGroundHeight(plage.x + 0.8, plage.z + 5.4), plage.z + 5.4]}
             scale={0.36}
@@ -252,14 +257,18 @@ function WoodenPier({ position, yaw }: { position: [number, number, number]; yaw
       )}
       <mesh position={[0, 0.34, 0]} receiveShadow castShadow>
         <boxGeometry args={[2.15, 0.1, 7.4]} />
-        <meshStandardMaterial color="#8a5e3c" roughness={0.78} />
+        <meshStandardMaterial color="#7a5234" roughness={0.82} metalness={0.04} />
       </mesh>
       {[-0.55, 0, 0.55].map((x) => (
         <mesh key={`plank-${x}`} position={[x, 0.4, 0]} receiveShadow>
           <boxGeometry args={[0.48, 0.04, 7.2]} />
-          <meshStandardMaterial color="#9a6a44" roughness={0.82} />
+          <meshStandardMaterial color="#a06e46" roughness={0.74} />
         </mesh>
       ))}
+      <mesh position={[0, 0.86, 3.45]} castShadow>
+        <boxGeometry args={[1.6, 0.06, 0.06]} />
+        <meshStandardMaterial color="#5c3f28" roughness={0.8} />
+      </mesh>
       {[-1, 1].map((side) => (
         <group key={`rail-${side}`}>
           <mesh position={[side * 1.02, 0.72, 0]}>

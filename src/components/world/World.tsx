@@ -115,7 +115,40 @@ function AccessPaths() {
   );
 }
 
+function BeachScatter() {
+  const { scene } = useGLTF("/models/rocks-dormin.glb");
+  const src = useMemo(() => {
+    const c = scene.clone(true);
+    enableShadows(c);
+    groundClone(c);
+    return c;
+  }, [scene]);
+  const items = useMemo(() => {
+    return [
+      [-12.6, -28],
+      [-13.2, -52],
+      [-12.4, -88],
+      [-13.0, -120],
+    ].map(([x, z], i) => ({
+      position: [x, sampleGroundHeight(x, z), z] as [number, number, number],
+      scale: 1.8 + (i % 3) * 0.25,
+      rot: i * 0.7,
+      object: src.clone(true),
+    }));
+  }, [src]);
+  return (
+    <group>
+      {items.map((r, i) => (
+        <group key={`dr-${i}`} position={r.position} rotation={[0, r.rot, 0]} scale={r.scale}>
+          <primitive object={r.object} />
+        </group>
+      ))}
+    </group>
+  );
+}
+
 useGLTF.preload("/models/rock-coast-a.glb");
+useGLTF.preload("/models/rocks-dormin.glb");
 
 export function World({ quality }: { quality: QualitySettings }) {
   return (
@@ -126,6 +159,7 @@ export function World({ quality }: { quality: QualitySettings }) {
       <Road />
       <RoadAccentProps />
       <ShoreRocks count={quality.shadows ? 7 : 5} />
+      {quality.shadows && <BeachScatter />}
       <Vegetation count={quality.treeCount} />
       <AccessPaths />
       <CoastalTown rich={quality.shadows} />

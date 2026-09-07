@@ -266,13 +266,14 @@ export function PlayerSystem() {
 
       const speedFactor = THREE.MathUtils.clamp(Math.abs(velocity.current) / MAX_SPEED, 0.42, 1);
       const turnSign = Math.sign(velocity.current || 1);
-      // Melvyn AZERTY ground truth (47d49f2 FAIL): Q = left, D = right
-      // from the driver's view. Previous signs sent Q right / D left.
+      // Player-view: Q/A = left, D = right. Camera sits behind car yaw.
+      // Facing +Z, left is −X = −yaw (Three.js Y). 182e107 had these flipped
+      // (Q increased yaw → screen-right). Analog +x follows D.
       if (analogSteer) {
-        yaw.current -= touch.x * TURN_RATE * speedFactor * turnSign * dt;
+        yaw.current += touch.x * TURN_RATE * speedFactor * turnSign * dt;
       } else {
-        if (left) yaw.current += TURN_RATE * speedFactor * turnSign * dt;
-        if (right) yaw.current -= TURN_RATE * speedFactor * turnSign * dt;
+        if (left) yaw.current -= TURN_RATE * speedFactor * turnSign * dt;
+        if (right) yaw.current += TURN_RATE * speedFactor * turnSign * dt;
       }
       tmp.current.set(Math.sin(yaw.current), 0, Math.cos(yaw.current));
       pos.current.addScaledVector(tmp.current, velocity.current * dt);
@@ -403,9 +404,10 @@ export function PlayerSystem() {
       // Authoritative basis = lookYaw (same as the chase rig). Camera world
       // direction is NOT used: a mid-lerp / in-front camera would invert W/stick.
       tmp.current.set(Math.sin(lookYaw.current), 0, Math.cos(lookYaw.current));
-      // Screen-left when facing +Z is −X. Melvyn: Q/A = left, D = right.
-      // (fwd.z, 0, −fwd.x) was the opposite basis on 47d49f2.
-      sideTmp.current.set(-tmp.current.z, 0, tmp.current.x);
+      // Right vector = up × forward. At lookYaw=0: (+X, 0, 0) = screen-right.
+      // moveX = right − left → Q/A strafe −X (left), D strafe +X (right).
+      // 182e107 used (−fwd.z, 0, fwd.x) which sent Q to +X.
+      sideTmp.current.set(tmp.current.z, 0, -tmp.current.x);
       moveTmp.current
         .set(0, 0, 0)
         .addScaledVector(tmp.current, moveZ)
@@ -541,7 +543,7 @@ export function PlayerSystem() {
     const basisYaw = mode === "driving" ? yaw.current : lookYaw.current;
     const lookFx = Math.sin(basisYaw);
     const lookFz = Math.cos(basisYaw);
-    api.live = {
+    const snap = {
       mode,
       playerPos: { x: playerPos.current.x, y: playerPos.current.y, z: playerPos.current.z },
       carPos: { x: pos.current.x, y: pos.current.y, z: pos.current.z },
@@ -556,6 +558,9 @@ export function PlayerSystem() {
       camInside: isInsideCameraOccluder(camera.position, 0.08),
       keys: { ...inputRef.current },
     };
+    api._live = snap;
+    const liveFn = Object.assign(() => snap, snap);
+    api.live = liveFn;
   }
 
   function syncCar(

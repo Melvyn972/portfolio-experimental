@@ -12,12 +12,12 @@ import {
   roadClearance,
 } from "@/lib/ground";
 
-const SAND = new THREE.Color("#cbb592");
-const WET = new THREE.Color("#b4a88c");
-const APRON = new THREE.Color("#d0ba96");
-const DIRT = new THREE.Color("#b89e78");
-const GRASS = new THREE.Color("#5f7d46");
-const ROCK = new THREE.Color("#b8aa90");
+const SAND = new THREE.Color("#d2bc96");
+const WET = new THREE.Color("#b8a888");
+const APRON = new THREE.Color("#d4be9a");
+const DIRT = new THREE.Color("#c2a478");
+const GRASS = new THREE.Color("#6a7a44");
+const ROCK = new THREE.Color("#b6a888");
 
 /**
  * Continuous coastal heightfield. Sand stays above the water sheet.

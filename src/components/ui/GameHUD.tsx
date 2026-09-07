@@ -49,6 +49,35 @@ export function GameHUD() {
       <TouchControls />
       <InteractPrompt />
       <SpeedWhisper />
+      {state.debugColliders && <AxesProof />}
+    </div>
+  );
+}
+
+function AxesProof() {
+  const [line, setLine] = useState("axes…");
+  useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      const api = (window as unknown as { __coteMelvyn?: { live?: (() => Record<string, unknown>) | Record<string, unknown> } }).__coteMelvyn;
+      const raw = api?.live;
+      const l = typeof raw === "function" ? raw() : raw;
+      if (l) {
+        const keys = (l.keys as { left?: boolean; right?: boolean; forward?: boolean }) ?? {};
+        const p = (l.playerPos as { x: number; z: number }) ?? { x: 0, z: 0 };
+        const yaw = Number(l.carYaw ?? 0);
+        setLine(
+          `${l.mode} · Q=${keys.left ? "on" : "off"} D=${keys.right ? "on" : "off"} · x=${p.x.toFixed(2)} z=${p.z.toFixed(2)} · yaw=${yaw.toFixed(3)} · look=${Number(l.lookYaw ?? 0).toFixed(2)}`,
+        );
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return (
+    <div className="absolute left-1/2 top-[4.6rem] z-30 -translate-x-1/2 rounded-sm bg-[#1c1610]/70 px-2 py-1 font-mono text-[10px] text-[#f3ead8]">
+      {line}
     </div>
   );
 }
