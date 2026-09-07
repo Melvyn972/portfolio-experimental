@@ -9,6 +9,7 @@ import {
   tryOpenCurrentInteractable,
   discoveryProgress,
   skipToPlay,
+  CHAPTERS,
 } from "@/lib/gameStore";
 import { inputRef } from "@/hooks/useKeyboard";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
@@ -47,6 +48,7 @@ export function GameHUD() {
       <TravelJournal />
       <TouchControls />
       <InteractPrompt />
+      <DiscoveryToast />
       <SpeedWhisper />
       <AxesProof />
     </div>
@@ -183,6 +185,36 @@ function TopBar() {
           Menu{done > 0 ? ` · ${done}/${total}` : ""}
         </button>
       </div>
+    </div>
+  );
+}
+
+function DiscoveryToast() {
+  const { lastFound, phase } = useGameStore();
+  const [visible, setVisible] = useState(false);
+  const [label, setLabel] = useState("");
+
+  useEffect(() => {
+    if (!lastFound || phase !== "playing") return;
+    const chapter = CHAPTERS.find((c) => c.id === lastFound);
+    setLabel(chapter?.label ?? "Page");
+    setVisible(true);
+    const t = window.setTimeout(() => {
+      setVisible(false);
+      setGameState({ lastFound: null });
+    }, 2800);
+    return () => window.clearTimeout(t);
+  }, [lastFound, phase]);
+
+  if (!visible || !label) return null;
+  return (
+    <div
+      className="absolute left-1/2 z-30 -translate-x-1/2 animate-rise"
+      style={{ top: "calc(4.6rem + env(safe-area-inset-top, 0px))" }}
+    >
+      <p className="rounded-sm border border-[#b08d57]/45 bg-[#1a120c]/72 px-3.5 py-1.5 font-display text-[12px] tracking-[0.12em] text-[#e8d4a8] shadow-[0_8px_20px_rgba(20,10,4,0.35)] backdrop-blur-sm">
+        Page trouvée · {label}
+      </p>
     </div>
   );
 }

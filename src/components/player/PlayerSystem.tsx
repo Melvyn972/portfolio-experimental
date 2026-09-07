@@ -26,11 +26,11 @@ import { isFinitePos, sanitizeWalkSpawn } from "@/lib/spawn";
 import { isInsideCameraOccluder, resolveCollisions } from "@/lib/colliders";
 import { SEA_INLAND_X } from "@/lib/sea";
 
-const MAX_SPEED = 20;
-const ACCEL = 12;
+const MAX_SPEED = 22;
+const ACCEL = 16.5;
 const BRAKE = 30;
-const DRAG = 3.4;
-const TURN_RATE = 1.65;
+const DRAG = 2.6;
+const TURN_RATE = 1.7;
 const WALK_SPEED = 3.8;
 const RUN_SPEED = 6.4;
 const EXIT_DIST = 4.8;
@@ -212,7 +212,7 @@ export function PlayerSystem() {
   }, []);
 
   useFrame((_, rawDt) => {
-    const dt = Math.min(rawDt, 0.05);
+    const dt = Math.min(rawDt, 0.1);
     const state = getGameState();
     if (state.phase === "boot") return;
 

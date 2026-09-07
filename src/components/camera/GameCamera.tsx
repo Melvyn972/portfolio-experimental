@@ -49,7 +49,7 @@ export function GameCamera() {
   const snapFrames = useRef(4);
 
   useFrame((_, rawDt) => {
-    const dt = Math.min(rawDt, 0.05);
+    const dt = Math.min(rawDt, 0.1);
     const state = getGameState();
     const mobile = state.isMobile;
     const distDrive = mobile ? CAM_DIST_DRIVE * 1.05 : CAM_DIST_DRIVE;

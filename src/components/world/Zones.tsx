@@ -254,6 +254,7 @@ export function CoastalZones() {
             position={[plage.x - 0.8, sampleGroundHeight(plage.x - 0.8, plage.z + 2.2), plage.z + 2.2]}
             scale={1.15}
           />
+          <FishingQuarter x={plage.x + 1.6} z={plage.z + 3.2} />
         </group>
       )}
 
@@ -317,6 +318,28 @@ function WoodenPier({ position, yaw }: { position: [number, number, number]; yaw
           ))}
         </group>
       ))}
+    </group>
+  );
+}
+
+function FishingQuarter({ x, z }: { x: number; z: number }) {
+  const y = sampleGroundHeight(x, z);
+  return (
+    <group position={[x, y, z]}>
+      {[
+        [0, 0, 0.55, 0.22, 0.38],
+        [0.62, 0.08, 0.42, 0.18, 0.32],
+        [-0.55, -0.12, 0.38, 0.16, 0.28],
+      ].map(([ox, oz, sx, sy, sz], i) => (
+        <mesh key={i} position={[ox, sy / 2, oz]} castShadow receiveShadow>
+          <boxGeometry args={[sx, sy, sz]} />
+          <meshStandardMaterial color={i % 2 ? "#6a4a30" : "#8a5a38"} roughness={0.82} />
+        </mesh>
+      ))}
+      <mesh position={[0.15, 0.92, -0.35]} rotation={[0, 0.4, 0.15]} castShadow>
+        <boxGeometry args={[1.15, 0.04, 0.85]} />
+        <meshStandardMaterial color="#4a5c48" roughness={0.78} />
+      </mesh>
     </group>
   );
 }

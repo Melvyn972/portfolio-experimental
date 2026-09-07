@@ -99,8 +99,13 @@ export function AmbientAudio() {
     window.addEventListener("pointerdown", resume);
     window.addEventListener("keydown", resume);
 
-    const target = muted ? 0 : phase === "boot" ? 0 : phase === "title" ? 0.38 : 0.55;
-    n.master.gain.setTargetAtTime(target, ctx.currentTime, 0.4);
+    n.master.gain.cancelScheduledValues(ctx.currentTime);
+    if (muted) {
+      n.master.gain.setValueAtTime(0, ctx.currentTime);
+    } else {
+      const target = phase === "boot" ? 0 : phase === "title" ? 0.38 : 0.55;
+      n.master.gain.setTargetAtTime(target, ctx.currentTime, 0.4);
+    }
 
     return () => {
       window.removeEventListener("pointerdown", resume);
@@ -115,7 +120,13 @@ export function AmbientAudio() {
 
     let raf = 0;
     const tick = () => {
-      const { mode, phase, speed, engineOn } = getGameState();
+      const { mode, phase, speed, engineOn, muted } = getGameState();
+      if (muted) {
+        n.engine.gain.setValueAtTime(0, ctx.currentTime);
+        n.tires.gain.setValueAtTime(0, ctx.currentTime);
+        raf = requestAnimationFrame(tick);
+        return;
+      }
       const driving = mode === "driving" && phase === "playing";
       const engineLevel = engineOn || driving ? (driving ? 0.7 + Math.min(1, speed / 22) * 0.5 : 0.35) : 0;
       n.engine.gain.setTargetAtTime(engineLevel * 0.5, ctx.currentTime, 0.25);

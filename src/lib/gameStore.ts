@@ -68,6 +68,8 @@ export interface GameState {
   journalPage: number;
   /** Relic world position — camera eases in when a chapter opens. */
   relicFocus: { x: number; y: number; z: number } | null;
+  /** Last newly found chapter — leather toast, not a white card. */
+  lastFound: ChapterId | null;
 }
 
 type Listener = () => void;
@@ -102,6 +104,7 @@ let state: GameState = {
   isMobile: false,
   journalPage: 0,
   relicFocus: null,
+  lastFound: null,
 };
 
 function shallowEqualPos(
@@ -183,7 +186,7 @@ export function setGameState(partial: Partial<GameState>) {
 
 export function markDiscovered(id: ChapterId) {
   if (state.discovered[id]) return;
-  setGameState({ discovered: { [id]: true } });
+  setGameState({ discovered: { [id]: true }, lastFound: id });
 }
 
 export function openChapter(id: ChapterId | null) {
@@ -226,6 +229,7 @@ export function startJourney() {
     openChapter: null,
     rescueOpen: false,
     relicFocus: null,
+    lastFound: null,
   });
 }
 
@@ -239,6 +243,7 @@ export function skipToPlay() {
     openChapter: null,
     rescueOpen: false,
     relicFocus: null,
+    lastFound: null,
   });
 }
 
