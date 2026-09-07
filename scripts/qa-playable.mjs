@@ -20,7 +20,7 @@ async function waitApi(page) {
 }
 
 async function boot(page) {
-  await page.goto("http://127.0.0.1:3000/?quality=eco", { waitUntil: "domcontentloaded", timeout: 120000 });
+  await page.goto("http://127.0.0.1:3000/?quality=high", { waitUntil: "domcontentloaded", timeout: 120000 });
   await waitApi(page);
   await page.evaluate(() =>
     window.__coteMelvyn.setState({
@@ -30,14 +30,14 @@ async function boot(page) {
       loadStage: 3,
       showExplorerHint: false,
       isMobile: false,
-      quality: "eco",
+      quality: "high",
       muted: true,
       openChapter: null,
       rescueOpen: false,
     }),
   );
   await page.waitForSelector("canvas", { timeout: 60000 });
-  await page.waitForTimeout(2800);
+  await page.waitForTimeout(4500);
 }
 
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
@@ -118,7 +118,7 @@ const shots = [
 
 for (const [t, name] of shots) {
   await page.evaluate((tt) => window.__coteMelvyn.teleportDrive(tt), t);
-  await page.waitForTimeout(2200);
+  await page.waitForTimeout(7000);
   await page.screenshot({ path: `${out}/${name}.png`, timeout: 90000, animations: "disabled" });
   const live = await page.evaluate(() => {
     const l = typeof window.__coteMelvyn.live === "function" ? window.__coteMelvyn.live() : window.__coteMelvyn.live;
@@ -143,7 +143,7 @@ await dbg.evaluate(() =>
   }),
 );
 await dbg.waitForTimeout(2400);
-const debugOn = await dbg.evaluate(() => document.body.innerText.includes("screenDeltaX"));
+const debugOn = await dbg.evaluate(() => /screenDeltaX|steerYawDelta|axes/.test(document.body.innerText));
 await dbg.screenshot({ path: `${out}/debug_flag_on.png`, timeout: 90000, animations: "disabled" });
 console.log("DEBUG_FLAG", debugOn);
 console.log("PAGE_ERRORS", errors.slice(0, 8));

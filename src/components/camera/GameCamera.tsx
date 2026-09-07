@@ -44,6 +44,7 @@ export function GameCamera() {
   const dist = useRef(CAM_DIST_DRIVE);
   const started = useRef(false);
   const lastMode = useRef(getGameState().mode);
+  const lastSubject = useRef(new THREE.Vector3(Infinity, 0, 0));
   const snapFrames = useRef(4);
 
   useFrame((_, rawDt) => {
@@ -109,7 +110,7 @@ export function GameCamera() {
     const walking = state.mode === "walking";
     if (lastMode.current !== state.mode) {
       lastMode.current = state.mode;
-      snapFrames.current = 4;
+      snapFrames.current = 8;
     }
     const subject = walking ? state.playerPos : state.carPos;
     if (!Number.isFinite(subject.x) || !Number.isFinite(subject.y) || !Number.isFinite(subject.z)) {
@@ -117,6 +118,8 @@ export function GameCamera() {
     }
     if (walking) _subject.set(subject.x, subject.y + 1.35, subject.z);
     else _subject.set(subject.x, subject.y + 0.9, subject.z);
+    if (lastSubject.current.distanceTo(_subject) > 3.5) snapFrames.current = 10;
+    lastSubject.current.copy(_subject);
 
     const yaw = walking ? state.lookYaw : state.carYaw;
     const pitch = walking ? state.lookPitch : 0.08;
@@ -186,9 +189,9 @@ export function GameCamera() {
       );
     } else {
       _lookTarget.set(
-        _subject.x + Math.sin(yaw) * 6,
-        _subject.y + 0.2,
-        _subject.z + Math.cos(yaw) * 6,
+        _subject.x + Math.sin(yaw) * 14,
+        _subject.y + 0.55,
+        _subject.z + Math.cos(yaw) * 14,
       );
     }
 
