@@ -56,28 +56,39 @@ export function GameCamera() {
     const hDrive = mobile ? CAM_HEIGHT_DRIVE * 1.05 : CAM_HEIGHT_DRIVE;
     const hWalk = mobile ? CAM_HEIGHT_WALK * 0.95 : CAM_HEIGHT_WALK;
 
-    if (state.phase === "boot") {
-      camera.position.set(32, 24, 58);
-      camera.lookAt(-8, 0, -20);
+    if (state.phase === "boot" || state.phase === "title") {
+      camera.position.set(-26, 28, 12);
+      camera.lookAt(-10, 0.2, -55);
+      current.current.copy(camera.position);
+      look.current.set(-10, 0.2, -55);
+      introT.current = 0;
+      started.current = false;
       return;
     }
 
     if (state.phase === "intro") {
-      introT.current = Math.min(1, introT.current + dt * 0.18);
+      introT.current = Math.min(1, introT.current + dt * 0.11);
       const t = easeInOut(introT.current);
-      _start.set(36, 26, 62);
-      _mid.set(14, 14, 28);
+      // Aerial over the sea → travel the coast → descend on the roadster.
+      _start.set(-26, 28, 12);
+      _mid.set(-16, 16, -48);
       offsetPos(_end, START_POSE.position, Math.atan2(START_POSE.tangent.x, START_POSE.tangent.z), 0.12, distDrive, hDrive, 0.42);
-      _a.copy(_start).lerp(_mid, Math.min(1, t * 1.4));
-      _b.copy(_mid).lerp(_end, Math.max(0, (t - 0.35) / 0.65));
-      const pos = t < 0.45 ? _a : _b;
-      _lookA.set(-12, 0.5, -30);
-      _lookB.copy(START_POSE.position).add(_a.set(0, 0.8, 0));
-      look.current.lerpVectors(_lookA, _lookB, t);
-      current.current.lerp(pos, 0.08);
+      if (t < 0.42) {
+        current.current.lerpVectors(_start, _mid, t / 0.42);
+        look.current.lerpVectors(_lookA.set(-18, 0.1, -40), _lookB.set(-8, 0.4, -90), t / 0.42);
+      } else if (t < 0.78) {
+        const u = (t - 0.42) / 0.36;
+        current.current.lerpVectors(_mid, _a.set(4, 9, 40), u);
+        look.current.lerpVectors(_lookB.set(-8, 0.4, -90), START_POSE.position.clone().setY(1.1), u);
+      } else {
+        const u = (t - 0.78) / 0.22;
+        current.current.lerpVectors(_a.set(4, 9, 40), _end, u);
+        look.current.lerp(START_POSE.position.clone().setY(0.85), u);
+      }
       camera.position.copy(current.current);
       camera.lookAt(look.current);
       if (introT.current >= 1 && !started.current) started.current = true;
+      snapFrames.current = 10;
       return;
     }
 

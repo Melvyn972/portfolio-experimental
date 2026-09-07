@@ -109,7 +109,7 @@ export function CoastalZones() {
 
   const fences = useMemo(() => {
     const curve = getRoadCurve();
-    return [0.28, 0.45, 0.72].map((t, i) => {
+    return [0.12, 0.2, 0.28].map((t, i) => {
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();

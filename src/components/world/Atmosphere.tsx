@@ -96,7 +96,7 @@ export function RoadAccentProps() {
   const { scene } = useGLTF("/models/lamp.glb");
   const props = useMemo(() => {
     const curve = getRoadCurve();
-    return [0.18, 0.35, 0.55, 0.7, 0.85].map((t) => {
+    return [0.08, 0.16, 0.24, 0.32].map((t) => {
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();

@@ -83,7 +83,7 @@ export function Vegetation({ count = 60 }: { count?: number }) {
       const pos = p.clone().addScaledVector(side, dist);
       // Never plant in the sea ( Melvyn QA: floating pink shards over water )
       if (pos.x < -8.5) continue;
-      if (Math.abs(nearestRoadSample(pos).lateral) < ROAD_WIDTH * 0.5 + 6.2) continue;
+      if (Math.abs(nearestRoadSample(pos).lateral) < ROAD_WIDTH * 0.5 + 8.4) continue;
       pos.y = sampleGroundHeight(pos.x, pos.z);
       let type: TreeType = "pine";
       if (!cliffSide) type = i % 3 === 0 ? "bougainvillea" : "pine";
@@ -112,7 +112,7 @@ export function Vegetation({ count = 60 }: { count?: number }) {
         .addScaledVector(bel.side, -4.2 - (i % 2) * 1.1)
         .addScaledVector(bel.tangent, (i - 2) * 1.8);
       if (pos.x < -9.5) continue;
-      if (Math.abs(nearestRoadSample(pos).lateral) < ROAD_WIDTH * 0.5 + 6.2) continue;
+      if (Math.abs(nearestRoadSample(pos).lateral) < ROAD_WIDTH * 0.5 + 8.4) continue;
       items.push({
         type: i % 2 === 0 ? "bougainvillea" : "pine",
         position: [pos.x, sampleGroundHeight(pos.x, pos.z), pos.z],

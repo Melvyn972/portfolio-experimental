@@ -240,7 +240,7 @@ export function PlayerSystem() {
       });
     }
 
-    if (state.phase === "intro" || state.openChapter !== null) {
+    if (state.phase === "intro" || state.phase === "title" || state.openChapter !== null) {
       syncCar(pos.current, yaw.current, suspension.current, 0);
       return;
     }

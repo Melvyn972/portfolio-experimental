@@ -74,7 +74,7 @@ export function CoastalTown({ rich = true }: { rich?: boolean }) {
 
   const lamps = useMemo(() => {
     const curve = getRoadCurve();
-    return [0.1, 0.22, 0.34, 0.48, 0.62, 0.76, 0.88].map((t) => {
+    return [0.07, 0.14, 0.21, 0.28].map((t) => {
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
@@ -88,7 +88,7 @@ export function CoastalTown({ rich = true }: { rich?: boolean }) {
 
   const parked = useMemo(() => {
     const curve = getRoadCurve();
-    return [0.2, 0.4, 0.58, 0.78].map((t, i) => {
+    return [0.1, 0.18, 0.26].map((t, i) => {
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();

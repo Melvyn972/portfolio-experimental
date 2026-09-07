@@ -35,7 +35,7 @@ export function WorldColliders() {
       <RigidBody type="fixed" colliders={false} position={[38, 4, -70]}>
         <CuboidCollider args={[1, 10, 140]} />
       </RigidBody>
-      <RigidBody type="fixed" colliders={false} position={[0, 4, 58]}>
+      <RigidBody type="fixed" colliders={false} position={[0, 4, 74]}>
         <CuboidCollider args={[50, 10, 1]} />
       </RigidBody>
       <RigidBody type="fixed" colliders={false} position={[0, 4, -204]}>

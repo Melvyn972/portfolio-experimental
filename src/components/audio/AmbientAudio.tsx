@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useGameStore } from "@/hooks/useGameStore";
-import { setGameState, getGameState } from "@/lib/gameStore";
+import { setGameState, getGameState, skipToPlay } from "@/lib/gameStore";
 
 /**
  * Procedural ambient audio via Web Audio API —
@@ -99,7 +99,7 @@ export function AmbientAudio() {
     window.addEventListener("pointerdown", resume);
     window.addEventListener("keydown", resume);
 
-    const target = muted ? 0 : phase === "boot" ? 0 : 0.55;
+    const target = muted ? 0 : phase === "boot" ? 0 : phase === "title" ? 0.38 : 0.55;
     n.master.gain.setTargetAtTime(target, ctx.currentTime, 0.4);
 
     return () => {
@@ -183,15 +183,27 @@ export function IntroDirector() {
 
   useEffect(() => {
     if (phase !== "intro" || done.current) return;
-    const engineAt = window.setTimeout(() => setGameState({ engineOn: true }), 4200);
+    let skipBound = false;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      done.current = true;
+      skipToPlay();
+    };
+    const engineAt = window.setTimeout(() => setGameState({ engineOn: true }), 6200);
     const playAt = window.setTimeout(() => {
       done.current = true;
       setGameState({ phase: "playing", engineOn: true, showExplorerHint: true });
-      window.setTimeout(() => setGameState({ showExplorerHint: false }), 3800);
-    }, 5600);
+      window.setTimeout(() => setGameState({ showExplorerHint: false }), 4200);
+    }, 9200);
+    const skipAt = window.setTimeout(() => {
+      skipBound = true;
+      window.addEventListener("keydown", onKey);
+    }, 500);
     return () => {
       clearTimeout(engineAt);
       clearTimeout(playAt);
+      clearTimeout(skipAt);
+      if (skipBound) window.removeEventListener("keydown", onKey);
     };
   }, [phase]);
 

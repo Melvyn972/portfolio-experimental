@@ -5,8 +5,8 @@ import { content } from "@/lib/content";
 /** Visual bounds — sand runs under the sea sheet so driving view never shows a white void. */
 export const TERRAIN_MIN_X = -28;
 export const TERRAIN_MAX_X = 70;
-export const TERRAIN_MIN_Z = -200;
-export const TERRAIN_MAX_Z = 80;
+export const TERRAIN_MIN_Z = -220;
+export const TERRAIN_MAX_Z = 90;
 
 /** Flat sand under the asphalt and past the lip — no trench, no vertical cut. */
 export const ROAD_SAND_APRON = ROAD_WIDTH * 0.5 + 1.85;
@@ -78,9 +78,10 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
   {
     const pdx = x - -16;
     const pdz = z - -172;
-    if (pdx * pdx + pdz * pdz < 90) {
-      const falloff = 1 - Math.sqrt(pdx * pdx + pdz * pdz) / 9.5;
-      y = Math.max(y, 0.35 + falloff * 1.4);
+    // Mound only on the sea rock — never in the drive windshield.
+    if (x < -11 && pdx * pdx + pdz * pdz < 64) {
+      const falloff = 1 - Math.sqrt(pdx * pdx + pdz * pdz) / 8;
+      y = Math.max(y, 0.28 + falloff * 0.9);
     }
   }
   if (x < -14 && z < -85 && z > -110) y = Math.min(y, 0.2);
@@ -88,7 +89,7 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
   for (const zone of content.zones.zones) {
     const ddx = x - zone.marker.x;
     const ddz = z - zone.marker.z;
-    const r = zone.id === "phare" ? 14 : zone.id === "plage" ? 16 : 12;
+    const r = zone.id === "phare" ? 8 : zone.id === "plage" ? 16 : 12;
     if (ddx * ddx + ddz * ddz >= r * r) continue;
     // Belvedere marker.y = 1.2 over a 12 m disc lifted the beach into a floating mesa.
     if (zone.id === "belvedere") continue;
@@ -99,6 +100,7 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
       y = Math.max(y, 0.1);
       continue;
     }
+    if (zone.id === "phare" && (x > -11 || roadDist < 12)) continue;
     if (lat < -1.2 && zone.id !== "phare") continue;
     y = Math.max(y, zone.marker.y);
   }
@@ -111,10 +113,10 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
 
   // Drive corridor: nothing taller than a low shoulder. Zone / plaza lifts
   // were building a dirt wall in the windshield (Melvyn HARD FAIL).
-  const driveFlat = ROAD_WIDTH * 0.5 + 7.2;
+  const driveFlat = ROAD_WIDTH * 0.5 + 9.2;
   if (roadDist < driveFlat) {
-    const t = THREE.MathUtils.clamp((roadDist - ROAD_WIDTH * 0.5 - 0.25) / 6.9, 0, 1);
-    const cap = sandBedY(roadY) + t * t * 0.32;
+    const t = THREE.MathUtils.clamp((roadDist - ROAD_WIDTH * 0.5 - 0.2) / 8.8, 0, 1);
+    const cap = sandBedY(roadY) + t * t * 0.2;
     if (y > cap) y = cap;
   }
   if (roadDist < ROAD_WIDTH * 0.5 + 0.28) {
@@ -178,8 +180,8 @@ export function accessCorridors(): { width: number; pts: { x: number; z: number;
     {
       width: 11,
       pts: [
-        { x: 5.2, z: -36, y: 0.42 },
-        { x: 10.5, z: -37, y: 1.15 },
+        { x: 13.2, z: -36, y: 0.85 },
+        { x: 15.2, z: -37, y: 1.35 },
         { x: 16, z: -37, y: 1.62 },
         { x: 16, z: -46, y: 1.62 },
       ],
@@ -187,8 +189,8 @@ export function accessCorridors(): { width: number; pts: { x: number; z: number;
     {
       width: 11,
       pts: [
-        { x: 5.4, z: -114, y: 0.55 },
-        { x: 11, z: -114, y: 1.2 },
+        { x: 13.4, z: -114, y: 0.9 },
+        { x: 15.4, z: -114, y: 1.4 },
         { x: 18, z: -113, y: 1.82 },
         { x: 18, z: -122, y: 1.82 },
       ],

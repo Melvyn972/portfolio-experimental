@@ -20,7 +20,7 @@ void main() {
   vUv = uv;
   vDeep = 1.0 - uv.x;
   vec3 pos = position;
-  float amp = vDeep * vDeep * 0.045;
+  float amp = vDeep * vDeep * 0.07;
   pos.z += sin(pos.y * 0.12 + uTime * 0.48) * amp;
   pos.z += cos(pos.y * 0.07 + pos.x * 0.05 + uTime * 0.28) * amp * 0.5;
   vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
@@ -44,6 +44,8 @@ void main() {
   col = mix(col, shore, smoothstep(0.78, 1.0, vUv.x));
   float sparkle = pow(max(0.0, sin(vUv.y * 28.0) * cos(vUv.x * 18.0)), 18.0);
   col += vec3(0.06, 0.07, 0.06) * sparkle * vDeep * 0.22;
+  float foam = smoothstep(0.88, 1.0, vUv.x) * (0.45 + 0.25 * sin(vUv.y * 40.0));
+  col = mix(col, vec3(0.86, 0.88, 0.84), foam * 0.55);
   col *= 0.90 + 0.08 * (1.0 - vDeep);
   gl_FragColor = vec4(col, 1.0);
   #include <fog_fragment>

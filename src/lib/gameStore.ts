@@ -5,7 +5,7 @@ import { isFinitePos, sanitizeWalkSpawn, zoneWalkSpawns } from "@/lib/spawn";
 import { chapterForInteractableId, interactableForChapter } from "@/lib/interaction";
 import { inputRef } from "@/hooks/useKeyboard";
 
-export type GamePhase = "boot" | "intro" | "playing";
+export type GamePhase = "boot" | "title" | "intro" | "playing";
 export type ControlMode = "driving" | "walking";
 export type QualityPreset = "auto" | "high" | "eco";
 
@@ -63,6 +63,8 @@ export interface GameState {
   loadStage: number;
   debugColliders: boolean;
   isMobile: boolean;
+  /** Page inside the open travel journal (0-based). */
+  journalPage: number;
 }
 
 type Listener = () => void;
@@ -95,6 +97,7 @@ let state: GameState = {
   loadStage: 0,
   debugColliders: false,
   isMobile: false,
+  journalPage: 0,
 };
 
 function shallowEqualPos(
@@ -164,7 +167,43 @@ export function markDiscovered(id: ChapterId) {
 
 export function openChapter(id: ChapterId | null) {
   if (id) markDiscovered(id);
-  setGameState({ openChapter: id, rescueOpen: false, prompt: null });
+  setGameState({ openChapter: id, rescueOpen: false, prompt: null, journalPage: 0 });
+}
+
+const VOYAGE_KEY = "cote-melvyn-voyage";
+
+export function hasVoyagedBefore() {
+  try {
+    return window.localStorage.getItem(VOYAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function markVoyaged() {
+  try {
+    window.localStorage.setItem(VOYAGE_KEY, "1");
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+/** Black-title CTA → aerial cinematic. */
+export function startJourney() {
+  markVoyaged();
+  setGameState({ phase: "intro", engineOn: false, showExplorerHint: false, openChapter: null, rescueOpen: false });
+}
+
+/** Escape / Passer — never soft-locks a returning visitor. */
+export function skipToPlay() {
+  markVoyaged();
+  setGameState({
+    phase: "playing",
+    engineOn: true,
+    showExplorerHint: true,
+    openChapter: null,
+    rescueOpen: false,
+  });
 }
 
 /** Open the in-range chapter now — do not wait for the physics frame (1 fps / SwiftShader). */
@@ -241,6 +280,8 @@ if (typeof window !== "undefined") {
       setKeys: (partial: Partial<import("@/hooks/useKeyboard").InputState>) => void;
       enterCar: () => void;
       teleportDrive: (t?: number) => void;
+      startJourney: () => void;
+      skipToPlay: () => void;
       live?: {
         mode: string;
         playerPos: { x: number; y: number; z: number };
@@ -322,6 +363,8 @@ if (typeof window !== "undefined") {
     teleportDrive: (t = 0.08) => {
       window.dispatchEvent(new CustomEvent("cote:teleport-drive", { detail: { t } }));
     },
+    startJourney,
+    skipToPlay,
     belvedereAnchor: () => {
       const a = getBelvedereWorldAnchor();
       return {

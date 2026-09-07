@@ -9,6 +9,8 @@ import { CoastalZones } from "./Zones";
 import { CoastalTown } from "./CoastalTown";
 import { Atmosphere, RoadAccentProps } from "./Atmosphere";
 import { DebugColliders } from "./DebugColliders";
+import { LivingWorld } from "./LivingWorld";
+import { DiscoveryRelics } from "./DiscoveryRelics";
 import type { QualitySettings } from "@/lib/quality";
 import { useMemo } from "react";
 import * as THREE from "three";
@@ -31,12 +33,12 @@ function ShoreRocks({ count }: { count: number }) {
     const curve = getRoadCurve();
     const n = Math.max(4, Math.min(6, count));
     return Array.from({ length: n }, (_, i) => {
-      const t = 0.18 + (i / Math.max(1, n - 1)) * 0.58;
+      const t = 0.06 + (i / Math.max(1, n - 1)) * 0.28;
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-      const pos = p.clone().addScaledVector(side, -13.4 - (i % 2) * 0.45);
-      pos.x = Math.min(pos.x, -13.0);
+      const pos = p.clone().addScaledVector(side, -15.6 - (i % 2) * 0.4);
+      pos.x = Math.min(pos.x, -16.2);
       pos.y = sampleGroundHeight(pos.x, pos.z);
       return {
         position: [pos.x, pos.y, pos.z] as [number, number, number],
@@ -125,10 +127,10 @@ function BeachScatter() {
   }, [scene]);
   const items = useMemo(() => {
     return [
-      [-12.6, -28],
-      [-13.2, -52],
-      [-12.4, -88],
-      [-13.0, -120],
+      [-16.4, -28],
+      [-16.8, -72],
+      [-16.2, -120],
+      [-16.6, -168],
     ].map(([x, z], i) => ({
       position: [x, sampleGroundHeight(x, z), z] as [number, number, number],
       scale: 1.8 + (i % 3) * 0.25,
@@ -165,6 +167,8 @@ export function World({ quality }: { quality: QualitySettings }) {
       <CoastalTown rich={quality.shadows} />
       <Belvedere />
       <CoastalZones />
+      <DiscoveryRelics />
+      <LivingWorld rich={quality.dust} />
       <DebugColliders />
     </group>
   );

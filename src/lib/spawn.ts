@@ -20,7 +20,7 @@ export function isFinitePos(p: { x?: unknown; y?: unknown; z?: unknown } | null 
 export function sanitizeWalkSpawn(raw: { x?: unknown; y?: unknown; z?: unknown; yaw?: unknown }): WalkSpawn | null {
   if (!finite(raw.x) || !finite(raw.z)) return null;
   const x = THREE.MathUtils.clamp(raw.x, -27, 31);
-  const z = THREE.MathUtils.clamp(raw.z, -194, 49);
+  const z = THREE.MathUtils.clamp(raw.z, -198, 64);
   let y = sampleGroundHeight(x, z);
   if (!finite(y)) y = 0.2;
   y = THREE.MathUtils.clamp(y, -0.2, 8);

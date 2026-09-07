@@ -25,7 +25,7 @@ function Scene({ isMobile }: { isMobile: boolean }) {
       <GameCamera />
       <World quality={quality} />
       <WorldColliders />
-      {(phase === "playing" || phase === "intro") && <PlayerSystem />}
+      {(phase === "playing" || phase === "intro" || phase === "title") && <PlayerSystem />}
       <PostFX enabled={quality.postfx} ao={quality.shadows && !isMobile} />
       <ProgressiveLoader />
     </PhysicsWorld>
@@ -64,7 +64,7 @@ export function ExperienceCanvas() {
 
   useEffect(() => {
     const t = window.setTimeout(() => {
-      if (getGameState().phase === "boot") setGameState({ phase: "intro" });
+      if (getGameState().phase === "boot") setGameState({ phase: "title" });
     }, 500);
     return () => clearTimeout(t);
   }, []);

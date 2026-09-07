@@ -22,7 +22,7 @@ export function getInteractables(): Interactable[] {
     {
       id: "carnet",
       chapter: "identity",
-      label: "Consulter le carnet",
+      label: "Ouvrir le carnet",
       position: bel.terrace.clone().setY(1.2),
       radius: 3.8,
       walkingOnly: true,
@@ -35,7 +35,7 @@ export function getInteractables(): Interactable[] {
       {
         id: "maison-parcours",
         chapter: "parcours",
-        label: "Parcours",
+        label: "Plans de carrière",
         position: new THREE.Vector3(MAISON_PORCH.x, maison.y + 0.15, MAISON_PORCH.z),
         radius: 7.2,
         walkingOnly: true,
@@ -43,7 +43,7 @@ export function getInteractables(): Interactable[] {
       {
         id: "maison-xp",
         chapter: "experiences",
-        label: "Expériences",
+        label: "Montre — le temps",
         position: new THREE.Vector3(maison.x - 2, maison.y + 1, maison.z + 4.0),
         radius: 3.0,
         walkingOnly: true,
@@ -51,7 +51,7 @@ export function getInteractables(): Interactable[] {
       {
         id: "maison-skills",
         chapter: "competences",
-        label: "Compétences",
+        label: "Ouvrir l’ordinateur",
         position: new THREE.Vector3(maison.x + 5, maison.y + 1, maison.z + 3.5),
         radius: 3.0,
         walkingOnly: true,
@@ -64,7 +64,7 @@ export function getInteractables(): Interactable[] {
     list.push({
       id: "studio-projets",
       chapter: "projets",
-      label: "Voir les projets",
+      label: "Feuilleter le carnet de croquis",
       position: new THREE.Vector3(studio.x, studio.y + 1, studio.z + 3.8),
       radius: 3.5,
       walkingOnly: true,
@@ -76,9 +76,17 @@ export function getInteractables(): Interactable[] {
     list.push({
       id: "plage-passions",
       chapter: "passions",
-      label: "Passions",
+      label: "Appareil photo",
       position: new THREE.Vector3(plage.x, 0.4, plage.z),
-      radius: 5,
+      radius: 4.2,
+      walkingOnly: true,
+    });
+    list.push({
+      id: "plage-helmet",
+      chapter: "passions",
+      label: "Casque moto",
+      position: new THREE.Vector3(plage.x + 2.4, 0.35, plage.z + 1.6),
+      radius: 3.4,
       walkingOnly: true,
     });
   }
@@ -89,7 +97,7 @@ export function getInteractables(): Interactable[] {
       {
         id: "phare-activite",
         chapter: "activite",
-        label: "Activité",
+        label: "Lanternes — l’activité",
         position: new THREE.Vector3(phare.x + 2.5, phare.y + 0.5, phare.z + 2),
         radius: 3.5,
         walkingOnly: true,
@@ -97,7 +105,7 @@ export function getInteractables(): Interactable[] {
       {
         id: "phare-cv",
         chapter: "cv",
-        label: "CV",
+        label: "Enveloppe du CV",
         position: new THREE.Vector3(phare.x, phare.y + 0.5, phare.z + 2.2),
         radius: 3.2,
         walkingOnly: true,
@@ -105,7 +113,7 @@ export function getInteractables(): Interactable[] {
       {
         id: "phare-contact",
         chapter: "contact",
-        label: "Contact",
+        label: "Lire la plaque",
         position: new THREE.Vector3(phare.x - 2.2, phare.y + 0.5, phare.z + 1.8),
         radius: 3.2,
         walkingOnly: true,

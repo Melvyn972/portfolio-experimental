@@ -7,7 +7,7 @@ import { useCoastalPbr } from "@/lib/pbrTextures";
 
 /** Top-face overlay only — sits on the sand bed. No slab, no walls, no berms. */
 const ASPHALT_HALF = ROAD_WIDTH / 2 + 0.12;
-const SEGMENTS = 220;
+const SEGMENTS = 320;
 
 function makeAsphaltTexture() {
   const s = 64;
