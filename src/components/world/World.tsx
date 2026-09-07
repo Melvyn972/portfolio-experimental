@@ -6,42 +6,53 @@ import { Terrain } from "./Terrain";
 import { Vegetation } from "./Vegetation";
 import { Belvedere } from "./Belvedere";
 import { CoastalZones } from "./Zones";
+import { CoastalTown } from "./CoastalTown";
 import { Atmosphere, RoadAccentProps } from "./Atmosphere";
 import { DebugColliders } from "./DebugColliders";
 import type { QualitySettings } from "@/lib/quality";
 import { useMemo } from "react";
 import * as THREE from "three";
+import { useGLTF } from "@react-three/drei";
 import { getRoadCurve, nearestRoadSample, ROAD_WIDTH } from "@/lib/road";
 import { accessCorridors, sampleGroundHeight } from "@/lib/ground";
+import { enableShadows, groundClone } from "@/lib/gltfFit";
 
-/** Rounded coastal boulders — not dodecahedron shards, not uncentered GLBs. */
+/** Poly Haven coast rocks — grounded, not procedural spheres. */
 function ShoreRocks({ count }: { count: number }) {
+  const { scene } = useGLTF("/models/rock-coast-a.glb");
+  const src = useMemo(() => {
+    const c = scene.clone(true);
+    enableShadows(c);
+    groundClone(c);
+    return c;
+  }, [scene]);
+
   const items = useMemo(() => {
     const curve = getRoadCurve();
-    const n = Math.max(4, Math.min(7, count));
+    const n = Math.max(4, Math.min(6, count));
     return Array.from({ length: n }, (_, i) => {
       const t = 0.18 + (i / Math.max(1, n - 1)) * 0.58;
       const p = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-      const pos = p.clone().addScaledVector(side, -13.6 - (i % 2) * 0.5);
-      pos.x = Math.min(pos.x, -13.2);
+      const pos = p.clone().addScaledVector(side, -13.4 - (i % 2) * 0.45);
+      pos.x = Math.min(pos.x, -13.0);
+      pos.y = sampleGroundHeight(pos.x, pos.z);
       return {
-        position: [pos.x, sampleGroundHeight(pos.x, pos.z) + 0.05, pos.z] as [number, number, number],
-        scale: [1.15 + (i % 3) * 0.12, 0.48 + (i % 2) * 0.06, 0.98 + (i % 3) * 0.1] as [number, number, number],
-        rot: i * 0.7,
-        color: i % 2 === 0 ? "#c6b89e" : "#b8a88c",
+        position: [pos.x, pos.y, pos.z] as [number, number, number],
+        scale: 1.35 + (i % 3) * 0.18,
+        rot: i * 0.85,
+        object: src.clone(true),
       };
     });
-  }, [count]);
+  }, [count, src]);
 
   return (
     <group>
       {items.map((r, i) => (
-        <mesh key={i} position={r.position} rotation={[0, r.rot, 0]} scale={r.scale} castShadow receiveShadow>
-          <sphereGeometry args={[0.7, 7, 5]} />
-          <meshStandardMaterial color={r.color} roughness={0.94} flatShading={false} />
-        </mesh>
+        <group key={i} position={r.position} rotation={[0, r.rot, 0]} scale={r.scale}>
+          <primitive object={r.object} />
+        </group>
       ))}
     </group>
   );
@@ -104,6 +115,8 @@ function AccessPaths() {
   );
 }
 
+useGLTF.preload("/models/rock-coast-a.glb");
+
 export function World({ quality }: { quality: QualitySettings }) {
   return (
     <group>
@@ -115,6 +128,7 @@ export function World({ quality }: { quality: QualitySettings }) {
       <ShoreRocks count={quality.shadows ? 7 : 5} />
       <Vegetation count={quality.treeCount} />
       <AccessPaths />
+      <CoastalTown rich={quality.shadows} />
       <Belvedere />
       <CoastalZones />
       <DebugColliders />

@@ -266,13 +266,13 @@ export function PlayerSystem() {
 
       const speedFactor = THREE.MathUtils.clamp(Math.abs(velocity.current) / MAX_SPEED, 0.42, 1);
       const turnSign = Math.sign(velocity.current || 1);
-      // Same yaw convention as look: +yaw = right (toward +X when facing +Z).
-      // A / stick left decreases yaw. D / stick right increases yaw.
+      // Melvyn AZERTY ground truth (47d49f2 FAIL): Q = left, D = right
+      // from the driver's view. Previous signs sent Q right / D left.
       if (analogSteer) {
-        yaw.current += touch.x * TURN_RATE * speedFactor * turnSign * dt;
+        yaw.current -= touch.x * TURN_RATE * speedFactor * turnSign * dt;
       } else {
-        if (left) yaw.current -= TURN_RATE * speedFactor * turnSign * dt;
-        if (right) yaw.current += TURN_RATE * speedFactor * turnSign * dt;
+        if (left) yaw.current += TURN_RATE * speedFactor * turnSign * dt;
+        if (right) yaw.current -= TURN_RATE * speedFactor * turnSign * dt;
       }
       tmp.current.set(Math.sin(yaw.current), 0, Math.cos(yaw.current));
       pos.current.addScaledVector(tmp.current, velocity.current * dt);
@@ -305,12 +305,12 @@ export function PlayerSystem() {
 
       const ahead = sampleRoad(THREE.MathUtils.clamp(sample.t + 0.012, 0, 1));
       const pitch = Math.atan2(ahead.position.y - sample.position.y, 2.2) * 0.9;
-      const roll = ((left ? 1 : 0) - (right ? 1 : 0)) * 0.06;
+      const roll = ((right ? 1 : 0) - (left ? 1 : 0)) * 0.06;
 
       syncCar(pos.current, yaw.current, suspension.current, pitch, roll);
       if (carVisual.current) {
         carVisual.current.userData.setWheelSpin?.(velocity.current * dt * 3.15);
-        const steerAmt = analogSteer ? -touch.x * 0.42 : ((left ? 1 : 0) - (right ? 1 : 0)) * 0.42;
+        const steerAmt = analogSteer ? touch.x * 0.42 : ((right ? 1 : 0) - (left ? 1 : 0)) * 0.42;
         carVisual.current.userData.setSteer?.(steerAmt);
       }
 
@@ -403,7 +403,9 @@ export function PlayerSystem() {
       // Authoritative basis = lookYaw (same as the chase rig). Camera world
       // direction is NOT used: a mid-lerp / in-front camera would invert W/stick.
       tmp.current.set(Math.sin(lookYaw.current), 0, Math.cos(lookYaw.current));
-      sideTmp.current.set(tmp.current.z, 0, -tmp.current.x);
+      // Screen-left when facing +Z is −X. Melvyn: Q/A = left, D = right.
+      // (fwd.z, 0, −fwd.x) was the opposite basis on 47d49f2.
+      sideTmp.current.set(-tmp.current.z, 0, tmp.current.x);
       moveTmp.current
         .set(0, 0, 0)
         .addScaledVector(tmp.current, moveZ)
