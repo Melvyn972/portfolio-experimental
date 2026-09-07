@@ -9,7 +9,7 @@ export function PostFX({ enabled, ao = false }: { enabled: boolean; ao?: boolean
       <N8AO enabled={ao} aoRadius={1.6} intensity={0.95} quality="performance" halfRes />
       <Bloom luminanceThreshold={0.86} mipmapBlur intensity={0.22} radius={0.42} />
       <HueSaturation saturation={0.08} />
-      <BrightnessContrast brightness={0.016} contrast={0.05} />
+      <BrightnessContrast brightness={-0.02} contrast={0.08} />
       <Vignette eskil={false} offset={0.24} darkness={0.3} />
     </EffectComposer>
   );

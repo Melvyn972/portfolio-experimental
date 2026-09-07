@@ -68,9 +68,9 @@ export function useCoastalPbr(anisotropy = 4): CoastalPbr {
       map: prep(maps.terraDiff, 1.8, anisotropy),
       roughnessMap: prepLinear(maps.terraRough, 1.8, anisotropy),
     },
-      asphalt: {
-      map: prep(maps.asphaltDiff, 6, anisotropy),
-      roughnessMap: prepLinear(maps.asphaltRough, 6, anisotropy),
+    asphalt: {
+      map: prep(maps.asphaltDiff, 10, anisotropy),
+      roughnessMap: prepLinear(maps.asphaltRough, 10, anisotropy),
     },
   }), [maps, anisotropy]);
 }

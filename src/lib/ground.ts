@@ -2,11 +2,11 @@ import * as THREE from "three";
 import { nearestRoadSample, getBelvedereWorldAnchor, ROAD_WIDTH, ROAD_SURFACE_LIFT } from "@/lib/road";
 import { content } from "@/lib/content";
 
-/** Visual bounds — sand overlaps the water sheet by ~1 m from above (no underside gap). */
-export const TERRAIN_MIN_X = -18.4;
+/** Visual bounds — sand runs under the sea sheet so driving view never shows a white void. */
+export const TERRAIN_MIN_X = -28;
 export const TERRAIN_MAX_X = 70;
-export const TERRAIN_MIN_Z = -185;
-export const TERRAIN_MAX_Z = 75;
+export const TERRAIN_MIN_Z = -200;
+export const TERRAIN_MAX_Z = 80;
 
 /** Flat sand under the asphalt and past the lip — no trench, no vertical cut. */
 export const ROAD_SAND_APRON = ROAD_WIDTH * 0.5 + 1.85;
@@ -53,11 +53,11 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
   if (shelf != null) {
     // Continuous walkable ground Route → Maison → Studio. No cliff, no trench.
     y = shelf;
-  } else if (x > 18 && lat > INLAND_SHELF_WIDTH + ROAD_WIDTH) {
-    const rise = THREE.MathUtils.smoothstep(18, 36, x);
+  } else if (x > 22 && lat > INLAND_SHELF_WIDTH + ROAD_WIDTH + 4) {
+    const rise = THREE.MathUtils.smoothstep(22, 40, x);
     const ridge =
-      Math.sin(z * 0.045) * 0.7 + Math.cos(z * 0.09 + x * 0.05) * 0.45 + Math.sin(x * 0.12) * 0.3;
-    y = Math.max(y, PLAZA_HEIGHT + rise * (1.4 + ridge));
+      Math.sin(z * 0.045) * 0.55 + Math.cos(z * 0.09 + x * 0.05) * 0.35 + Math.sin(x * 0.12) * 0.22;
+    y = Math.max(y, PLAZA_HEIGHT + rise * (1.15 + ridge));
   }
 
   const terrace = getBelvedereWorldAnchor().terrace;
@@ -70,9 +70,10 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
     y = Math.max(y, 0.14 + fall * fall * 0.8);
   }
 
-  if (x > 12 && z < -30 && z > -55) y = Math.max(y, 1.6);
-  if (x > 12 && z < -108 && z > -130) y = Math.max(y, 1.8);
-  if (x > 2 && z < -175 && z > -195) y = Math.max(y, 3.8);
+  if (x > 16 && z < -30 && z > -55) y = Math.max(y, 1.55);
+  if (x > 16 && z < -108 && z > -130) y = Math.max(y, 1.7);
+  // Overlook ridge stays inland of the drive ribbon (was x>6 → dirt wall).
+  if (x > 16 && z < -178 && z > -198) y = Math.max(y, 2.4);
 
   {
     const pdx = x - -16;
@@ -91,6 +92,8 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
     if (ddx * ddx + ddz * ddz >= r * r) continue;
     // Belvedere marker.y = 1.2 over a 12 m disc lifted the beach into a floating mesa.
     if (zone.id === "belvedere") continue;
+    // WOW mesa at x=6 / y=4.5 sat in the windshield as a dirt wall.
+    if (zone.id === "wow") continue;
     if (zone.id === "plage") {
       if (x < -14.6) continue;
       y = Math.max(y, 0.1);
@@ -106,8 +109,14 @@ function scenicHeight(x: number, z: number): { y: number; roadDist: number; road
     y = lat < 0 ? Math.max(y, access) : access;
   }
 
-  // Final lock under the asphalt — terrace / zone lifts must not poke through,
-  // and no later sculpt can open a trench at the driving lip.
+  // Drive corridor: nothing taller than a low shoulder. Zone / plaza lifts
+  // were building a dirt wall in the windshield (Melvyn HARD FAIL).
+  const driveFlat = ROAD_WIDTH * 0.5 + 7.2;
+  if (roadDist < driveFlat) {
+    const t = THREE.MathUtils.clamp((roadDist - ROAD_WIDTH * 0.5 - 0.25) / 6.9, 0, 1);
+    const cap = sandBedY(roadY) + t * t * 0.32;
+    if (y > cap) y = cap;
+  }
   if (roadDist < ROAD_WIDTH * 0.5 + 0.28) {
     y = sandBedY(roadY);
   }
@@ -139,12 +148,12 @@ export function seaShoulderY(lat: number, roadY: number): number | null {
 
 /** Smooth inland shelf: road shoulder → plaza height over INLAND_SHELF_WIDTH. */
 export function inlandShelfY(lat: number, roadY: number): number | null {
-  const edge = ROAD_WIDTH * 0.5 + 0.35;
-  if (lat < edge * 0.12) return null;
+  const edge = ROAD_WIDTH * 0.5 + 6.2;
+  if (lat < edge) return null;
   if (lat > edge + INLAND_SHELF_WIDTH + 10) return null;
   const t = THREE.MathUtils.clamp((lat - edge) / INLAND_SHELF_WIDTH, 0, 1);
   const e = t * t * (3 - 2 * t);
-  return THREE.MathUtils.lerp(sandBedY(roadY), PLAZA_HEIGHT, e);
+  return THREE.MathUtils.lerp(sandBedY(roadY) + 0.18, PLAZA_HEIGHT, e);
 }
 
 /**

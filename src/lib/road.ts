@@ -1,21 +1,25 @@
 import * as THREE from "three";
 
-/** Coastal road centerline (~220m), sea on −X, cliffs / maisons on +X. */
+/**
+ * Coastal road centerline (~220 m). Stay near x ≈ −2.4 so the ribbon
+ * never aims at the inland shelf — Melvyn FAIL: S-curve pointed the
+ * car into a dirt wall.
+ */
 const ROAD_POINTS: [number, number, number][] = [
-  [0, 0.05, 42],
-  [2, 0.05, 22],
-  [-1, 0.08, 2],
-  [-3, 0.1, -18],
-  [0, 0.12, -38],
-  [2, 0.14, -52],
-  [-2, 0.16, -68],
-  [-5, 0.2, -85],
-  [-3, 0.24, -102],
-  [1, 0.28, -118],
-  [2, 0.3, -135],
-  [-2, 0.32, -150],
-  [-6, 0.36, -165],
-  [-4, 0.4, -178],
+  [-2.0, 0.06, 44],
+  [-2.1, 0.07, 26],
+  [-2.2, 0.08, 8],
+  [-2.3, 0.10, -10],
+  [-2.4, 0.12, -28],
+  [-2.5, 0.13, -46],
+  [-2.6, 0.15, -64],
+  [-2.7, 0.18, -82],
+  [-2.6, 0.22, -100],
+  [-2.5, 0.26, -118],
+  [-2.4, 0.30, -136],
+  [-2.3, 0.33, -154],
+  [-2.2, 0.36, -172],
+  [-2.1, 0.38, -186],
 ];
 
 export const ROAD_WIDTH = 7.2;

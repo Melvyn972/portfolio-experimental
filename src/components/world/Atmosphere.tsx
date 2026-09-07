@@ -19,14 +19,14 @@ type AtmosphereProps = {
 export function Atmosphere({ dust = true, shadows = true, shadowMapSize = 2048 }: AtmosphereProps) {
   return (
     <>
-      <color attach="background" args={["#9cb4b8"]} />
-      <fog attach="fog" args={["#b8c4b8", 48, 205]} />
-      <ambientLight intensity={0.42} color="#ffd2b0" />
-      <hemisphereLight args={["#7eacc4", "#c8a070", 1.12]} />
+      <color attach="background" args={["#8aa4a8"]} />
+      <fog attach="fog" args={["#c4b49a", 92, 280]} />
+      <ambientLight intensity={0.38} color="#f0c8a0" />
+      <hemisphereLight args={["#6e9cb4", "#b08850", 0.92]} />
       <directionalLight
         castShadow={shadows}
         position={[52, 22, 14]}
-        intensity={2.38}
+        intensity={1.72}
         color="#ffb060"
         shadow-mapSize={[shadowMapSize, shadowMapSize]}
         shadow-camera-near={1}

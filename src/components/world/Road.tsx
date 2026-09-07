@@ -15,7 +15,7 @@ function makeAsphaltTexture() {
   for (let y = 0; y < s; y++) {
     for (let x = 0; x < s; x++) {
       const i = (y * s + x) * 4;
-      const n = 78 + ((x * 13 + y * 7) % 22);
+      const n = 52 + ((x * 13 + y * 7) % 18);
       data[i] = n;
       data[i + 1] = n;
       data[i + 2] = n - 3;
@@ -69,12 +69,12 @@ export function Road() {
     <group>
       <mesh geometry={overlay} receiveShadow renderOrder={2}>
         <meshStandardMaterial
-          color="#6a6254"
+          color="#3f3a34"
           map={pbr.asphalt.map ?? fallback}
           roughnessMap={pbr.asphalt.roughnessMap}
-          roughness={0.86}
-          metalness={0.04}
-          envMapIntensity={0.28}
+          roughness={0.92}
+          metalness={0.02}
+          envMapIntensity={0.18}
           depthWrite
           polygonOffset
           polygonOffsetFactor={-3}
