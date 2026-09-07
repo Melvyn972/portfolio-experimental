@@ -3,6 +3,7 @@ import { computeTerrainHeight, sampleGroundHeight } from "@/lib/ground";
 import { getBelvedereWorldAnchor, nearestRoadSample, ROAD_SURFACE_LIFT, ribbonPose, START_T, isNullIsland } from "@/lib/road";
 import { SEA_INLAND_X, SEA_SURFACE_Y } from "@/lib/sea";
 import { isFinitePos, sanitizeWalkSpawn, zoneWalkSpawns } from "@/lib/spawn";
+import { getSoftGL } from "@/lib/softgl";
 import { chapterForInteractableId, interactableForChapter } from "@/lib/interaction";
 import { inputRef } from "@/hooks/useKeyboard";
 
@@ -522,6 +523,11 @@ export function toggleMute() {
 }
 
 export function setQuality(quality: QualityPreset) {
+  // Soft-GL + Haute/Auto = Chrome Error 9. HUD must stay on Éco.
+  if (getSoftGL()) {
+    setGameState({ quality: "eco" });
+    return;
+  }
   setGameState({ quality });
 }
 

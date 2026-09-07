@@ -47,34 +47,16 @@ export function ExperienceCanvas() {
     setSoftGL(soft);
     return soft;
   });
-  const quality = useMemo(() => resolveQuality(preset, isMobile), [preset, isMobile, softGL]);
+  const quality = useMemo(() => {
+    void softGL;
+    return resolveQuality(preset, isMobile);
+  }, [preset, isMobile, softGL]);
 
-function Scene({ isMobile }: { isMobile: boolean }) {
-  const { quality: preset, phase } = useGameStore();
-  const quality = useMemo(() => resolveQuality(preset, isMobile), [preset, isMobile]);
-
-  return (
-    <PhysicsWorld>
-      {/* Camera / physics / player stay mounted while World GLBs suspend.
-          A shared Suspense remounted chase-cam + PlayerSystem on origin
-          and dropped the first teleport* after skipToPlay. */}
-      <GameCamera />
-      <WorldColliders />
-      {(phase === "playing" || phase === "intro" || phase === "title") && <PlayerSystem />}
-      <Suspense fallback={null}>
-        <World quality={quality} />
-        <PostFX enabled={quality.postfx} ao={quality.shadows && !isMobile} />
-        <ProgressiveLoader />
-      </Suspense>
-    </PhysicsWorld>
-  );
-}
-
-export function ExperienceCanvas() {
-  useKeyboard();
-  const { quality: preset, openChapter, rescueOpen } = useGameStore();
-  const [isMobile, setIsMobile] = useState(false);
-  const quality = useMemo(() => resolveQuality(preset, isMobile), [preset, isMobile]);
+  useEffect(() => {
+    if (softGL && getGameState().quality !== "eco") {
+      setGameState({ quality: "eco" });
+    }
+  }, [softGL]);
 
   useEffect(() => {
     if ((openChapter || rescueOpen) && document.pointerLockElement) {
@@ -118,13 +100,12 @@ export function ExperienceCanvas() {
         toneMappingExposure: 0.96,
         failIfMajorPerformanceCaveat: false,
       }}
-      camera={{ fov: 42, near: 0.22, far: 360, position: [32, 24, 58] }}
+      camera={{ fov: 42, near: 0.22, far: quality.lite ? 280 : 360, position: [32, 24, 58] }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = 0.96;
         gl.setClearColor("#7e9aa0");
-        const canvas = gl.domElement;
-        canvas.addEventListener(
+        gl.domElement.addEventListener(
           "webglcontextlost",
           (e) => {
             e.preventDefault();

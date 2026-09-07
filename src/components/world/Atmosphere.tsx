@@ -13,20 +13,26 @@ type AtmosphereProps = {
   dust?: boolean;
   shadows?: boolean;
   shadowMapSize?: number;
+  lite?: boolean;
 };
 
 /** Late Mediterranean afternoon PBR lighting. */
-export function Atmosphere({ dust = true, shadows = true, shadowMapSize = 2048 }: AtmosphereProps) {
+export function Atmosphere({
+  dust = true,
+  shadows = true,
+  shadowMapSize = 2048,
+  lite = false,
+}: AtmosphereProps) {
   return (
     <>
       <color attach="background" args={["#7e9aaa"]} />
-      <fog attach="fog" args={["#8ea8b0", 150, 340]} />
-      <ambientLight intensity={0.38} color="#f0c8a0" />
-      <hemisphereLight args={["#6e9cb4", "#b08850", 0.92]} />
+      <fog attach="fog" args={lite ? ["#8ea8b0", 80, 210] : ["#8ea8b0", 150, 340]} />
+      <ambientLight intensity={lite ? 0.62 : 0.38} color="#f0c8a0" />
+      <hemisphereLight args={["#6e9cb4", "#b08850", lite ? 1.05 : 0.92]} />
       <directionalLight
         castShadow={shadows}
         position={[52, 22, 14]}
-        intensity={1.72}
+        intensity={lite ? 1.15 : 1.72}
         color="#ffb060"
         shadow-mapSize={[shadowMapSize, shadowMapSize]}
         shadow-camera-near={1}
@@ -38,19 +44,22 @@ export function Atmosphere({ dust = true, shadows = true, shadowMapSize = 2048 }
         shadow-bias={-0.00028}
         shadow-normalBias={0.035}
       />
-      <directionalLight position={[-22, 14, -36]} intensity={0.62} color="#8eb8d8" />
-      <directionalLight position={[8, 6, 30]} intensity={0.34} color="#ffb070" />
-      <Sky
-        distance={450000}
-        sunPosition={[52, 6.5, 14]}
-        inclination={0.46}
-        azimuth={0.18}
-        mieCoefficient={0.007}
-        mieDirectionalG={0.9}
-        rayleigh={0.55}
-        turbidity={9.2}
-      />
-      <Environment files="/hdri/venice_sunset_1k.hdr" background={false} environmentIntensity={1.32} />
+      <directionalLight position={[-22, 14, -36]} intensity={lite ? 0.85 : 0.62} color="#8eb8d8" />
+      {!lite && <directionalLight position={[8, 6, 30]} intensity={0.34} color="#ffb070" />}
+      {/* Soft-GL: Sky shader + 1k HDR Environment = Chrome Error 9. Solid lights only. */}
+      {!lite && (
+        <Sky
+          distance={450000}
+          sunPosition={[52, 6.5, 14]}
+          inclination={0.46}
+          azimuth={0.18}
+          mieCoefficient={0.007}
+          mieDirectionalG={0.9}
+          rayleigh={0.55}
+          turbidity={9.2}
+        />
+      )}
+      {!lite && <Environment files="/hdri/venice_sunset_1k.hdr" background={false} environmentIntensity={1.32} />}
       {dust && <DustMotes />}
     </>
   );

@@ -160,7 +160,12 @@ export function World({ quality }: { quality: QualitySettings }) {
   const lite = quality.lite;
   return (
     <group>
-      <Atmosphere dust={!lite && quality.dust} shadows={quality.shadows} shadowMapSize={quality.shadowMapSize} />
+      <Atmosphere
+        lite={lite}
+        dust={!lite && quality.dust}
+        shadows={quality.shadows}
+        shadowMapSize={quality.shadowMapSize}
+      />
       <Sea segments={quality.seaSegments} />
       <Terrain segmentsX={lite ? 56 : 140} segmentsZ={lite ? 88 : 220} />
       <Road simple={lite} />

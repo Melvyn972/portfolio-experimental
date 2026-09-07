@@ -12,7 +12,14 @@ export function detectSoftGL(): boolean {
     const renderer = ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) ?? "") : "";
     const vendor = ext ? String(gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) ?? "") : "";
     const blob = `${renderer} ${vendor}`.toLowerCase();
-    return /swiftshader|llvmpipe|software|microsoft basic|mesa offscreen|gdi generic/.test(blob);
+    const hit = /swiftshader|llvmpipe|software|microsoft basic|mesa offscreen|gdi generic/.test(blob);
+    try {
+      const lose = gl.getExtension("WEBGL_lose_context");
+      lose?.loseContext();
+    } catch {
+      /* probe canvas only */
+    }
+    return hit;
   } catch {
     return true;
   }
