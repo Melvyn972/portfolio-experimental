@@ -162,11 +162,11 @@ export function World({ quality }: { quality: QualitySettings }) {
       <Road />
       <RoadAccentProps />
       <ShoreRocks count={quality.shadows ? 7 : 5} />
-      {quality.shadows && <BeachScatter />}
+      <BeachScatter />
       <Vegetation count={quality.treeCount} />
       <AccessPaths />
       <CoastalTown rich={quality.shadows} />
-      <HeroCoast rich={quality.shadows} />
+      <HeroCoast lit={quality.shadows} />
       <Belvedere />
       <CoastalZones />
       <DiscoveryRelics />

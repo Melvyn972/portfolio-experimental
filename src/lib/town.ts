@@ -7,6 +7,8 @@ export const TOWN_LOTS = [
   { id: "lot-c", x: 23.6, z: -48.8, yaw: -0.28, kind: "maison" as const, tint: "#efe0d0" },
   { id: "lot-d", x: 26.2, z: -62.0, yaw: 0.22, kind: "studio" as const, tint: "#f7f2ea" },
   { id: "lot-e", x: 23.2, z: -78.5, yaw: -0.34, kind: "atelier" as const, tint: "#e4d2be" },
+  { id: "lot-k", x: 21.2, z: -70.6, yaw: -0.22, kind: "maison" as const, tint: "#f2e6d4" },
+  { id: "lot-l", x: 28.6, z: -86.4, yaw: 0.2, kind: "atelier" as const, tint: "#e8d4c0" },
   { id: "lot-f", x: 25.8, z: -96.5, yaw: 0.16, kind: "maison" as const, tint: "#ead8c8" },
   { id: "lot-j", x: 27.0, z: -108.8, yaw: -0.12, kind: "maison" as const, tint: "#f0e6d4" },
   { id: "lot-g", x: 23.0, z: -118.0, yaw: 0.08, kind: "studio" as const, tint: "#efe4d2" },

@@ -11,8 +11,8 @@ import { getGameState } from "@/lib/gameStore";
 export function LivingWorld({ rich = true }: { rich?: boolean }) {
   return (
     <group>
-      <Clouds count={rich ? 9 : 5} />
-      <BirdFlock count={rich ? 8 : 6} />
+      <Clouds count={rich ? 9 : 6} />
+      <BirdFlock count={rich ? 8 : 7} />
       <DistantBoats count={rich ? 3 : 2} />
       <ShoreFoam />
       <LighthouseBeam />
@@ -142,8 +142,8 @@ function ShoreFoam() {
   });
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-17.05, -0.145, -60]} renderOrder={1}>
-        <planeGeometry args={[2.15, 230]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-17.15, -0.155, -60]} renderOrder={1}>
+        <planeGeometry args={[2.55, 230]} />
         <meshStandardMaterial
           ref={a}
           color="#efe8dc"

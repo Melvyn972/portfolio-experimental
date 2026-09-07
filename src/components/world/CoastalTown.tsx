@@ -191,7 +191,7 @@ export function CoastalTown({ rich = true }: { rich?: boolean }) {
         </group>
       ))}
 
-      {(rich ? gardens : gardens.slice(0, 6)).map((g, i) => (
+      {(rich ? gardens : gardens.slice(0, 14)).map((g, i) => (
         <group key={`gd-${i}`} position={[g.x, g.y, g.z]} rotation={[0, g.yaw, 0]}>
           <primitive
             object={(g.kind === "olive" ? olive : g.kind === "cypress" ? cypress : g.kind === "bougain" ? bougain : hedge).clone(true)}
