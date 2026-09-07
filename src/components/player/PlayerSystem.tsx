@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import { CapsuleCollider, CuboidCollider, RigidBody, useRapier, type RapierRigidBody } from "@react-three/rapier";
 import { useGLTF } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
@@ -95,6 +95,19 @@ export function PlayerSystem() {
     from: THREE.Vector3;
     to: THREE.Vector3;
   }>({ kind: null, t: 0, from: new THREE.Vector3(), to: new THREE.Vector3() });
+
+  function restoreParkedCar(car: { x: number; y: number; z: number }, carYaw: number) {
+    if (!isNullIsland(car.x, car.y, car.z)) {
+      const sample = nearestRoadSample(new THREE.Vector3(car.x, 0, car.z));
+      pos.current.set(sample.position.x, sample.position.y, sample.position.z);
+      yaw.current = Number.isFinite(carYaw) ? carYaw : Math.atan2(sample.tangent.x, sample.tangent.z);
+    } else {
+      const ribbon = ribbonPose(START_T);
+      pos.current.set(ribbon.x, ribbon.roadY, ribbon.z);
+      yaw.current = ribbon.yaw;
+    }
+    syncCar(pos.current, yaw.current, 0, 0);
+  }
 
   function applyDriveTeleport(t: number) {
     const pose = ribbonPose(t);
@@ -248,25 +261,31 @@ export function PlayerSystem() {
     if (state.phase === "boot") return;
 
     if (!initialized.current) {
-      if (!consumeGate()) {
+      if (state.phase === "title" || state.phase === "intro") {
+        const ribbon = ribbonPose(START_T);
+        pos.current.set(ribbon.x, ribbon.roadY, ribbon.z);
+        yaw.current = ribbon.yaw;
+        playerPos.current.set(ribbon.x, ribbon.y, ribbon.z);
+        syncCar(pos.current, yaw.current, 0, 0);
+      } else if (!consumeGate()) {
         if (state.mode === "walking" && !isNullIsland(state.playerPos.x, state.playerPos.y, state.playerPos.z)) {
           walkYaw.current = state.walkYaw;
           lookYaw.current = state.lookYaw;
           playerPos.current.set(state.playerPos.x, state.playerPos.y, state.playerPos.z);
-          const ribbon = ribbonPose(START_T);
-          pos.current.set(ribbon.x, ribbon.roadY, ribbon.z);
-          yaw.current = ribbon.yaw;
-          syncCar(pos.current, yaw.current, 0, 0);
+          restoreParkedCar(state.carPos, state.carYaw);
         } else {
-          applyDriveTeleport(START_T);
+          applyDriveTeleport(ribbonTFromXZ(state.carPos.x, state.carPos.z));
         }
       }
       initialized.current = true;
     } else {
       consumeGate();
-      if (state.mode === "driving" && isNullIsland(pos.current.x, pos.current.y, pos.current.z)) {
-        applyDriveTeleport(START_T);
-      } else if (state.mode === "walking" && isNullIsland(playerPos.current.x, playerPos.current.y, playerPos.current.z)) {
+      if (state.mode === "driving") {
+        const buried =
+          isNullIsland(pos.current.x, pos.current.y, pos.current.z) ||
+          pos.current.y < computeTerrainHeight(pos.current.x, pos.current.z) - 0.9;
+        if (buried) applyDriveTeleport(ribbonTFromXZ(pos.current.x, pos.current.z));
+      } else if (isNullIsland(playerPos.current.x, playerPos.current.y, playerPos.current.z)) {
         applyDriveTeleport(START_T);
       }
     }
@@ -736,7 +755,9 @@ export function PlayerSystem() {
         <CuboidCollider args={[1.05, 0.5, 2.25]} friction={0.8} />
       </RigidBody>
       <group ref={carVisual}>
-        <Convertible color="#c45c3e" />
+        <Suspense fallback={null}>
+          <Convertible color="#c45c3e" />
+        </Suspense>
       </group>
 
       <RigidBody
@@ -748,7 +769,9 @@ export function PlayerSystem() {
       >
         <CapsuleCollider args={[CAPSULE_HALF, PLAYER_RADIUS]} friction={0.9} />
         <group ref={playerVisual} position={[0, -CAPSULE_Y, 0]} visible={false}>
-          <ExplorerAvatar />
+          <Suspense fallback={null}>
+            <ExplorerAvatar />
+          </Suspense>
         </group>
       </RigidBody>
     </group>
@@ -825,6 +848,11 @@ function ExplorerAvatar() {
       <primitive object={model} />
     </group>
   );
+}
+
+function ribbonTFromXZ(x: number, z: number) {
+  if (!Number.isFinite(x) || !Number.isFinite(z) || Math.hypot(x, z) < 1.15) return START_T;
+  return nearestRoadSample(new THREE.Vector3(x, 0, z)).t;
 }
 
 function easeOutCubic(t: number) {

@@ -147,9 +147,10 @@ export function ribbonPose(t: number = START_T) {
   };
 }
 
+/** Origin is never on the lollipop — reject any near-(0,0) XZ, any Y. */
 export function isNullIsland(x: number, y: number, z: number) {
   if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) return true;
-  return Math.hypot(x, z) < 0.85 && y < 0.55;
+  return Math.hypot(x, z) < 1.15;
 }
 
 export function getBelvedereWorldAnchor() {

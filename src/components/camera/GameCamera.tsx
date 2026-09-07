@@ -46,7 +46,8 @@ export function GameCamera() {
   const lastMode = useRef(getGameState().mode);
   const lastPhase = useRef(getGameState().phase);
   const lastSubject = useRef(new THREE.Vector3(Infinity, 0, 0));
-  const snapFrames = useRef(4);
+  const snapFrames = useRef(getGameState().phase === "playing" ? 12 : 4);
+  const buriedFrames = useRef(0);
 
   useFrame((_, rawDt) => {
     const dt = Math.min(rawDt, 0.18);
@@ -171,11 +172,15 @@ export function GameCamera() {
     dist.current = THREE.MathUtils.lerp(dist.current, targetDist, 1 - Math.exp(-3.2 * dt));
     let followDist = dist.current;
     offsetPos(_desired, _subject, yaw, pitch, followDist, height, side);
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 6; i++) {
       const g = maxGroundAt(_desired.x, _desired.z);
       if (g <= _subject.y + 2.15) break;
-      followDist = Math.max(walking ? 2.5 : 3.5, followDist * 0.7);
+      followDist = Math.max(walking ? 2.4 : 3.2, followDist * 0.68);
       offsetPos(_desired, _subject, yaw, pitch, followDist, height, side);
+    }
+    // Mesa behind the ribbon: sit above the car, not on the hill.
+    if (maxGroundAt(_desired.x, _desired.z) > _subject.y + 2.55) {
+      offsetPos(_desired, _subject, yaw, pitch, walking ? 2.6 : 3.4, height + 0.4, 0);
     }
     // Hard rule: camera stays behind the look/car yaw. Obstacle pull must
     // never flip in front — that reads as "controls inverted" mid-session.
@@ -281,13 +286,26 @@ export function GameCamera() {
     // Last: stay above the visual sand + asphalt. Occluder eject must not win.
     liftAboveGround(_desired, _subject.y, walking);
     liftAboveGround(current.current, _subject.y, walking);
-    if (current.current.y < maxGroundAt(current.current.x, current.current.z) + 1.25) {
+    const floorNow = maxGroundAt(current.current.x, current.current.z);
+    if (current.current.y < floorNow + 1.25) {
+      buriedFrames.current += 1;
       current.current.copy(_desired);
       liftAboveGround(current.current, _subject.y, walking);
+      if (buriedFrames.current > 2 || current.current.y < maxGroundAt(current.current.x, current.current.z) + 1.15) {
+        current.current.set(
+          _subject.x - Math.sin(yaw) * (walking ? 2.8 : 4.0),
+          _subject.y + (walking ? 3.5 : 3.85),
+          _subject.z - Math.cos(yaw) * (walking ? 2.8 : 4.0),
+        );
+        liftAboveGround(current.current, _subject.y, walking);
+      }
+    } else {
+      buriedFrames.current = 0;
     }
     camera.position.copy(current.current);
     camera.lookAt(look.current);
     camera.updateMatrixWorld(true);
+    publishCamLive(camera, _subject);
 
     const persp = camera as THREE.PerspectiveCamera;
     const targetFov = walking ? (mobile ? 48 : 46) : THREE.MathUtils.lerp(40, 50, Math.min(1, state.speed / 20));
@@ -344,4 +362,18 @@ function liftAboveGround(pos: THREE.Vector3, subjectY: number, walking: boolean)
 
 function easeInOut(t: number) {
   return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+
+function publishCamLive(camera: THREE.Camera, subject: THREE.Vector3) {
+  if (typeof window === "undefined") return;
+  const api = (window as unknown as { __coteMelvyn?: Record<string, unknown> }).__coteMelvyn;
+  if (!api) return;
+  const ground = computeTerrainHeight(camera.position.x, camera.position.z);
+  api.camLive = {
+    pos: { x: camera.position.x, y: camera.position.y, z: camera.position.z },
+    ground,
+    clearance: camera.position.y - ground,
+    subject: { x: subject.x, y: subject.y, z: subject.z },
+    buried: camera.position.y < ground + 1.15,
+  };
 }

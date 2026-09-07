@@ -22,12 +22,17 @@ function Scene({ isMobile }: { isMobile: boolean }) {
 
   return (
     <PhysicsWorld>
+      {/* Camera / physics / player stay mounted while World GLBs suspend.
+          A shared Suspense remounted chase-cam + PlayerSystem on origin
+          and dropped the first teleport* after skipToPlay. */}
       <GameCamera />
-      <World quality={quality} />
       <WorldColliders />
       {(phase === "playing" || phase === "intro" || phase === "title") && <PlayerSystem />}
-      <PostFX enabled={quality.postfx} ao={quality.shadows && !isMobile} />
-      <ProgressiveLoader />
+      <Suspense fallback={null}>
+        <World quality={quality} />
+        <PostFX enabled={quality.postfx} ao={quality.shadows && !isMobile} />
+        <ProgressiveLoader />
+      </Suspense>
     </PhysicsWorld>
   );
 }
